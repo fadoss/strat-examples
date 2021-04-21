@@ -1,0 +1,32 @@
+***
+*** p53 signaling pathways from "Modeling p53 Signaling Pathways by Using
+*** Multiset Processing" by Yasuhiro Suzuki and Hiroshi Tanaka
+*** (DOI: 10.1007/3-540-29937-8_7)
+***
+
+membrane C is
+	*** Cytoplasm
+
+	ev rc1 : p53 -> empty .
+	ev rc2 : p53 -> (p53, in N) .
+end
+
+membrane N is
+	*** Nucleus
+
+	ev rn1 : p53 p53 p53 p53 -> p53-tetramer .
+	ev rn2 : p53-tetramer -> p53-tetramer MDM2 .
+	ev rn3 : p53 MDM2 -> empty .
+	ev rn4 : MDM2 -> (MDM2, out) .
+	ev rn5 : p53-tetramer MDM2 -> (p53 p53 p53 p53, out) .
+	ev rn6 : p53-tetramer DNA-damage -> p53-tetramer+ DNA-damage .
+	ev rn7 : p53-tetramer+ DNA-damage -> p53-tetramer .
+end
+
+eof
+
+compute < C | p53 p53 p53 < N | empty > > .
+compute [5] < C | p53 p53 p53 p53 < N | DNA-damage > > .
+
+check [6] < C | p53 p53 p53 p53 < N | DNA-damage > > satisfies [] contains(N, DNA-damage) .
+check < C | p53 p53 p53 p53 < N | DNA-damage > > satisfies [] ~ contains(N, p53-tetramer) .

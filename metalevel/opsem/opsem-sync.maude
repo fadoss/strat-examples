@@ -1,0 +1,64 @@
+***
+***	Experimental strategy combinator S1 & S2 that allows only those
+***	rewriting paths allowed by both S1 and S2. It can be seen as an
+***	intersection operator, not on results but on paths. The results
+***	are always a subset of the intersection of results.
+***
+
+sload opsem
+
+fmod META-STRATEGY-AND is
+	extending META-STRATEGY .
+
+	*** The intersection strategy
+	op _&_ : Strategy Strategy -> Strategy [ctor] .
+endfm
+
+mod NOP-AND-RULES{X :: MODULE} is
+	protecting META-STRATEGY-AND .
+	extending NOP-RULES{X} .
+
+	*** A new execution to carry two synchronized states
+	op sync : ExState ExState -> ExStatePart [ctor comm frozen (1 2)] .
+
+	vars X Y X' Y' : ExState .
+	var  P         : ExStatePart .
+	vars C S       : CtxStack .
+	vars A B       : Strategy .
+	var  T         : Term .
+
+	*** The underlying term can be read in any of them (it is the same)
+	eq cterm(sync(X, Y) @ C) = cterm(X) .
+
+	*** Creates the synchronized context
+	rl [ctl] : T @ (A & B) S => sync(T @ A vctx(S), T @ B vctx(S)) @ S .
+
+	*** Asynchronous control step
+	crl [sync] : sync(X, Y) => sync(X', Y) if X => X' .
+
+	*** Synchronous system step
+	crl [sync] : sync(X, Y) => sync(X', Y') if X => X' /\ Y => Y' /\ reduced(cterm(X')) = reduced(cterm(Y')) .
+
+	*** Solution (both end at the same time)
+	*** rl [ctl] : sync(T @ eps, T @ eps) @ S => T @ S .
+
+	*** Solution (one can end before the other)
+	rl [ctl] : sync(T @ eps, P @ C) @ S => P @ (C S) .
+
+endm
+
+smod NOP-AND-SEMANTICS{X :: MODULE} is
+	protecting NOP-AND-RULES{X} .
+	extending NOP-SEMANTICS{X} .
+
+	*** Adds the sync steps to the control and system transitions
+	sd ->c := sync{->c} .
+	sd ->s := sync{->s, ->s} .
+endsm
+
+smod MAIN-AND is
+	protecting NOP-AND-SEMANTICS{RiverModule} .
+	protecting NOP-PREDS{RiverModule} .
+	including MODEL-CHECKER .
+	including STRATEGY-MODEL-CHECKER .
+endsm

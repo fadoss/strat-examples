@@ -1,0 +1,35 @@
+==========================================
+srewrite [2] in MAIN : human(40, 20, female) using run(4) .
+
+Solution 1
+rewrites: 8365
+result Ecosystem: water(496) human(44, 22, female)
+
+Solution 2
+rewrites: 9733
+result Ecosystem: water(495) human(44, 23, female)
+==========================================
+srewrite [2] in MAIN : water(8000) (carnivore(10, 20, female) herbivore(5, 12,
+    male)) carnivore(10, 20, male) using run(2) .
+
+Solution 1
+rewrites: 225000
+result Ecosystem: water(8250) carnivore(12, 19, female) carnivore(12, 30, male)
+
+Solution 2
+rewrites: 225800
+result Ecosystem: water(8250) carnivore(12, 19, male) carnivore(12, 30, female)
+==========================================
+srewrite [2] in MAIN : grass(20) ((carnivore(10, 4, female) herbivore(5, 12,
+    male)) human(65, 1, male)) human(21, 2, male) using run(1) .
+
+Solution 1
+rewrites: 199122
+result Ecosystem: grass(20) water(249) human(22, 2, male) carnivore(11, 3,
+    female) herbivore(6, 11, male)
+
+Solution 2
+rewrites: 199926
+result Ecosystem: grass(20) water(249) human(22, 1, male) carnivore(11, 3,
+    female) herbivore(6, 11, male)
+Bye.

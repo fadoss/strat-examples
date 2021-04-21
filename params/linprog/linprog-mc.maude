@@ -1,0 +1,37 @@
+***
+*** Model checking the simplex algorithm
+***
+
+sload model-checker
+sload linprog-examples
+
+mod SIMPLEX-PREDS is
+	protecting SIMPLEX .
+	inc SATISFACTION .
+
+	subsort LPState < State .
+
+	ops final : -> Prop [ctor] .
+
+	var  K   : Rat .
+	vars P Q : Vertex .
+	var  St  : SimplexState .
+
+	eq solution(K, P) |= final = true .
+	eq unbounded(P, Q) |= final = true .
+	eq St |= final = false [owise] .
+endm
+
+smod SIMPLEX-MC is
+	protecting STRATEGY-MODEL-CHECKER .
+	protecting SIMPLEX-PREDS .
+	protecting SIMPLEX-READY .
+	protecting SIMPLEX-EXAMPLES .
+endsm
+
+eof
+
+red modelCheck(opt1, <> final, 'solve) .
+red modelCheck(opt1, <> final, 'free) .
+red modelCheck(cycles, <> final, 'simplex) .
+red modelCheck(cycles, <> final, 'free) .

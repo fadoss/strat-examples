@@ -1,0 +1,29 @@
+***
+*** Square number calculator
+***
+*** In the resulting configurations, the number of d is
+*** the square of the number of e
+***
+
+membrane M1 is
+	*** Passive skin membrane
+end
+
+membrane M2 is
+	ev r21 : b -> d .
+	ev r22 : d -> d e .
+	ev r23 : f f -> f .
+	ev r24 : f -> delta .
+
+	pr r23 > r24 .
+end
+
+membrane M3 is
+	ev r31 : a -> a b .
+	ev r32 : a -> b delta .
+	ev r33 : f -> f f .
+end
+
+eof
+
+check [15] < M1 | < M2 | < M3 | a f > > > satisfies [] { count(M1, d) ^ 2 = count(M1, e) } .

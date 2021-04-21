@@ -1,0 +1,14 @@
+***
+*** Test for membrane division
+***
+
+membrane M1 is
+	ev r11 : a -> b .
+	ev r12 : b -> d .
+end
+
+membrane M2 is
+	ev r21 : a -> (b, b c, div) .
+end
+
+trans < M1 | b < M2 | a > > .

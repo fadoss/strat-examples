@@ -1,0 +1,58 @@
+***
+*** Simple example for congruence and generic traversals operators
+***
+
+mod FOO is
+	sort Foo .
+
+	ops a b : -> Foo [ctor] .
+	op  f   : Foo Foo -> Foo [ctor] .
+
+	vars X Y : Foo .
+
+	rl [swap] : f(X, Y) => f(Y, X) .
+	rl [next] : a => b .
+endm
+
+sload model-checker
+
+mod FOO-CHECK is
+	protecting FOO .
+	including SATISFACTION .
+	including MODEL-CHECKER .
+
+	subsort Foo < State .
+
+	*** The term does not contain the given argument anywhere
+	op hasNo : Foo -> Prop [ctor] .
+
+	vars X Y Z : Foo .
+
+	eq f(X, Y) |= hasNo(Z) = X |= hasNo(Z) and Y |= hasNo(Z) .
+	eq X |= hasNo(Z) = Z == X [owise] . 
+endm
+
+eof
+
+sload congruenceOpsExt
+erew <> < repl : SlangREPL | none > initREPL(repl) .
+
+***
+*** Once the interface strategy language extension interface has printed its
+*** SLExt prompt, the FOO module can be selected with:
+***
+***	select FOO .
+***
+*** Then srewrite commands can be executed:
+***
+*** 	srew f(f(a, b), f(a, a)) using f(swap , gt-all(next)) .
+***
+*** The solution f(f(b, a), f(b, b)) will be obtained.
+***
+*** The sequence of rewrites to reach that solution can be obtained indirectly
+*** by model checking with:
+***
+***	python slangExtension.py congruenceOpsExt.maude CongOps congruence-foo.maude \
+***		'f(f(a, b), f(a, a))' 'f(swap , gt-all(next))' False
+***
+*** Other properties like <> hasNo(a) from f(a, a) using gt-all(next) can be checked.

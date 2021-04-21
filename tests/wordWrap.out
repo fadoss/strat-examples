@@ -1,0 +1,244 @@
+==========================================
+srewrite in MAIN : initial(quijote, 80) using wrange .
+
+Solution 1
+rewrites: 5912
+result State: nil |> {"En" "un" "lugar" "de" "la" "Mancha," "de" "cuyo"
+    "nombre" "no" "quiero" "acordarme," "no" "ha" "mucho" "tiempo" @ 1} {"que"
+    "vivia" "un" "hidalgo" "de" "los" "de" "lanza" "en" "astillero," "adarga"
+    "antigua," "rocin" "flaco" @ 15/13} {"y" "galgo" "corredor." "Una" "olla"
+    "de" "algo" "mas" "vaca" "que" "carnero," "salpicon" "las" "mas" "noches,"
+    @ 13/14} {"duelos" "y" "quebrantos" "los" "sabados," "lantejas" "los"
+    "viernes," "algun" "palomino" "de" "anadidura" @ 9/11} {"los" "domingos,"
+    "consumian" "las" "tres" "cuartas" "partes" "de" "su" "hacienda."} (count :
+    54, width : 80, words : 10, raggedness : 9)
+
+Solution 2
+rewrites: 5912
+result State: nil |> {"En" "un" "lugar" "de" "la" "Mancha," "de" "cuyo"
+    "nombre" "no" "quiero" "acordarme," "no" "ha" "mucho" "tiempo" @ 1} {"que"
+    "vivia" "un" "hidalgo" "de" "los" "de" "lanza" "en" "astillero," "adarga"
+    "antigua," "rocin" "flaco" "y" @ 1} {"galgo" "corredor." "Una" "olla" "de"
+    "algo" "mas" "vaca" "que" "carnero," "salpicon" "las" "mas" "noches," @
+    14/13} {"duelos" "y" "quebrantos" "los" "sabados," "lantejas" "los"
+    "viernes," "algun" "palomino" "de" "anadidura" @ 9/11} {"los" "domingos,"
+    "consumian" "las" "tres" "cuartas" "partes" "de" "su" "hacienda."} (count :
+    54, width : 80, words : 10, raggedness : 5)
+
+Solution 3
+rewrites: 5912
+result State: nil |> {"En" "un" "lugar" "de" "la" "Mancha," "de" "cuyo"
+    "nombre" "no" "quiero" "acordarme," "no" "ha" "mucho" "tiempo" "que" @ 3/4}
+    {"vivia" "un" "hidalgo" "de" "los" "de" "lanza" "en" "astillero," "adarga"
+    "antigua," "rocin" "flaco" "y" @ 17/13} {"galgo" "corredor." "Una" "olla"
+    "de" "algo" "mas" "vaca" "que" "carnero," "salpicon" "las" "mas" "noches,"
+    @ 14/13} {"duelos" "y" "quebrantos" "los" "sabados," "lantejas" "los"
+    "viernes," "algun" "palomino" "de" "anadidura" @ 9/11} {"los" "domingos,"
+    "consumian" "las" "tres" "cuartas" "partes" "de" "su" "hacienda."} (count :
+    54, width : 80, words : 10, raggedness : 37)
+
+Solution 4
+rewrites: 5912
+result State: nil |> {"En" "un" "lugar" "de" "la" "Mancha," "de" "cuyo"
+    "nombre" "no" "quiero" "acordarme," "no" "ha" "mucho" "tiempo" "que" @ 3/4}
+    {"vivia" "un" "hidalgo" "de" "los" "de" "lanza" "en" "astillero," "adarga"
+    "antigua," "rocin" "flaco" "y" "galgo" @ 6/7} {"corredor." "Una" "olla"
+    "de" "algo" "mas" "vaca" "que" "carnero," "salpicon" "las" "mas" "noches,"
+    "duelos" @ 1} {"y" "quebrantos" "los" "sabados," "lantejas" "los"
+    "viernes," "algun" "palomino" "de" "anadidura" "los" @ 12/11} {"domingos,"
+    "consumian" "las" "tres" "cuartas" "partes" "de" "su" "hacienda."} (count :
+    51, width : 80, words : 9, raggedness : 21)
+
+Solution 5
+rewrites: 5912
+result State: nil |> {"En" "un" "lugar" "de" "la" "Mancha," "de" "cuyo"
+    "nombre" "no" "quiero" "acordarme," "no" "ha" "mucho" "tiempo" "que" @ 3/4}
+    {"vivia" "un" "hidalgo" "de" "los" "de" "lanza" "en" "astillero," "adarga"
+    "antigua," "rocin" "flaco" "y" "galgo" @ 6/7} {"corredor." "Una" "olla"
+    "de" "algo" "mas" "vaca" "que" "carnero," "salpicon" "las" "mas" "noches,"
+    "duelos" "y" @ 6/7} {"quebrantos" "los" "sabados," "lantejas" "los"
+    "viernes," "algun" "palomino" "de" "anadidura" "los" @ 13/10} {"domingos,"
+    "consumian" "las" "tres" "cuartas" "partes" "de" "su" "hacienda."} (count :
+    51, width : 80, words : 9, raggedness : 33)
+
+No more solutions.
+rewrites: 5912
+==========================================
+srewrite in MAIN : initial(dracula, 80) using wrange(77) .
+
+Solution 1
+rewrites: 236948
+result State: nil |> {"Having" "had" "some" "time" "at" "my" "disposal" "when"
+    "in" "London," "I" "had" "visited" "the" "British" "Museum," @ 2/3} {"and"
+    "made" "search" "among" "the" "books" "and" "maps" "in" "the" "library"
+    "regarding" "Transylvania;" "it" @ 11/13} {"had" "struck" "me" "that"
+    "some" "foreknowledge" "of" "the" "country" "could" "hardly" "fail" "to"
+    "have" "some" @ 11/14} {"importance" "in" "dealing" "with" "a" "nobleman"
+    "of" "that" "country." "I" "find" "that" "the" "district" "he" @ 6/7} {
+    "named" "is" "in" "the" "extreme" "east" "of" "the" "country," "just" "on"
+    "the" "borders" "of" "three" "states," @ 14/15} {"Transylvania," "Moldavia"
+    "and" "Bukovina," "in" "the" "midst" "of" "the" "Carpathian" "mountains;" @
+    6/5} {"one" "of" "the" "wildest" "and" "least" "known" "portions" "of"
+    "Europe." "I" "was" "not" "able" "to" "light" "on" @ 15/16} {"any" "map"
+    "or" "work" "giving" "the" "exact" "locality" "of" "the" "Castle"
+    "Dracula," "as" "there" "are" "no" @ 1} {"maps" "of" "this" "country" "as"
+    "yet" "to" "compare" "with" "our" "own" "Ordnance" "Survey" "maps;" "but"
+    "I" @ 16/15} {"found" "that" "Bistritz," "the" "post" "town" "named" "by"
+    "Count" "Dracula," "is" "a" "fairly" "well-known" @ 12/13} {"place." "I"
+    "shall" "enter" "here" "some" "of" "my" "notes," "as" "they" "may"
+    "refresh" "my" "memory" "when" "I" @ 1} {"talk" "over" "my" "travels"
+    "with" "Mina." "In" "the" "population" "of" "Transylvania" "there" "are"
+    "four" @ 1} {"distinct" "nationalities:" "Saxons" "in" "the" "South," "and"
+    "mixed" "with" "them" "the" "Wallachs," "who" @ 5/6} {"are" "the"
+    "descendants" "of" "the" "Dacians;" "Magyars" "in" "the" "West," "and"
+    "Szekelys" "in" "the" "East" @ 13/14} {"and" "North." "I" "am" "going"
+    "among" "the" "latter," "who" "claim" "to" "be" "descended" "from" "Attila"
+    "and" @ 14/15} {"the" "Huns." "This" "may" "be" "so," "for" "when" "the"
+    "Magyars" "conquered" "the" "country" "in" "the" "eleventh" @ 11/15} {
+    "century" "they" "found" "the" "Huns" "settled" "in" "it." "I" "read"
+    "that" "every" "known" "superstition" @ 14/13} {"in" "the" "world" "is"
+    "gathered" "into" "the" "horse-shoe" "of" "the" "Carpathians," "as" "if"
+    "it" "were" "the" @ 13/15} {"centre" "of" "some" "sort" "of" "imaginative"
+    "whirlpool;" "if" "so" "my" "stay" "may" "be" "very" "interesting"} (count
+    : 69, width : 80, words : 15, raggedness : 77)
+
+Solution 2
+rewrites: 236948
+result State: nil |> {"Having" "had" "some" "time" "at" "my" "disposal" "when"
+    "in" "London," "I" "had" "visited" "the" "British" "Museum," @ 2/3} {"and"
+    "made" "search" "among" "the" "books" "and" "maps" "in" "the" "library"
+    "regarding" "Transylvania;" "it" @ 11/13} {"had" "struck" "me" "that"
+    "some" "foreknowledge" "of" "the" "country" "could" "hardly" "fail" "to"
+    "have" "some" @ 11/14} {"importance" "in" "dealing" "with" "a" "nobleman"
+    "of" "that" "country." "I" "find" "that" "the" "district" "he" @ 6/7} {
+    "named" "is" "in" "the" "extreme" "east" "of" "the" "country," "just" "on"
+    "the" "borders" "of" "three" "states," @ 14/15} {"Transylvania," "Moldavia"
+    "and" "Bukovina," "in" "the" "midst" "of" "the" "Carpathian" "mountains;" @
+    6/5} {"one" "of" "the" "wildest" "and" "least" "known" "portions" "of"
+    "Europe." "I" "was" "not" "able" "to" "light" "on" @ 15/16} {"any" "map"
+    "or" "work" "giving" "the" "exact" "locality" "of" "the" "Castle"
+    "Dracula," "as" "there" "are" "no" @ 1} {"maps" "of" "this" "country" "as"
+    "yet" "to" "compare" "with" "our" "own" "Ordnance" "Survey" "maps;" "but"
+    "I" @ 16/15} {"found" "that" "Bistritz," "the" "post" "town" "named" "by"
+    "Count" "Dracula," "is" "a" "fairly" "well-known" @ 12/13} {"place." "I"
+    "shall" "enter" "here" "some" "of" "my" "notes," "as" "they" "may"
+    "refresh" "my" "memory" "when" "I" @ 1} {"talk" "over" "my" "travels"
+    "with" "Mina." "In" "the" "population" "of" "Transylvania" "there" "are"
+    "four" @ 1} {"distinct" "nationalities:" "Saxons" "in" "the" "South," "and"
+    "mixed" "with" "them" "the" "Wallachs," "who" @ 5/6} {"are" "the"
+    "descendants" "of" "the" "Dacians;" "Magyars" "in" "the" "West," "and"
+    "Szekelys" "in" "the" "East" @ 13/14} {"and" "North." "I" "am" "going"
+    "among" "the" "latter," "who" "claim" "to" "be" "descended" "from" "Attila"
+    "and" @ 14/15} {"the" "Huns." "This" "may" "be" "so," "for" "when" "the"
+    "Magyars" "conquered" "the" "country" "in" "the" "eleventh" @ 11/15} {
+    "century" "they" "found" "the" "Huns" "settled" "in" "it." "I" "read"
+    "that" "every" "known" "superstition" "in" @ 6/7} {"the" "world" "is"
+    "gathered" "into" "the" "horse-shoe" "of" "the" "Carpathians," "as" "if"
+    "it" "were" "the" @ 15/14} {"centre" "of" "some" "sort" "of" "imaginative"
+    "whirlpool;" "if" "so" "my" "stay" "may" "be" "very" "interesting"} (count
+    : 69, width : 80, words : 15, raggedness : 77)
+
+Solution 3
+rewrites: 236948
+result State: nil |> {"Having" "had" "some" "time" "at" "my" "disposal" "when"
+    "in" "London," "I" "had" "visited" "the" "British" "Museum," @ 2/3} {"and"
+    "made" "search" "among" "the" "books" "and" "maps" "in" "the" "library"
+    "regarding" "Transylvania;" "it" @ 11/13} {"had" "struck" "me" "that"
+    "some" "foreknowledge" "of" "the" "country" "could" "hardly" "fail" "to"
+    "have" "some" @ 11/14} {"importance" "in" "dealing" "with" "a" "nobleman"
+    "of" "that" "country." "I" "find" "that" "the" "district" "he" @ 6/7} {
+    "named" "is" "in" "the" "extreme" "east" "of" "the" "country," "just" "on"
+    "the" "borders" "of" "three" "states," @ 14/15} {"Transylvania," "Moldavia"
+    "and" "Bukovina," "in" "the" "midst" "of" "the" "Carpathian" "mountains;" @
+    6/5} {"one" "of" "the" "wildest" "and" "least" "known" "portions" "of"
+    "Europe." "I" "was" "not" "able" "to" "light" "on" @ 15/16} {"any" "map"
+    "or" "work" "giving" "the" "exact" "locality" "of" "the" "Castle"
+    "Dracula," "as" "there" "are" "no" @ 1} {"maps" "of" "this" "country" "as"
+    "yet" "to" "compare" "with" "our" "own" "Ordnance" "Survey" "maps;" "but"
+    "I" @ 16/15} {"found" "that" "Bistritz," "the" "post" "town" "named" "by"
+    "Count" "Dracula," "is" "a" "fairly" "well-known" @ 12/13} {"place." "I"
+    "shall" "enter" "here" "some" "of" "my" "notes," "as" "they" "may"
+    "refresh" "my" "memory" "when" "I" @ 1} {"talk" "over" "my" "travels"
+    "with" "Mina." "In" "the" "population" "of" "Transylvania" "there" "are"
+    "four" @ 1} {"distinct" "nationalities:" "Saxons" "in" "the" "South," "and"
+    "mixed" "with" "them" "the" "Wallachs," @ 13/11} {"who" "are" "the"
+    "descendants" "of" "the" "Dacians;" "Magyars" "in" "the" "West," "and"
+    "Szekelys" "in" @ 17/13} {"the" "East" "and" "North." "I" "am" "going"
+    "among" "the" "latter," "who" "claim" "to" "be" "descended" "from" @ 16/15}
+    {"Attila" "and" "the" "Huns." "This" "may" "be" "so," "for" "when" "the"
+    "Magyars" "conquered" "the" "country" @ 15/14} {"in" "the" "eleventh"
+    "century" "they" "found" "the" "Huns" "settled" "in" "it." "I" "read"
+    "that" "every" "known" @ 13/15} {"superstition" "in" "the" "world" "is"
+    "gathered" "into" "the" "horse-shoe" "of" "the" "Carpathians," "as" @ 1} {
+    "if" "it" "were" "the" "centre" "of" "some" "sort" "of" "imaginative"
+    "whirlpool;" "if" "so" "my" "stay" "may" "be" @ 15/16} {"very"
+    "interesting"} (count : 15, width : 80, words : 2, raggedness : 77)
+
+Solution 4
+rewrites: 236948
+result State: nil |> {"Having" "had" "some" "time" "at" "my" "disposal" "when"
+    "in" "London," "I" "had" "visited" "the" "British" "Museum," @ 2/3} {"and"
+    "made" "search" "among" "the" "books" "and" "maps" "in" "the" "library"
+    "regarding" "Transylvania;" "it" @ 11/13} {"had" "struck" "me" "that"
+    "some" "foreknowledge" "of" "the" "country" "could" "hardly" "fail" "to"
+    "have" "some" @ 11/14} {"importance" "in" "dealing" "with" "a" "nobleman"
+    "of" "that" "country." "I" "find" "that" "the" "district" "he" @ 6/7} {
+    "named" "is" "in" "the" "extreme" "east" "of" "the" "country," "just" "on"
+    "the" "borders" "of" "three" "states," @ 14/15} {"Transylvania," "Moldavia"
+    "and" "Bukovina," "in" "the" "midst" "of" "the" "Carpathian" "mountains;" @
+    6/5} {"one" "of" "the" "wildest" "and" "least" "known" "portions" "of"
+    "Europe." "I" "was" "not" "able" "to" "light" "on" @ 15/16} {"any" "map"
+    "or" "work" "giving" "the" "exact" "locality" "of" "the" "Castle"
+    "Dracula," "as" "there" "are" "no" @ 1} {"maps" "of" "this" "country" "as"
+    "yet" "to" "compare" "with" "our" "own" "Ordnance" "Survey" "maps;" "but"
+    "I" @ 16/15} {"found" "that" "Bistritz," "the" "post" "town" "named" "by"
+    "Count" "Dracula," "is" "a" "fairly" "well-known" @ 12/13} {"place." "I"
+    "shall" "enter" "here" "some" "of" "my" "notes," "as" "they" "may"
+    "refresh" "my" "memory" "when" "I" @ 1} {"talk" "over" "my" "travels"
+    "with" "Mina." "In" "the" "population" "of" "Transylvania" "there" "are"
+    "four" @ 1} {"distinct" "nationalities:" "Saxons" "in" "the" "South," "and"
+    "mixed" "with" "them" "the" "Wallachs," @ 13/11} {"who" "are" "the"
+    "descendants" "of" "the" "Dacians;" "Magyars" "in" "the" "West," "and"
+    "Szekelys" "in" @ 17/13} {"the" "East" "and" "North." "I" "am" "going"
+    "among" "the" "latter," "who" "claim" "to" "be" "descended" "from" @ 16/15}
+    {"Attila" "and" "the" "Huns." "This" "may" "be" "so," "for" "when" "the"
+    "Magyars" "conquered" "the" "country" "in" @ 13/15} {"the" "eleventh"
+    "century" "they" "found" "the" "Huns" "settled" "in" "it." "I" "read"
+    "that" "every" "known" @ 15/14} {"superstition" "in" "the" "world" "is"
+    "gathered" "into" "the" "horse-shoe" "of" "the" "Carpathians," "as" @ 1} {
+    "if" "it" "were" "the" "centre" "of" "some" "sort" "of" "imaginative"
+    "whirlpool;" "if" "so" "my" "stay" "may" "be" @ 15/16} {"very"
+    "interesting"} (count : 15, width : 80, words : 2, raggedness : 77)
+
+No more solutions.
+rewrites: 236948
+==========================================
+srewrite in MAIN : initial(frankestein, 80) using wgreedy .
+
+Solution 1
+rewrites: 945
+result State: nil |> {"You" "will" "rejoice" "to" "hear" "that" "no" "disaster"
+    "has" "accompanied" "the" "commencement" "of" "an" @ 1} {"enterprise"
+    "which" "you" "have" "regarded" "with" "such" "evil" "forebodings." "I"
+    "arrived" "here" @ 14/11} {"yesterday;" "and" "my" "first" "task" "is" "to"
+    "assure" "my" "dear" "sister" "of" "my" "welfare," "and" @ 19/14} {
+    "increasing" "confidence" "in" "the" "success" "of" "my" "undertaking."} (
+    count : 48, width : 80, words : 8, raggedness : 34)
+
+No more solutions.
+rewrites: 945
+==========================================
+srewrite in MAIN : initial(integer, 80) using wint .
+
+Solution 1
+rewrites: 620
+result State: nil |> {"abcdefg" "ijklm" "op" "rstuvwxyzab" "def" "ghijklmn"
+    "pqrs" "t" "vwxyz" "bcd" "efghijklmnopq" "stuvwxy" @ 1} {"abcdefghijkmnopq"
+    "stv" "xyzbcde" "ghj" "lmopq" "su" "wxza" "cdefhijk" "mnop" "su" "wxyzab" @
+    2} {"a" "c" "defghijk" "mnopqrstuv" "xyzabcdef" "hijklmnopqrs" "uvwxy"
+    "abcdefgh" "jklmno" "qrstu" "wxyza"} (count : 70, width : 80, words : 11,
+    raggedness : 100)
+
+No more solutions.
+rewrites: 620
+Bye.

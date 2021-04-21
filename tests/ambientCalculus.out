@@ -1,0 +1,43 @@
+==========================================
+srewrite in MAIN : M using norep .
+
+Solution 1
+rewrites: 12
+result NSProcess: 'n{0}[in['n{0}] . stop | 'n{0}[stop]]
+
+No more solutions.
+rewrites: 12
+==========================================
+srewrite in MAIN : N using norep .
+
+Solution 1
+rewrites: 23
+result NSProcess: 'm{0}['n{0}[in['n{0}] . stop | 'n{0}[stop]]]
+
+No more solutions.
+rewrites: 23
+==========================================
+srewrite in MAIN : R using norep .
+
+No solution.
+rewrites: 12
+==========================================
+srewrite in MAIN : firewall(stop, stop) using cardellideco(4) .
+
+Solution 1
+rewrites: 148
+result NSProcess: new['k : W]new['m : W]('m{0}['n{0}[stop]])
+
+No more solutions.
+rewrites: 148
+==========================================
+srewrite [1] in MAIN : fail(stop, stop) using ecd(3) .
+
+Solution 1
+rewrites: 251
+result Process: err1
+
+Solution 2
+rewrites: 55
+result Process: stop
+Bye.

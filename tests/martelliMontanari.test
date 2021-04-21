@@ -1,0 +1,6 @@
+deduction/martelliMontanari
+
+srewrite x(1) = c(1) * x(1) using marmon .
+srewrite x(1) = c(1) * x(2) ; x(1) = x(3) * c(2) using marmon .
+srewrite x(1) = x(2) * x(3) ; x(1) = x(3) -> x(4) using marmon .
+srewrite x(1) = x(2) ; x(1) = c(1) * c(2) -> x(3) ; x(2) = x(4) -> c(3) using marmon .

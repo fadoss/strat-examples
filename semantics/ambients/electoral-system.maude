@@ -1,0 +1,159 @@
+***
+*** Ambient calculus (electoral system example)
+***
+*** Source: Typed Mobile Ambients in Maude
+***	    Fernando Rosa-Velardo, Clara Segura, and Alberto Verdejo
+***	    http://maude.ucm.es/ambients/
+***
+
+in ambients-types.maude
+
+fmod PERMS is
+	pr NAT .
+
+	sorts NatList NatListSet NatSet .
+	subsorts Nat < NatList < NatListSet .
+	subsort Nat < NatSet .
+	op nil : -> NatList .
+	op __ : NatList NatList -> NatList [assoc id: nil prec 10] .
+	op mt : -> NatListSet .
+	op _;_ : NatListSet NatListSet -> NatListSet [assoc comm id: mt prec 20] .
+	op mtNS : -> NatSet .
+	op _#_ : NatSet NatSet -> NatSet [assoc comm id: mtNS prec 20] .
+
+	op perms : Nat -> NatListSet .
+	op insert : Nat NatListSet -> NatListSet .
+	op insert : Nat NatList NatList -> NatListSet .
+
+	var N : Nat .
+	vars I i k : Nat .
+	vars IL IL' : NatList .
+	var ILS : NatListSet .
+	var NS : NatSet .
+
+	*** perms(N) returns all the permutations of numbers 1..N  
+	eq perms(1) = 1 .
+	ceq perms(N) = insert(N, perms(sd(N,1))) if N > 1 .
+
+	eq insert(N, mt) = mt .
+	eq insert(N, IL ; ILS) = insert(N, nil, IL) ; insert(N, ILS) .
+
+	eq insert(N, IL, nil) = IL N .
+	eq insert(N, IL, I IL') = IL N I IL' ; insert(N, IL I, IL') .
+
+	op rev : NatList -> NatList .
+	eq rev(nil) = nil .
+	eq rev(I IL) = rev(IL) I .
+
+	op permsS : NatSet -> NatListSet .
+
+	*** permsS( set ) returns all the permutations of the elements in set
+	eq permsS(N) = N .
+	eq permsS(N # NS) = insert(N, permsS(NS)) .
+
+	op S : Nat Nat -> NatSet .
+	op T : Nat Nat -> NatListSet .
+
+	eq S(i,k) = allFrom(sd(k,1)) except i .
+
+	op allFrom : Nat -> NatSet .
+	eq allFrom(0) = 0 .
+	eq allFrom(s N) = (s N # allFrom(N)) .
+	op _except_ : NatSet Nat -> NatSet .
+	eq (N # NS) except N = NS .
+	eq NS except N = NS [owise] .
+
+	eq T(i,k) = permsS(S(i,k)) .
+
+
+	***Invertir una lista
+
+	op Rev : NatList -> NatList .
+
+	eq Rev ( i IL ) = Rev ( IL ) i .
+	eq Rev ( nil ) = nil .
+
+endfm
+
+mod ELECTORAL is
+
+	pr PERMS .
+	pr ACSEMANTICS .
+	pr TYPE-SYSTEM .
+
+	vars i k : Nat .
+	var NS : NatSet .
+	var IL IL' : NatList .
+	var ILS : NatListSet .
+
+	op InList : NatList -> Message .
+
+	eq InList ( i IL ) = ( in[ 'n{i} ] . InList ( IL ) ) .
+	eq InList ( nil ) = eps .
+
+
+	op OutList : NatList -> Message .
+
+	eq OutList ( i IL ) = ( out['n{i}] . OutList ( IL ) ) .
+	eq OutList ( nil ) = eps .
+
+
+	op Pr1 : NatSet -> Process .
+
+	eq Pr1 ( i # NS ) = ( in [ 'n{i} ] . stop ) | Pr1 ( NS ) .
+	eq Pr1 ( mtNS ) = stop .
+
+
+	op Pr2 : NatListSet Nat -> Process .
+
+	eq Pr2 ( IL ; ILS , i ) = ('m{i}[ InList ( IL ) . (OutList ( Rev ( IL ) ) . out[ 'n{i} ] ) . stop]) | Pr2 ( ILS , i ) .
+	eq Pr2 ( mt, i ) = stop . 
+
+
+	op Pr : Nat Nat -> Process .
+
+	eq Pr ( i , k ) = 'n{i}[ Pr1 ( S ( i , k ) ) | Pr2 ( T ( i , k ) , i ) ] .
+
+	op Net : Nat -> Process .
+	op elect : Nat Nat -> Process .
+
+	eq Net ( k ) = elect ( 0 , k ) .
+	ceq elect ( i , k ) = Pr ( i , k ) | elect ( s(i) , k ) if s(i) < k .
+	ceq elect ( i , k ) = Pr ( i , k ) if s(i) = k .
+
+	op EnvElec : Nat -> Env .
+	op EnvEleci : Nat Nat -> Env .
+
+	eq EnvElec( k ) = EnvElec( 0 , k ) . 
+
+	ceq EnvElec ( i , k ) = ( 'n{i} , Amb[Shh] ) ( 'm{i} , Amb[Shh] )
+	EnvElec( s(i) ,k ) if i < k .
+
+	eq EnvElec ( k , k ) = empty .
+
+endm
+
+smod ELECTORAL-MAIN is
+	protecting ELECTORAL .
+	protecting NOMAT .
+endsm
+
+eof
+
+srew [1] Net(4) using cardelli(1000) .
+srew Net(4) using cardelli(1000) .
+
+srew Net(3) using cardelli(1000) .
+*** rewrites: 433936134 in 2558440ms cpu (2558580ms real) (169609 rewrites/second)
+*** rewrite with strategy :
+*** result NSProcess :
+***         'm{2}[stop]| 'n{2}[in['n{0}]. stop | in['n{1}]. stop | 'm{2}[in['n{0}]. in['n{1}]. out['n{
+***     1}]. out['n{0}]. out['n{2}]. stop]| 'n{1}[in['n{0}]. stop | 'm{1}[in['n{2}]. in['n{0}]. out['n{
+***     0}]. out['n{2}]. out['n{1}]. stop]| 'n{0}[in['n{2}]. stop | 'm{0}[in['n{1}]. in['n{2}]. out['n{
+***     2}]. out['n{1}]. out['n{0}]. stop]| 'm{0}[in['n{2}]. in['n{1}]. out['n{1}]. out['n{2}]. out['n{
+***     0}]. stop]| 'm{1}[in['n{2}]. out['n{2}]. out['n{0}]. out['n{1}]. stop]]]]
+
+
+rew EnvElec(2) |- Net(2) .
+
+srew Net(2) using cardelli(400) .

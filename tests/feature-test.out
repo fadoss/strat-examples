@@ -1,0 +1,295 @@
+==========================================
+srewrite in COMM : 'a 'b 'c using xmatchrew X Y by Y using mute .
+
+Solution 1
+rewrites: 2
+result Multi: 'a 'c 'h
+
+Solution 2
+rewrites: 3
+result Multi: 'a 'b 'h
+
+Solution 3
+rewrites: 4
+result Multi: 'b 'c 'h
+
+No more solutions.
+rewrites: 6
+==========================================
+srewrite in COMM : 'a 'b 'c using xmatchrew M such that X Y := M by M using
+    comb .
+
+Solution 1
+rewrites: 15
+result Multi: 'a 'bc
+
+Solution 2
+rewrites: 25
+result Multi: 'a 'cb
+
+Solution 3
+rewrites: 35
+result Multi: 'ac 'b
+
+Solution 4
+rewrites: 45
+result Multi: 'b 'ca
+
+Solution 5
+rewrites: 55
+result Multi: 'ab 'c
+
+Solution 6
+rewrites: 60
+result Multi: 'ba 'c
+
+No more solutions.
+rewrites: 60
+==========================================
+srewrite in COMM : 'a 'b 'c using mute[X <- 'a] .
+
+Solution 1
+rewrites: 1
+result Multi: 'b 'c 'h
+
+No more solutions.
+rewrites: 1
+==========================================
+srewrite in SEQ : 'a 'b 'a using amatchrew X Y such that true = true by X using
+    rh .
+
+Solution 1
+rewrites: 8
+result Seq: 'ha 'b 'a
+
+Solution 2
+rewrites: 8
+result Seq: 'a 'hb 'a
+
+No more solutions.
+rewrites: 8
+==========================================
+srewrite in SEQ : 'a 'b 'a 'a 'a using amatchrew X Y such that dist(X, Y) =
+    true by Y using rh .
+
+Solution 1
+rewrites: 12
+result Seq: 'a 'hb 'a 'a 'a
+
+Solution 2
+rewrites: 12
+result Seq: 'a 'b 'ha 'a 'a
+
+No more solutions.
+rewrites: 12
+==========================================
+srewrite in CONTEXTS : 8 using matchrew X by X using (matchrew Y by Y using (
+    match Z such that Z = Y)) .
+
+Solution 1
+rewrites: 0
+result NzNat: 8
+
+No more solutions.
+rewrites: 0
+==========================================
+srewrite in CONTEXTS : 8 using matchrew X by X using (matchrew Y by Y using (
+    match Z such that Z = X)) .
+
+Solution 1
+rewrites: 0
+result NzNat: 8
+
+No more solutions.
+rewrites: 0
+==========================================
+srewrite in CONTEXTS : 8 using matchrew X by X using (matchrew s X by X using (
+    match Z such that X = 8)) .
+
+No solution.
+rewrites: 0
+==========================================
+srewrite in SMODS : {'a % 'licante}, {'b % 'arcelona}, {'c % 'uenca} using
+    matchrew A:Tree, S:Set{Tree} such that {'c % X} := A:Tree by A:Tree using
+    swap .
+
+Solution 1
+rewrites: 1
+result NeSet{Tree}: {'a % 'licante}, {'b % 'arcelona}, {'uenca % 'c}
+
+No more solutions.
+rewrites: 1
+==========================================
+srewrite in SMODS : {'a % 'licante}, {'b % 'arcelona}, {'c % 'uenca} using
+    matchrew A:Tree, B:Tree, S:Set{Tree} such that {'c % X} := A:Tree /\ {'b %
+    C:Tree} := B:Tree by A:Tree using swap, B:Tree using swap .
+
+Solution 1
+rewrites: 2
+result NeSet{Tree}: {'a % 'licante}, {'arcelona % 'b}, {'uenca % 'c}
+
+No more solutions.
+rewrites: 2
+==========================================
+srewrite in SMODS : {'a % 'licante}, {'b % 'arcelona}, {'c % 'uenca} using
+    matchrew A:Tree, B:Tree, S:Set{Tree} such that {'c % X} := A:Tree /\ {'b %
+    X} := B:Tree by A:Tree using swap, B:Tree using swap .
+
+No solution.
+rewrites: 0
+==========================================
+srewrite in SMODS : 'a using puths(12) .
+
+Solution 1
+rewrites: 48
+result Qid: 'hhhhhhhhhhhha
+
+No more solutions.
+rewrites: 48
+==========================================
+srewrite in SMODS : 'a using rhonly('a) .
+
+Solution 1
+rewrites: 4
+result Qid: 'ha
+
+No more solutions.
+rewrites: 4
+==========================================
+srewrite in SMODS : 'a using rhonly('b) .
+
+No solution.
+rewrites: 0
+==========================================
+srewrite in SMODS : 'a using puths(7, 'a) .
+
+No solution.
+rewrites: 4
+==========================================
+srewrite in SMODS : 'b using puths(7, 'a) .
+
+No solution.
+rewrites: 0
+==========================================
+srewrite in SMODS : 'c using twohs ; threehs .
+
+Solution 1
+rewrites: 20
+result Qid: 'hhhhhc
+
+No more solutions.
+rewrites: 20
+==========================================
+srewrite in SMODS : 'o using hifeven(10) .
+
+Solution 1
+rewrites: 42
+result Qid: 'hhhhhhhhhho
+
+No more solutions.
+rewrites: 42
+==========================================
+srewrite in SMODS : 'o using hifeven(11) .
+
+Solution 1
+rewrites: 2
+result Qid: 'o
+
+No more solutions.
+rewrites: 2
+==========================================
+srewrite in CALLS : 'a using cond .
+
+Solution 1
+rewrites: 4
+result Qid: 'ha
+
+No more solutions.
+rewrites: 4
+==========================================
+srewrite in CALLS : 'c using cond .
+
+Solution 1
+rewrites: 4
+result Qid: 'hc
+
+No more solutions.
+rewrites: 4
+==========================================
+srewrite in CALLS : 'd using cond .
+
+No solution.
+rewrites: 0
+==========================================
+srewrite in CALLS : 'b using defs .
+
+Solution 1
+rewrites: 4
+result Qid: 'hb
+
+Solution 2
+rewrites: 4
+result Qid: 'b
+
+No more solutions.
+rewrites: 4
+==========================================
+srewrite in CALLS : 'e using args('a, 'b) .
+
+No solution.
+rewrites: 0
+==========================================
+srewrite in CALLS : 'f using args('f, 'g, 'h) .
+
+Solution 1
+rewrites: 4
+result Qid: 'hf
+
+No more solutions.
+rewrites: 4
+==========================================
+srewrite in CALLS : 'a using cond ; defs ; args('hha) .
+
+Solution 1
+rewrites: 12
+result Qid: 'hhha
+
+No more solutions.
+rewrites: 12
+==========================================
+srewrite in PUTH-MAIN : 'a using sqr-repeat(7) .
+
+Solution 1
+rewrites: 197
+result Qid: 'hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhha
+
+No more solutions.
+rewrites: 197
+==========================================
+srewrite in PUTH-MAIN : 'a using sqr-repeat2(7) .
+
+Solution 1
+rewrites: 197
+result Qid: 'hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhha
+
+No more solutions.
+rewrites: 197
+==========================================
+srewrite in PUTH-MAIN : 'a using sqr-repeat3(7) .
+
+Solution 1
+rewrites: 197
+result Qid: 'hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhha
+
+No more solutions.
+rewrites: 197
+==========================================
+srewrite in PUTH-MAIN : 'a using sqr-repeat(7) .
+
+Solution 1
+rewrites: 197
+result Qid: 'hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhha
+
+No more solutions.
+rewrites: 197
+Bye.

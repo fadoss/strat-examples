@@ -1,0 +1,5 @@
+biology/ecosystem
+
+srew [2] human(40, 20, female) using run(4) .
+srew [2] water(8000) carnivore(10, 20, male) carnivore(10, 20, female) herbivore(5, 12, male) using run(2) .
+srew [2] grass(20) human(21, 2, male) human(65, 1, male) carnivore(10, 4, female) herbivore(5, 12, male) using run(1) .

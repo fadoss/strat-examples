@@ -1,0 +1,22 @@
+==========================================
+srewrite in INSERTION-SORT-STRAT : generate(1, 20) using insort(2) .
+
+Solution 1
+rewrites: 1544
+result PairSet: (1,1) (2,2) (3,3) (4,4) (5,5) (6,6) (7,7) (8,8) (9,9) (10,10) (
+    11,11) (12,12) (13,13) (14,14) (15,15) (16,16) (17,17) (18,18) (19,19) (20,
+    20)
+
+No more solutions.
+rewrites: 1544
+==========================================
+srewrite in INSERTION-SORT-STRAT : (1,8) (2,3) (3,15) (4,5) (5,2) using insort(
+    2) .
+
+Solution 1
+rewrites: 91
+result PairSet: (1,2) (2,3) (3,5) (4,8) (5,15)
+
+No more solutions.
+rewrites: 91
+Bye.

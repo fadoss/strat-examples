@@ -1,0 +1,277 @@
+***
+*** Dynamic programming algorithms skeleton
+***
+*** Since parameterized theories are not supported, the Map and List
+*** data types defined in the Maude's prelude cannot be used. We define
+*** our own in DYNAMIC-PROBLEM-DATA module to be imported by the instances,
+*** and also in the DYNAMIC-PROBLEM-BASE theory to require them.
+***
+
+mod DYNAMIC-PROBLEM-DATA{K :: TRIV, V :: TRIV} is
+	sort Result KeyList Table .
+
+	subsort K$Elt < KeyList .
+	subsort Result < Table .
+
+	*** Table of computed results
+	op <_,_> : K$Elt V$Elt -> Result .
+
+	op empty : -> Table [ctor] .
+	op __    : Table Table -> Table [ctor assoc comm id: empty] .
+
+	*** List of keys
+	op nil   : -> KeyList [ctor] .
+	op __    : KeyList KeyList -> KeyList [ctor assoc id: nil] .
+
+	var R : Result .
+	var K : K$Elt .
+	var V : V$Elt .
+	var L : KeyList .
+	var T : Table .
+
+	*** No repetitions are allowed in any of the previous
+	eq R R = R .
+	eq K L K = K L .
+
+	op hasKeys : KeyList Table -> Bool .
+
+	eq hasKeys(nil, T) = true .
+	eq hasKeys(K L, < K , V > T) = hasKeys(L, T) .
+	eq hasKeys(L, T) = false [owise] .
+
+	*** Rules
+	rl [add] : T => T < K, V > [nonexec] .
+endm
+
+th DYNAMIC-PROBLEM-BASE is
+	protecting BOOL .
+
+	*** Key is the input data of the problem
+	*** Value is the output data (the result)
+
+	sort Key Value .
+	sort KeyList Table .
+	sort Result .
+
+	subsort Key < KeyList .
+	subsort Result < Table .
+
+	*** Table of computed results
+	op <_,_>  : Key Value -> Result .
+
+	op empty  : -> Table [ctor] .
+	op __     : Table Table -> Table [ctor assoc comm id: empty] .
+
+	*** List of keys
+	op nil    : -> KeyList [ctor] .
+	op __     : KeyList KeyList -> KeyList [ctor assoc id: nil] .
+
+	var R : Result .
+	var K : Key .
+	var V : Value .
+	var L : KeyList .
+	var T : Table .
+
+	*** No repetitions are allowed in any of the previous
+	eq R R = R .
+	eq K L K = K L .
+
+	*** Which instances of the problem need to be calcuted before
+	*** the argument?
+	op dependencies : Key -> KeyList .
+
+	*** eq K in dependencies(K) = false [nonexec] .
+
+	op hasKeys : KeyList Table -> Bool .
+
+	eq hasKeys(nil, T) = true .
+	eq hasKeys(K L, < K , V > T) = true .
+	eq hasKeys(L, T) = false [owise] .
+endth
+
+sth DYNAMIC-PROBLEM is
+	including DYNAMIC-PROBLEM-BASE .
+
+	*** Calculates the solution for a given value
+	*** provided its dependencies values are in the table.
+	strat calculate : Key @ Table .
+endsth
+
+mod DYNAMIC-PROGRAMMING-RULES{X :: DYNAMIC-PROBLEM-BASE} is
+	sort State .
+	subsort X$Table < State .
+
+	*** List of depedencies and dynamic programming table
+	op > _ | _ < : X$KeyList X$Table -> State .
+
+	var  T   : X$Table .
+	vars P L : X$KeyList .
+	var  K   : X$Key .
+	var  V   : X$Value .
+
+	rl [box]   : T => > nil | T < .
+	rl [unbox] : > nil | T < => T .
+
+	*** Add a dependency to the list
+	rl [add-pending] : P => L P [nonexec] .
+	*** Remove a dependency from the list
+	rl [pop] : > K P | T < => > P | T < .
+endm
+
+view Problem from DYNAMIC-PROBLEM-BASE to DYNAMIC-PROBLEM is
+	*** identity
+endv
+
+smod DYNAMIC-PROGRAMMING{X :: DYNAMIC-PROBLEM} is
+	protecting DYNAMIC-PROGRAMMING-RULES{Problem}{X} .
+
+	strat solve : X$Key @ X$Table .
+	strat loop @ State .
+
+	vars K D : X$Key .
+	vars P L : X$KeyList .
+	var  T   : X$Table .
+	var  S   : State .
+
+	sd loop := (match > nil | T <) ? idle : (
+		*** Base case: can already be solved
+		(matchrew > K P | T < s.t. hasKeys(dependencies(K), T) by T using calculate(K)) ; pop
+		or-else
+		*** Adds the dependencies to the list and continues
+		(matchrew > P | T < s.t. K L := P by P using add-pending[L <- dependencies(K)])
+	) ; loop .
+
+	sd solve(K) := top(box) ; add-pending[L <- K] ; loop ; top(unbox) .
+endsm
+
+***
+*** Examples
+***
+
+mod FACTORIAL is
+	protecting NAT .
+	protecting DYNAMIC-PROBLEM-DATA{Nat, Nat} .
+
+	var N M : Nat .
+
+	rl [fact] : < N , M > => < s(N), s(N) * M > .
+
+	op dependencies : Nat -> KeyList .
+
+	eq dependencies(0) = nil .
+	eq dependencies(s(N)) = N .
+endm
+
+smod FACTORIAL-STRAT is
+	protecting FACTORIAL .
+
+	var N K V : Nat .
+
+	strat calculate : Nat @ Table .
+
+	sd calculate(0) := add[K <- 0, V <- 1] .
+	sd calculate(s(N)) := fact[N <- N] .
+endsm
+
+view Factorial from DYNAMIC-PROBLEM to FACTORIAL-STRAT is
+	sort Key to Nat .
+	sort Value to Nat .
+endv
+
+mod FIBONNACI is
+	protecting NAT .
+	protecting DYNAMIC-PROBLEM-DATA{Nat, Nat} .
+
+	var N F G : Nat .
+
+	rl [fibonnaci] : < N , F > < s(N), G > => < s(N), G > < N + 2 , F + G > .
+
+	op dependencies : Nat -> KeyList .
+
+	eq dependencies(0) = nil .
+	eq dependencies(1) = nil .
+	eq dependencies(s(s(N))) = N s(N) .
+endm
+
+smod FIBONNACI-STRAT is
+	protecting FIBONNACI .
+
+	var N M F G K V : Nat .
+
+	strat calculate : Nat @ Table .
+
+	csd calculate(N) := add[K <- N, V <- 1] if N < 2 .
+	sd calculate(s(s(N))) := fibonnaci[N <- N] .
+endsm
+
+view Fibonnaci from DYNAMIC-PROBLEM to FIBONNACI-STRAT is
+	sort Key to Nat .
+	sort Value to Nat .
+endv
+
+fmod NAT-PAIR is
+	protecting NAT .
+
+	sort NatPair .
+
+	op (_;_) : Nat Nat -> NatPair [ctor] .
+endfm
+
+view NatPair from TRIV to NAT-PAIR is
+	sort Elt to NatPair .
+endv
+
+mod BINOMIAL is
+	protecting NAT-PAIR .
+	protecting DYNAMIC-PROBLEM-DATA{NatPair, Nat} .
+
+	var N K V W : Nat .
+
+	rl [binom] : < (N ; K) , V > < (N ; s(K)) , W > => < (N ; K) , V > < (N ; s(K)) , W > < (s(N) ; s(K)) , V + W > .
+
+	op dependencies : NatPair -> KeyList .
+
+	ceq dependencies((N ; K)) = nil if K >= N .
+	eq dependencies((N ; 0)) = nil .
+	eq dependencies((s(N) ; s(K))) = (N ; K) (N ; s(K)) [owise] .
+endm
+
+smod BINOMIAL-STRAT is
+	protecting BINOMIAL .
+
+	var N M V : Nat .
+	var K : Nat .
+
+	strat calculate : NatPair @ Table .
+
+	sd calculate((N ; N)) := add[K:NatPair <- (N ; N), V <- 1] .
+	sd calculate((N ; 0)) := add[K:NatPair <- (N ; 0), V <- 1] .
+	csd calculate((s(N) ; s(K))) := binom[N <- N, K <- K] if N =/= K .
+endsm
+
+view Binomial from DYNAMIC-PROBLEM to BINOMIAL-STRAT is
+	sort Key to NatPair .
+	sort Value to Nat .
+endv
+
+***
+*** Entry modules
+***
+
+smod MAIN-FACTORIAL is
+	protecting DYNAMIC-PROGRAMMING{Factorial} .
+endsm
+
+smod MAIN-FIBONNACI is
+	protecting DYNAMIC-PROGRAMMING{Fibonnaci} .
+endsm
+
+smod MAIN-BINOMIAL is
+	protecting DYNAMIC-PROGRAMMING{Binomial} .
+endsm
+
+eof
+
+srew [1] in MAIN-BINOMIAL : empty using solve((10 ; 4)) .
+srew [1] in MAIN-FIBONNACI : empty using solve(12) .
+srew [1] in MAIN-FACTORIAL : empty using solve(15) .

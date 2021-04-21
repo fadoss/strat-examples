@@ -1,0 +1,2013 @@
+***
+*** Membrane systems
+***
+*** Now remotely based on "Strategy-Based Proof Calculus for
+*** Membrane Systems" by Oana Andrei and Dorel Lucanu.
+***
+
+sload file
+sload membrane
+
+fmod BASIC-METALANGUAGE is
+	protecting QID-LIST .
+
+	sort @Token@ .
+	sort @Bubble@ .
+	sort @TokenSequence@ @GtSequence@ @CommaSequence@ .
+
+	op token : Qid -> @Token@ [special (
+		id-hook Bubble (1 1)
+		op-hook qidSymbol (<Qids> : ~> Qid))] .
+
+	op bubble : QidList -> @Bubble@ [special (
+		id-hook Bubble (1 -1)
+		op-hook qidListSymbol (__ : QidList QidList ~> QidList)
+		op-hook qidSymbol (<Qids> : ~> Qid)
+		id-hook Exclude (.))] .
+
+	op tokenSeq : QidList -> @TokenSequence@ [special (
+		id-hook Bubble (1 -1)
+		op-hook qidListSymbol (__ : QidList QidList ~> QidList)
+		op-hook qidSymbol (<Qids> : ~> Qid)
+		id-hook Exclude (. :))] .
+
+	op gtSeq : QidList -> @GtSequence@ [special (
+		id-hook Bubble (1 -1)
+		op-hook qidListSymbol (__ : QidList QidList ~> QidList)
+		op-hook qidSymbol (<Qids> : ~> Qid)
+		id-hook Exclude (. >))] .
+
+	op commaSeq : QidList -> @CommaSequence@ [special (
+		id-hook Bubble (1 -1)
+		op-hook qidListSymbol (__ : QidList QidList ~> QidList)
+		op-hook qidSymbol (<Qids> : ~> Qid)
+		id-hook Exclude (. ,))] .
+endfm
+
+fmod MEMBRANE-LANGUAGE-SORTS is
+	sort @Membrane@ .
+	sort @DeclMembrane@ .
+	sort @DeclRuleEvolution@ .
+	sort @DeclRulePriority@ .
+
+	sort @Signature@ .
+	sort @DeclSignature@ .
+
+	subsort @DeclRuleEvolution@ @DeclRulePriority@ < @DeclMembrane@ .
+endfm
+
+view @DeclMembrane@ from TRIV to MEMBRANE-LANGUAGE-SORTS is
+	sort Elt to @DeclMembrane@ .
+endv
+
+view @DeclSignature@ from TRIV to MEMBRANE-LANGUAGE-SORTS is
+	sort Elt to @DeclSignature@ .
+endv
+
+fmod MEMBRANE-LANGUAGE-SIGN is
+	protecting BASIC-METALANGUAGE .
+	protecting MEMBRANE-LANGUAGE-SORTS .
+	including  LIST{@DeclMembrane@} .
+	including  LIST{@DeclSignature@} .
+
+	*** Membrane declaration
+	op membrane_is_end : @Token@ List{@DeclMembrane@} -> @Membrane@ .
+	op membrane_is end : @Token@ -> @Membrane@ .
+	*** Object signature declaration
+	op signature is_end : List{@DeclSignature@} -> @Signature@ .
+
+	*** Evolution rule, priority and variable declarations
+	op ev_:_->_.  : @Token@ @Bubble@ @Bubble@ -> @DeclRuleEvolution@ .
+	op cev_:_->_. : @Token@ @Bubble@ @Bubble@ -> @DeclRuleEvolution@ .
+	op xev_:_->_. : @Token@ @Bubble@ @Bubble@ -> @DeclRuleEvolution@ .
+	op pr_>_.     : @GtSequence@ @Bubble@     -> @DeclRulePriority@ .
+	op var_:_.    : @TokenSequence@ @Token@   -> @DeclMembrane@ .
+	op vars_:_.   : @TokenSequence@ @Token@   -> @DeclMembrane@ .
+
+	*** Object signature declarations
+	*** (only module names are allowed for import)
+	op import_. : @Token@ -> @DeclSignature@ .
+	op ob_.     : @Token@ -> @DeclSignature@ .
+	op obs_.    : @TokenSequence@ -> @DeclSignature@ .
+	op ob_:_.   : @Token@ @Bubble@ -> @DeclSignature@ .
+	op obs_:_.  : @TokenSequence@ @Bubble@ -> @DeclSignature@ .
+
+endfm
+
+fmod MEMBRANE-COMMANDS-SIGN is
+	including BASIC-METALANGUAGE .
+
+	sorts   @SearchCommand@ @Command@ .
+	subsort @SearchCommand@ < @Command@ .
+
+	op transition_.    : @Bubble@ -> @SearchCommand@ [ctor] .
+	op trans_.         : @Bubble@ -> @SearchCommand@ [ctor] .
+	op compute_.       : @Bubble@ -> @SearchCommand@ [ctor] .
+	op dfs_		   : @SearchCommand@ -> @Command@ [ctor] .
+	op check_.         : @Bubble@ -> @Command@ [ctor] .
+	op show_.          : @Bubble@ -> @Command@ [ctor] .
+	op set_.  	   : @Bubble@ -> @Command@ [ctor] .
+endfm
+
+mod MEMBRANE-COMMANDS-INNER-SIGN is
+	extending P-SYSTEM-PREDS .
+
+	extending LTL .
+	subsort Prop < Formula .
+
+	*** Signature of the internal structure of commands
+	*** (to be used in the particular module)
+
+	sorts @TransBody@ @ComputeBody@ @CheckBody@ .
+	subsort @TransBody@ < @ComputeBody@ .
+
+	op [_]_           : Nat Membrane -> @TransBody@ [ctor] .
+	op [_,_]_         : Nat Nat Membrane -> @ComputeBody@ [ctor] .
+	op [,_]_          : Nat Membrane -> @ComputeBody@ [ctor] .
+	op [_]_satisfies_ : Nat Membrane Formula -> @CheckBody@ [ctor gather (& & &)] .
+	op _satisfies_    : Membrane Formula -> @CheckBody@ [ctor gather (& &)] .
+
+	var S  : ObjSoup .
+	var TS : TargetSoup .
+
+	*** Wrap spare objects into a here target
+	op wrapHere : Soup -> Soup .
+	eq wrapHere(S TS) = if S =/= empty or TS == empty then (S, here) else empty fi TS .
+endm
+
+mod MEMBRANE-SPEC-INNER-SIGN is
+	extending P-SYSTEM-CONFIGURATION .
+	extending BASIC-METALANGUAGE .
+
+	*** Signature of the internal structure of more complex rules
+
+	sorts @CondRuleBody@ @EvCondition@ @ExtRuleBody@ .
+
+	*** Conditions of conditional evolution rules (promoters and inhibitors)
+	op with_    : ObjSoup -> @EvCondition@ [ctor gather (&)] .
+	op without_ : ObjSoup -> @EvCondition@ [ctor gather (&)] .
+	op __       : @EvCondition@ @EvCondition@ -> @EvCondition@ [ctor assoc] .
+
+	*** Conditional evolution rule
+	op __      : Membrane @EvCondition@ -> @CondRuleBody@ [ctor] .
+	*** Fake target messages for extended evolution rules
+	op `(_,_`) : @CommaSequence@ Target -> @ExtRuleBody@ .
+endm
+
+fmod MEMBRANE-SIGN is
+	including MEMBRANE-COMMANDS-SIGN .
+	including MEMBRANE-LANGUAGE-SIGN .
+
+	sort @Input@ .
+	subsort @Membrane@ @Signature@ @Command@ < @Input@ .
+
+	op __ : @Input@ @Input@ -> @Input@ [ctor assoc] .
+endfm
+
+*** Reads a file from the standard input as a string.
+*** It does nothing specific about membranes, but it will
+*** be extended MEMBRANE-PARSE to do so.
+
+mod MEMBRANE-READ is
+	protecting FILE .
+
+	op Memparse : -> Cid [ctor] .
+	op memp : Nat -> Oid [ctor] .
+
+	*** Instruct the parser to parse the file whose name is given
+	*** by the third argument
+	op parseFile : Oid Oid String -> Msg [ctor msg format (b o)] .
+
+	op state:_    : ParseState -> Attribute [ctor gather (&)] .
+	op fd:_       : Oid -> Attribute [ctor gather (&)] .
+	op buffer:_   : String -> Attribute [ctor gather (&)] .
+	op sender:_   : Oid -> Attribute [ctor gather (&)] .
+	op filename:_ : String -> Attribute [ctor gather (&)] .
+
+	vars O Sender FD   : Oid .
+	vars Filename S B  : String .
+	var  Attrs         : AttributeSet .
+
+	sort ParseState .
+	ops init opening reading stopped : -> ParseState [ctor] .
+
+	rl [openFile] :
+		< O : Memparse | state: init, Attrs >
+		parseFile(O, Sender, Filename)
+	=>
+		< O : Memparse | state: opening, sender: Sender, filename: Filename, Attrs >
+		openFile(fileManager, O, Filename, "r") .
+
+	rl [startRead] :
+		< O : Memparse | state: opening, Attrs >
+		openedFile(O, fileManager, FD)
+	=>
+		< O : Memparse | state: reading, fd: FD, buffer: "", Attrs >
+		getChars(FD, O, 512) .
+
+	rl [noSuchFile] :
+		< O : Memparse | state: opening, sender: Sender, filename: Filename, Attrs >
+		fileError(O, fileManager, S)
+	=>
+		< O : Memparse | state: init, Attrs >
+		fileError(Sender, O, S) .
+
+	crl [read] :
+		< O : Memparse | state: reading, fd: FD, buffer: B, Attrs >
+		gotChars(O, FD, S)
+	=>
+		< O : Memparse | state: reading, fd: FD, buffer: B + S, Attrs >
+		getChars(FD, O, 512)
+	if S =/= "" .
+
+	rl [readEnd] :
+		< O : Memparse | state: reading, fd: FD, buffer: B, Attrs >
+		gotChars(O, FD, "")
+	=>
+		< O : Memparse | state: stopped, fd: FD, buffer: B, Attrs >
+		closeFile(FD, O) .
+
+	rl [closeFile] :
+		< O : Memparse | fd: FD, Attrs >
+		closedFile(O, FD)
+	=>
+		< O : Memparse | Attrs >
+	.
+endm *** MEMBRANE-READ
+
+*** Given a priority relation on the rules, this module calculates a strategy
+*** to apply them inside a membrane (either in a weak or strong sense).
+
+view Term from TRIV to META-LEVEL is
+	sort Elt to Term .
+endv
+
+*** Evolution rules of different types are supported
+
+fmod MEMBRANE-RULE-INFO is
+	protecting META-LEVEL .
+
+	sorts RuleInfo RuleType RuleInfoSet .
+	subsort RuleInfo < RuleInfoSet .
+
+	op <_,_> : Qid RuleType -> RuleInfo [ctor] .
+
+	*** There are multiple types of rules: normal, conditional, protected,
+	ops normal cond proted : -> RuleType [ctor] .
+	*** and extended (with its target)
+	op exted : Term -> RuleType [ctor] .
+
+	*** Set of RuleInfo
+	op empty : -> RuleInfoSet [ctor] .
+	op __    : RuleInfoSet RuleInfoSet -> RuleInfoSet [ctor assoc comm id: empty] .
+
+	*** Extract the set of rule names from RuleInfoSet
+	op toQidSet : RuleInfoSet -> QidSet .
+	*** Make the application strategy for each rule
+	op makeAppStrat : RuleInfo -> Strategy .
+
+	var Q  : Qid .
+	var RS : RuleInfoSet .
+	var RT : RuleType .
+	var T  : Term .
+
+	eq toQidSet(empty) = none .
+	eq toQidSet(< Q, RT > RS) = Q ; toQidSet(RS) .
+
+	*** one can be safely used for efficiency around normal, cond and
+	*** proted (but not exted). It makes execution slighly slower when
+	*** there are few objects, but faster where there are many.
+
+	eq makeAppStrat(< Q, normal >) = Q[none]{empty} .
+	eq makeAppStrat(< Q, cond >) = Q['S0:ObjSoup <- 'S0:ObjSoup]{empty} .
+	eq makeAppStrat(< Q, proted >) = matchrew '__['O:Obj, 'R:Soup] s.t. nil by 'O:Obj using top(Q[none]{empty}) .
+	eq makeAppStrat(< Q, exted(T) >) = matchrew '__['O:Obj, 'R:Soup] s.t. nil by 'O:Obj using 
+		(Q[none]{empty} ; top('wrapMsg['T:Target <- T ; 'RL:Qid <- upQid(Q)]{empty})) .
+
+	*** Safely raise a Qid to the metalevel
+	op upQid : Qid -> Qid .
+	eq upQid(Q) = qid("'" + string(Q) + ".Qid") .
+endfm
+
+fmod MEMBRANE-PRIORITY is
+	protecting MEMBRANE-RULE-INFO .
+	protecting MAP{Qid, Term} .
+	extending META-STRATEGY .
+
+	sort PriorityRelation .
+
+	*** PriorityRelation is a set of rule label pairs
+	op _>_  : Qid Qid -> PriorityRelation [ctor gather (& &) prec 20] .
+	op none : -> PriorityRelation [ctor] .
+	op __   : PriorityRelation PriorityRelation -> PriorityRelation [ctor assoc comm id: none] .
+
+	vars R R' SN Q  : Qid .
+	var  Rs Ps      : QidSet .
+	var  V          : Variable .
+	var  Cnt        : Constant .
+	var  PR CPR     : PriorityRelation .
+	vars S1 S2 S3 S : Strategy .
+	vars MS MS1 MS2 : MarkedStrategy .
+	var  T MN       : Term .
+	var  C          : EqCondition .
+	var  PM         : Map{Qid, Term} .
+	var  RIs        : RuleInfoSet .
+	var  RT         : RuleType .
+
+	*** Calculate the minimal elements of the priority relation
+	op minimal : QidSet PriorityRelation -> QidSet .
+
+	eq minimal(none, PR) = none .
+	eq minimal(R ; Rs, R > R' PR) = minimal(Rs, PR) .
+	eq minimal(R ; Rs, PR) = R ; minimal(Rs, PR) [owise] .
+
+	*** Calculate the maximal elements of the priority relation
+	op maximal : QidSet PriorityRelation -> QidSet .
+
+	eq maximal(none, PR) = none .
+	eq maximal(R ; Rs, R' > R PR) = maximal(Rs, PR) .
+	eq maximal(R ; Rs, PR) = R ; maximal(Rs, PR) [owise] .
+
+	*** Calculate the predecesors of a given element in the relation
+	op pred : Qid PriorityRelation -> QidSet .
+
+	eq pred(R, R' > R PR) = R' ; pred(R, PR) .
+	eq pred(R, PR) = none [owise] .
+
+	*** Calculate the successors of a given element in the relation
+	op succ : Qid PriorityRelation -> QidSet .
+
+	eq succ(R, R > R' PR) = R' ; succ(R, PR) .
+	eq succ(R, PR) = none [owise] .
+
+	*** Containment
+	op in : Qid Qid PriorityRelation -> Bool .
+	eq in(R, R', R > R' PR) = true .
+	eq in(R, R', PR) = false [owise] .
+
+	*** Transitive closure (efficiency can be improved)
+	op closure : PriorityRelation -> PriorityRelation .
+	ceq closure(R > Q Q > R' PR) = closure(R > Q Q > R' R > R' PR) if not in(R, R', PR) .
+	eq closure(PR) = PR [owise] .
+
+	*** The Strategy sort is temporarily extended to mark the recent
+	*** additions to the strategy that is being constructed
+	sort MarkedStrategy .
+	subsort Strategy < MarkedStrategy .
+
+	op <_,_>     : Qid Strategy -> MarkedStrategy [ctor] .
+	op _|_       : MarkedStrategy MarkedStrategy -> MarkedStrategy [ctor ditto] .
+	op _|_       : MarkedStrategy Strategy -> MarkedStrategy [ctor ditto] .
+	op _or-else_ : MarkedStrategy Strategy -> MarkedStrategy [ctor ditto] .
+
+	*** Generates a strategy that applies a rule respecting a given
+	*** priority relation in the weak sense (the first argument is
+	*** the set of rule names).
+	***
+	*** Maximal parallel rewriting with priority can be implemented
+	*** by applying this strategy until a normal form is reached.
+	*** This is because priority is understood in the weak sense:
+	*** if r1 > r2, r2 could be applied after r1 but only if r1
+	*** cannot be applied again.
+	op genPriorityStrat : RuleInfoSet PriorityRelation -> Strategy .
+	op genPriorityStrat : MarkedStrategy RuleInfoSet PriorityRelation -> Strategy .
+
+	eq genPriorityStrat(RIs, PR) = genPriorityStrat(genRuleApps(minimal(toQidSet(RIs), PR), RIs), RIs, PR) .
+	eq genPriorityStrat(MS, RIs, PR) = if MS :: Strategy then
+			MS
+		else
+			genPriorityStrat(orElseSimplify(extendPrec(MS, RIs, PR)), RIs, PR)
+		fi .
+
+	*** The priority strategy is obtained by a fixed point computation,
+	*** in which the strategy, a union of or-else clauses, is extended
+	*** by adding more or-else clauses to the innermost argument.
+
+	op extendPrec : MarkedStrategy RuleInfoSet PriorityRelation -> Strategy .
+
+	eq extendPrec(MS or-else S, RIs, PR) = extendPrec(MS, RIs, PR) or-else S .
+	ceq extendPrec(MS1 | MS2, RIs, PR) = extendPrec(MS1, RIs, PR) | extendPrec(MS2, RIs, PR) if MS1 =/= fail /\ MS2 =/= fail .
+	eq extendPrec(< R, S >, RIs, PR) = if pred(R, PR) == none then
+			S
+		else
+			genRuleApps(pred(R, PR), RIs) or-else S
+		fi .
+	eq extendPrec(S, RIs, PR) = S [owise] .
+
+	*** Convert a set of rule names into a union of rule applications
+	op genRuleApps : QidSet RuleInfoSet -> Strategy .
+	eq genRuleApps(none, RIs) = fail .
+	eq genRuleApps(R ; Rs, < R, RT > RIs) = < R, makeAppStrat(< R, RT >) > | genRuleApps(Rs, RIs) .
+
+	*** Simplify the strategy generated by extendPrec
+	op orElseSimplify : MarkedStrategy -> MarkedStrategy .
+
+	eq orElseSimplify((MS1 or-else S1) | (MS1 or-else S2) | MS2) =
+		orElseSimplify((MS1 or-else (S1 | S2)) | MS2) .
+	eq orElseSimplify((MS or-else S1) | MS | S) =
+		orElseSimplify(MS or-else S1 | S) .
+	eq orElseSimplify(MS) = MS [owise] .
+
+	*** Strong variant of the prioritized rule application.
+	*** It is no longer possible to iterate a fixed expression since
+	*** the history of rules applied matters.
+	***
+	*** A recursive strategy expression is generated taking the set of rule
+	*** labels applied as argument. The structure is similar to the previous
+	*** one: when a rule succeeds it calls the strategy with its name added
+	*** to the argument, otherwise the lower priority rules are tried if the
+	*** failed rule has not succeeded before. They have guards to check it.
+	***
+
+	op genStrongPrStrat : RuleInfoSet PriorityRelation Qid Term -> Strategy .
+	op genStrongPrStrat : MarkedStrategy RuleInfoSet PriorityRelation Map{Qid, Term} Qid Term -> Strategy .
+
+	eq genStrongPrStrat(RIs, PR, SN, MN) =
+		genStrongPrStrat(genRuleApps(minimal(toQidSet(RIs), PR), SN, MN,
+		                             predSets(toQidSet(RIs), closure(PR)), RIs),
+			                     RIs, PR, predSets(toQidSet(RIs), closure(PR)), SN, MN)
+		or-else
+		idle .
+	eq genStrongPrStrat(MS, RIs, PR, PM, SN, MN) = if MS :: Strategy then
+			MS
+		else
+			genStrongPrStrat(strongSimplify(extendStrongPr(MS, RIs, PR, PM, SN, MN)), RIs, PR, PM, SN, MN)
+		fi .
+
+	*** Precedence extension for the strong cases
+	op extendStrongPr : Strategy RuleInfoSet PriorityRelation Map{Qid, Term} Qid Term -> Strategy .
+
+	eq extendStrongPr(MS or-else S, RIs, PR, PM, SN, MN) = extendStrongPr(MS, RIs, PR, PM, SN, MN) or-else S .
+	ceq extendStrongPr(MS1 | MS2, RIs, PR, PM, SN, MN) =
+ 		  extendStrongPr(MS1, RIs, PR, PM, SN, MN)
+		| extendStrongPr(MS2, RIs, PR, PM, SN, MN) if MS1 =/= fail /\ MS2 =/= fail .
+	eq extendStrongPr(< R, S >, RIs, PR, PM, SN, MN) = if pred(R, PR) == none then
+			S
+		else
+			genRuleApps(pred(R, PR), SN, MN, PM, RIs)
+			or-else
+			(match 'H:Soup s.t. ('intersection[PM[R], 'AR:QidSet] = 'empty.QidSet) ; S)
+		fi .
+	eq extendStrongPr(S, RIs, PR, PM, SN, MN) = S [owise] .
+
+	*** Simplify a strong strategy expression
+	op strongSimplify : MarkedStrategy -> MarkedStrategy .
+
+	eq strongSimplify((MS1 or-else (match T s.t. C ; S1)) | (MS1 or-else (match T s.t. C ; S2)) | MS2) =
+		strongSimplify((MS1 or-else (match T s.t. C ; (S1 | S2))) | MS2) .
+	eq strongSimplify((MS1 or-else S) | MS1 | MS2) =
+		strongSimplify(MS1 or-else S | MS2) .
+	eq strongSimplify(MS) = MS [owise] .
+
+	*** Convert a set of rule names into a union of rule applications
+	*** with recursive call in case of success
+	op genRuleApps : QidSet Qid Term Map{Qid, Term} RuleInfoSet -> MarkedStrategy .
+	eq genRuleApps(none, SN, MN, PM, RIs) = fail .
+	eq genRuleApps(R ; Rs, SN, MN, PM, < R, RT > RIs) = < R, makeAppStrat(< R, RT >) ;
+		SN[[MN, 'S0:ObjSoup, '_`,_[upQidSet(R, '_`,_, 'empty.QidSet), 'AR:QidSet]]] >
+		| genRuleApps(Rs, SN, MN, PM, RIs) .
+
+	*** Map from rule labels to the set of their predecessors for the
+	*** relation (as the metarepresentation of a QidSet, to be inserted
+	*** as argument of intersection in extendStrongPr)
+	op predSets : QidSet PriorityRelation -> Map{Qid, Term} .
+	op predSets : QidSet Qid PriorityRelation QidSet -> Map{Qid, Term} .
+
+	eq predSets(none, PR) = empty .
+	eq predSets(R ; Rs, PR) = predSets(Rs, R, PR, none) .
+	eq predSets(Rs, R, R' > R PR, Ps) = predSets(Rs, R, PR, Ps ; R') .
+	eq predSets(none, R, PR, Ps) = R |-> upQidSet(Ps, '_`,_, 'empty.QidSet) [owise] .
+	eq predSets(R' ; Rs, R, PR, Ps) = R |-> upQidSet(Ps, '_`,_, 'empty.QidSet),
+		predSets(Rs, R', PR, none) [owise] .
+
+	***
+	*** Alternative second version for the generation of strong
+	*** priorities (less efficient)
+	***
+
+	op qid2str : Constant -> Qid .
+	eq qid2str(T) = qid("\"" + string(getName(T)) + "\"") .
+
+	*** The penultimate argument is the name of the recursive strategy
+	*** and the last one is the first argument of that strategy
+	op genStrongPrStrats : QidSet PriorityRelation Qid Term -> StratDefSet .
+	op genStrongPrStrats2 : QidSet PriorityRelation Qid Term -> StratDefSet .
+
+	eq genStrongPrStrats(Rs, PR, SN, MN) =
+		*** The entry point to the strong priority application
+		(sd SN[[MN]] := SN[[MN, makeMaximalSet(maximal(Rs, PR))]] [none] .) *** print('"inicio-" qid2str(MN))
+		*** When all remaining rules are pending, the application finishes
+		(sd SN[[MN, 'PF:PendingFront]] := idle [none] .) *** print('"fin-" 'PF:PendingFront)
+		genStrongPrStrats2(Rs, PR, SN, MN) .
+
+	eq genStrongPrStrats2(none, PR, SN, MN) = none .
+	eq genStrongPrStrats2(R ; Rs, PR, SN, MN) =
+		*** A definition is generated for each rule and tries
+		*** to execute it when enabled
+		(sd SN[[MN, '_`,_['_used_[upQidSet2(R), 'B:Bool], 'RL:RuleFront]]] :=
+			R[none]{empty}
+			*** In case it succeds, mark it as used and keep it,
+			*** since it could be used again
+			? SN[[MN, '_`,_['_used_[upQidSet2(R), 'true.Bool], 'RL:RuleFront]]]
+			*** In case it fails, remove it from the rule front and
+			*** add their successors if it has never succeded
+		        : SN[[MN, 'if_then_else_fi['B:Bool, 'RL:RuleFront, makeSuccSet(succ(R, PR), 'RL:RuleFront, PR)]]] [none] .) *** print('"medio-" qid2str(upQidSet2(R)) '"--" 'B:Bool '"--" 'RL:RuleFront)
+		genStrongPrStrats2(Rs, PR, SN, MN) .
+
+	*** Build the initial front r1 used false, ...., rn used false
+	*** with the maximal elements of the priority relation
+	op makeMaximalSet : QidSet -> Term .
+	op makeMaximalSet2 : QidSet -> TermList .
+
+	eq makeMaximalSet(none) = 'empty.RuleFront .
+	eq makeMaximalSet(R) = '_used_[upQidSet2(R), 'false.Bool] .
+	eq makeMaximalSet(Rs) = '_`,_[makeMaximalSet2(Rs)] [owise] .
+
+	eq makeMaximalSet2(none) = empty .
+	eq makeMaximalSet2(R ; Rs) = '_used_[upQidSet2(R), 'false.Bool], makeMaximalSet2(Rs) .
+
+	*** Make the front r1 to p1 - 1, ..., rn pn - 1 with the successors of
+	*** a rule and the number of pending precedessors until they can be run
+	op makeSuccSet : QidSet Variable PriorityRelation -> Term .
+	op makeSuccSet : QidSet PriorityRelation -> TermList .
+
+	eq makeSuccSet(none, V, PR) = V .
+	eq makeSuccSet(Rs, V, PR) = '_`,_[makeSuccSet(Rs, PR), V] [owise] .
+	eq makeSuccSet(none, PR) = empty .
+	eq makeSuccSet(R ; Rs, PR) = '_to_[upTerm(sd(| pred(R, PR) |, 1)), upQidSet2(R)], makeSuccSet(Rs, PR) .
+
+
+	*** Raise a QidSet to the metalevel
+	*** (using upTerm is not possible, since it adds sorts other
+	*** that Qid to the quoted identifier's metarepresentation,
+	*** which may not be present in other modules)
+	op upQidSet : QidSet Qid Constant -> Term .
+	op upQidSet2 : NeQidSet -> Term .
+
+	eq upQidSet(none, Q, Cnt) = Cnt .
+	eq upQidSet(R, Q, Cnt) = upQidSet2(R) .
+	eq upQidSet(Rs, Q, Cnt) = Q[upQidSet2(Rs)] [owise] .
+
+	eq upQidSet2(none) = empty .
+	eq upQidSet2(R ; Rs) = qid("'" + string(R) + ".Qid"), upQidSet2(Rs) .
+
+endfm *** MEMBRANE-PRIORITY
+
+*** Auxiliary objects used by the strong priorities strategy definitions
+
+fmod MEMBRANE-STRONG-PRIORITY is
+	protecting NAT .
+	protecting QID .
+
+	sorts   RuleFront PendingFront .
+	subsort PendingFront < RuleFront .
+
+	op empty  : -> PendingFront [ctor] .
+
+	*** A rule that can be used now and whether it has been used before
+	op _used_ : Qid Bool -> RuleFront [ctor] .
+	*** A rule that cannot be used until some of its 
+	*** predecessors have been discarded
+	op _to_   : Nat Qid -> PendingFront [ctor] .
+
+	op _,_    : RuleFront RuleFront -> RuleFront [ctor comm assoc id: empty] .
+	op _,_    : PendingFront PendingFront -> PendingFront [ditto] .
+	op _,_    : RuleFront PendingFront -> RuleFront [ditto] .
+
+	var  R   : Qid .
+	vars N M : Nat .
+
+	eq 0 to R = R used false .
+
+	*** The number of predecessors decreases as a new predecessors
+	*** introduce to-pairs to the rule front (the number of the
+	*** lowest/oldest is decreased in one)
+	eq (s(N) to R), (s(M) to R) = min(N, M) to R .
+endfm
+
+*** Auxiliary material to implement some extensions
+
+mod MEMBRANE-EXTENSIONS is
+	protecting P-SYSTEM-CONFIGURATION .
+
+	*** Whether the second soup contains the first
+	op contains : Soup Soup -> Bool .
+
+	vars S1 S2 : Soup .
+	var  OS    : ObjSoup .
+	var  T     : Target .
+	var  TS    : TargetSoup .
+
+	eq contains(S1, S1 S2) = true .
+	eq contains(S1, S2) = false [owise] .
+endm
+
+*** Auxiliary Soup object log to register which rules have been applied
+
+mod P-SYSTEM-LOG is
+	protecting P-SYSTEM-CONFIGURATION .
+
+	sorts   RuleMultiset RuleLog .
+	subsort Qid < RuleMultiset .
+	subsort RuleLog < TargetSoup .
+
+	op _;_ : RuleMultiset RuleMultiset -> RuleMultiset [ctor assoc comm] .
+
+	op log : RuleMultiset              -> RuleLog [ctor] .
+	op log : MembraneName RuleMultiset -> RuleLog [ctor] .
+
+	vars M M1 M2 : MembraneName .
+	vars R R1 R2 : RuleMultiset .
+	var  H       : Soup .
+
+	*** Rules for the same membrane are combined in the same log
+	eq log(R1) log(R2) = log(R1 ; R2) .
+	eq log(M, R1) log(M, R2) = log(M, R1 ; R2) .
+
+	*** Logs are moved to the top level (recording the membrane name)
+	eq < M | H log(R) > = < M | H > log(M, R) .
+	eq < M2 | H log(M1, R) > = < M2 | H > log(M1, R) .
+
+	*** Remove log entries from the configutation
+	rl [purgeLog] : log(R) => empty [nonexec] .
+	rl [purgeLog] : log(M, R) => empty [nonexec] .
+endm
+
+*** Metainformation about the membranes and the membrane system
+
+view RuleInfoSet from TRIV to MEMBRANE-RULE-INFO is
+	sort Elt to RuleInfoSet .
+endv
+
+fmod MEMBRANE-INFO is
+	protecting MEMBRANE-PRIORITY .
+
+	sort MembraneInfo .
+
+	*** Membrane information (first argument is list of rules)
+	op minfo : RuleInfoSet PriorityRelation -> MembraneInfo [ctor] .
+endfm
+
+view MembraneInfo from TRIV to MEMBRANE-INFO is
+	sort Elt to MembraneInfo .
+endv
+
+fmod MEMBRANE-SYSTEM-INFO is
+	protecting MAP{Term, MembraneInfo} .
+
+	sort MembraneSystemInfo RulePriority .
+
+	*** Priority mode of the evolution rules
+	ops weak strong : -> RulePriority [ctor] .
+
+	*** Membrane system info
+	op msinfo : Map{Term, MembraneInfo} RulePriority -> MembraneSystemInfo [ctor] .
+endfm
+
+***
+*** Parse specifications in the membrane language and builds a Maude module
+*** that represents them in rewriting logic controlled by strategies
+***
+
+fmod MEMBRANE-LANGUAGE-PARSER is
+	protecting META-LEVEL .
+	protecting MEMBRANE-PRIORITY .
+	protecting MEMBRANE-SYSTEM-INFO .
+	protecting CONVERSION .
+	protecting MAP{Qid, RuleInfoSet} .
+
+	*** Make a metamodule for parsing the membrane systems
+	op makeParseModule : Term -> Module .
+	*** Make a metamodule representing the membrane system
+	op makeMembraneModule : Module Term -> MembraneSystemPair .
+	op makeMembraneModule : Term -> MembraneSystemPair .
+	*** Get the names of all membranes in the input file
+	op getMembraneNames : Term -> QidList .
+	*** Gather all object symbols present in the input
+	op gatherSymbols : Term -> QidSet .
+	*** Gather the priority pairs in the input
+	op gatherPriority : Term -> PriorityRelation .
+	*** Gather the variables in a membrane specification
+	op gatherVariables : Term -> QidSet .
+	*** Make the operator for the membrane names and symbols
+	op makeMembraneNameSymbols : QidList -> OpDeclSet .
+	op makeObjectSymbols : QidSet -> OpDeclSet .
+	*** Make the meta-rules and their strategies
+	op makeRules : Module Bool VariableSet Term -> RulePair .
+	op makeMembraneRules : Map{Qid, RuleInfoSet} Term -> StratDefSet .
+
+	*** Make the membrane system information
+	op makeMembraneSystemInfo : Map{Qid, RuleInfoSet} Term -> MembraneSystemInfo .
+	*** Gather all commands in the input
+	op gatherCommands : Term -> TermList .
+
+	***
+	*** Equations
+	***
+
+	var  Q Q1 Q2           : Qid .
+	vars QL AQL QL1 QL2    : QidList .
+	var  NeQL              : NeQidList .
+	vars H D DL RN LHS RHS
+	     Input PLHS PRHS T : Term .
+	var  TL                : TermList .
+	var  TyL               : TypeList .
+	var  VS                : VariableSet .
+	var  QS                : QidSet .
+	var  B                 : Bool .
+	var  M                 : Module .
+	var  Ty Ty1 Ty2 Ty3    : Type .
+	var  MI                : MembraneInfo .
+	var  Attrs             : AttrSet .
+	var  N                 : Nat .
+	vars Rs Rs1 Rs2        : RuleSet .
+	vars RIs RIs1 RIs2     : RuleInfoSet .
+	var  MRIs MRIs1 MRIs2  : Map{Qid, RuleInfoSet} .
+	var  MSI               : MembraneSystemInfo .
+	var  RP                : ResultPair .
+
+
+	eq makeParseModule(Input) = mod 'MEMBRANES-PARSE is
+		(extending 'P-SYSTEM-CONFIGURATION .)
+		(extending 'MEMBRANE-COMMANDS-INNER-SIGN .)
+		(extending 'MEMBRANE-SPEC-INNER-SIGN .)
+		gatherImports(Input)
+		sorts none .
+		none
+		makeMembraneNameSymbols(getMembraneNames(Input))
+		makeObjectSignature(Input)
+		none
+		none
+		none
+	endm .
+
+	eq makeMembraneModule(Input) =
+		makeMembraneModule(makeParseModule(Input), Input) .
+
+	ceq makeMembraneModule(M, Input) = < smod 'MEMBRANES is
+		(extending 'P-SYSTEM-STRATEGY .)
+***		(extending 'MEMBRANE-STRONG-PRIORITY .)
+		(extending 'MEMBRANE-EXTENSIONS .)
+		(protecting 'QID-SET .)
+		gatherImports(Input)
+		sorts none .
+		none
+		makeMembraneNameSymbols(getMembraneNames(Input))
+		makeObjectSignature(Input)
+		none
+		none
+		Rs
+		*** Rule to add the target to objects rewritten with extended rules (
+		*** defined here so that it can be replaced in enableLog)
+		(rl 'OS:ObjSoup => '`(_`,_`)['OS:ObjSoup, 'T:Target] [nonexec label('wrapMsg)] .)
+***		(strat 'mpr-strong : 'MembraneName @ 'Soup [none] .)
+***		(strat 'mpr-strong : 'MembraneName 'RuleFront @ 'Soup [none] .)
+		(strat 'mpr-strong : 'MembraneName 'ObjSoup 'QidSet @ 'Soup [none] .)
+		makeMembraneRules(MRIs, Input)
+		*** By default membranes are handled with inner-mpr (i.e. with
+		*** weak priorities or without priorities), but this definition
+		*** is replaced when using strong priorities
+		(sd 'handleMembrane[['MN:MembraneName, 'S0:ObjSoup]]
+			:= 'inner-mpr[['MN:MembraneName, 'S0:ObjSoup]] [none] .)
+	endsm, makeMembraneSystemInfo(MRIs, Input) >
+	if < Rs ; MRIs > := makeRules(M, hasSignature(Input), none, Input) .
+
+	*** A pair with the membrane module and the membrane system information
+	sort MembraneSystemPair .
+
+	op <_,_> : Module MembraneSystemInfo -> MembraneSystemPair [ctor] .
+
+	op getModule : MembraneSystemPair -> Module .
+	op getMembraneSystemInfo : MembraneSystemPair -> MembraneSystemInfo .
+	eq getModule(< M, MSI >) = M .
+	eq getMembraneSystemInfo(< M, MSI >) = MSI .
+
+	***
+	*** Object signature (inferred or explicitly given)
+
+	op makeObjectSignature : Term -> OpDeclSet .
+
+	eq makeObjectSignature(Input) = if hasSignature(Input) then
+			gatherObDecls(Input)
+		else
+			makeObjectSymbols(gatherSymbols(Input))
+		fi .
+
+	***
+	*** Membrane names
+
+	eq getMembraneNames('membrane_is_end['token[Q], DL]) = downTerm(Q, 'UNNAMED) .
+	eq getMembraneNames('membrane_is`end['token[Q]]) = downTerm(Q, 'UNNAMED) .
+	eq getMembraneNames('__[D, DL]) = getMembraneNames(D) getMembraneNames(DL) .
+	eq getMembraneNames(H) = nil [owise] .
+
+	eq makeMembraneNameSymbols(nil) = none .
+	eq makeMembraneNameSymbols(Q QL) =
+		(op Q : nil -> 'MembraneName [ctor] .)
+		makeMembraneNameSymbols(QL) .
+
+	***
+	*** Object symbols
+
+	eq gatherSymbols('membrane_is_end[H, DL]) = gatherSymbols(DL) .
+	eq gatherSymbols('nil.List`{@DeclMembrane@`}) = none .
+	eq gatherSymbols('ev_:_->_.[RN, 'bubble[LHS], 'bubble[RHS]]) =
+		toQidSet(downTerm(LHS, (nil).QidList)) ;
+		toQidSet(removeTargets(downTerm(RHS, (nil).QidList))) .
+	eq gatherSymbols('cev_:_->_.[RN, 'bubble[LHS], 'bubble[RHS]]) =
+		toQidSet(downTerm(LHS, (nil).QidList)) ;
+		toQidSet(removeTargets(removeReserved(downTerm(RHS, (nil).QidList)))) .
+	*** xev when there is no signature are handled as equivalent to ev
+	eq gatherSymbols('xev_:_->_.[RN, 'bubble[LHS], 'bubble[RHS]]) =
+		toQidSet(downTerm(LHS, (nil).QidList)) ;
+		toQidSet(removeTargets(downTerm(RHS, (nil).QidList))) .
+	eq gatherSymbols('pr_>_.[LHS, RHS]) = none .
+	eq gatherSymbols('__[D, DL]) = gatherSymbols(D) ; gatherSymbols(DL) .
+	eq gatherSymbols(H) = none [owise] .
+
+	eq makeObjectSymbols(none) = none .
+	eq makeObjectSymbols(Q ; QS) =
+		(op Q : nil -> 'Obj [ctor] .)
+		makeObjectSymbols(QS) .
+
+	*** Remove targets from the right-hand side of a rule
+	*** to deduce the alphabet of objects
+	op removeTargets  : QidList -> QidList .
+	op removeTargets2 : QidList QidList Bool ~> QidList .
+
+	eq removeTargets(nil) = nil .
+	eq removeTargets('delta QL) = removeTargets(QL) .
+	eq removeTargets('empty QL) = removeTargets(QL) .
+	eq removeTargets('`( QL) = removeTargets2(nil, QL, false) .
+	eq removeTargets(Q QL) = Q removeTargets(QL) [owise] .
+
+	*** Capture each entry of the target item, which will be appended or
+	*** discarding when the comma or parenthesis is seen, respectively,
+	*** since the final entry is the target name. If no comma is seen
+	*** at all, nothing is discarded since it is a normal parenthesis
+	eq removeTargets2(AQL, '`, QL, B) = AQL removeTargets2(nil, QL, true) .
+	eq removeTargets2(AQL, '`) QL, B) = if B then nil else AQL fi removeTargets(QL) .
+	eq removeTargets2(AQL, Q QL, B) = removeTargets2(AQL Q, QL, B) [owise] .
+
+	*** Remove reserved words in conditional evolution rules
+	op removeReserved : QidList -> QidList .
+	op removeReserved : QidList Nat -> QidList .
+
+	eq removeReserved(QL) = removeReserved(QL, 0) .
+	eq removeReserved(nil, N) = nil .
+	eq removeReserved('with QL, 0) = removeReserved(QL, 0) .
+	eq removeReserved('without QL, 0) = removeReserved(QL, 0) .
+	eq removeReserved('`( QL, N) = '`( removeReserved(QL, s(N)) .
+	eq removeReserved('`) QL, 0) = '`) removeReserved(QL, 0) .
+	eq removeReserved('`) QL, s(N)) = '`) removeReserved(QL, N) .
+	eq removeReserved(Q QL, N) = Q removeReserved(QL, N) [owise] .
+
+	***
+	*** Rules
+
+	*** Rule pairs are used to generate both the actual rewrite rules
+	*** and some information identifiying how they have to be applied.
+	*** This is used when generating strategies and when showing rules.
+	sort RulePair .
+	op <_;_> : RuleSet RuleInfoSet -> RulePair [ctor] .
+	op <_;_> : RuleSet Map{Qid, RuleInfoSet} -> RulePair [ctor] .
+	op emptyPair : -> RulePair [ctor] .
+
+	op getRuleSet : RulePair -> RuleSet .
+	op getRuleInfoSet : RulePair ~> Map{Qid, RuleInfoSet} .
+	eq getRuleSet(< Rs ; RIs >) = Rs .
+	eq getRuleSet(< Rs ; MRIs >) = Rs .
+	eq getRuleInfoSet(< Rs ; MRIs >) = MRIs .
+
+	op closeMembRules : RulePair Qid -> RulePair [ctor] .
+	eq closeMembRules(< Rs ; RIs >, Q) = < Rs ; Q |-> RIs > .
+	eq closeMembRules(< Rs ; MRIs1 >, Q) = < Rs ; MRIs1 > .
+	eq closeMembRules(emptyPair, Q) = < none ; Q |-> empty > .
+
+	op _+_ : RulePair RulePair ~> RulePair [ctor assoc comm id: emptyPair] .
+	eq < Rs1 ; RIs1 > + < Rs2 ; RIs2 > = < Rs1 Rs2 ; RIs1 RIs2 > .
+	eq < Rs1 ; MRIs1 > + < Rs2 ; MRIs2 > = < Rs1 Rs2 ; MRIs1, MRIs2 > .
+
+	*** Rewrite rule generation
+	*** (bad constructed rules are simply ignored, probably this deserves a warning)
+
+	eq makeRules(M, B, VS, 'membrane_is_end['token[Q], DL]) =
+		closeMembRules(makeRules(M, B, gatherVariables(DL), DL), downLabel(Q)) .
+	eq makeRules(M, B, VS, 'nil.List`{@DeclMembrane@`}) = emptyPair .
+	eq makeRules(M, B, VS, 'pr_>_.[LHS, RHS]) = emptyPair .
+
+	*** Simple evolution rules
+	ceq makeRules(M, B, VS, 'ev_:_->_.['token[Q], 'bubble[LHS], 'bubble[RHS]]) =
+		< rl PLHS => PRHS [label (downLabel(Q))] . ;
+		  < downLabel(Q), if B and Ty == 'Obj then proted else normal fi > >
+	if {PLHS, Ty} := metaParse(M, VS, downTerm(LHS, (nil).QidList), 'ObjSoup)
+	/\ T          := getTerm(metaParse(M, VS, downTerm(RHS, (nil).QidList), 'Soup))
+	/\ PRHS       := getTerm(metaReduce(M, 'wrapHere[T])) .
+
+	*** Conditional evolution rules
+	ceq makeRules(M, B, VS, 'cev_:_->_.['token[Q], 'bubble[LHS], 'bubble[RHS]]) =
+		< crl PLHS => PRHS if makeRuleCondition(PLHS, D) [nonexec label (downLabel(Q))] . ;
+		  < downLabel(Q), cond > >
+	if PLHS      := getTerm(metaParse(M, VS, downTerm(LHS, (nil).QidList), 'ObjSoup))
+	/\ '__[T, D] := getTerm(metaParse(M, VS, downTerm(RHS, (nil).QidList), '@CondRuleBody@))
+	/\ PRHS      := getTerm(metaReduce(M, 'wrapHere[T])) .
+
+	*** Extended evolution rules
+	*** (they are seen as ev rules in the absence of a signature)
+	eq makeRules(M, false, VS, 'xev_:_->_.['token[Q], 'bubble[LHS], 'bubble[RHS]]) =
+		makeRules(M, false, VS, 'ev_:_->_.['token[Q], 'bubble[LHS], 'bubble[RHS]]) .
+
+	ceq makeRules(M, true, VS, 'xev_:_->_.['token[Q], 'bubble[LHS], 'bubble[RHS]]) =
+		makeExtendedRule(M, VS, RP, downLabel(Q), downTerm(RHS, (nil).QidList))
+	if RP := metaParse(M, VS, downTerm(LHS, (nil).QidList), anyType) .
+
+	eq makeRules(M, B, VS, '__[D, DL]) = makeRules(M, B, VS, D) + makeRules(M, B, VS, DL) .
+	eq makeRules(M, B, VS, H) = emptyPair [owise] .
+
+	op makeRuleCondition : Term Term -> EqCondition .
+
+	eq makeRuleCondition(LHS, 'with_[T]) = '__[LHS, T, 'SRest:ObjSoup] := 'S0:ObjSoup .
+	eq makeRuleCondition(LHS, 'without_[T]) = 'contains['__[LHS, T], 'S0:ObjSoup] = 'false.Bool .
+	eq makeRuleCondition(LHS, '__[D, DL]) = makeRuleCondition(LHS, D) /\ makeRuleCondition(LHS, DL) .
+	eq makeRuleCondition(LHS, T) = nil [owise] .
+
+	op makeExtendedRule : Module VariableSet ResultPair Qid QidList -> RulePair .
+
+	ceq makeExtendedRule(M, VS, RP, Q, QL) =
+		< rl getTerm(RP) => PRHS [label (Q)] . ; < Q, exted(T) > >
+	if '`(_`,_`)['commaSeq[RHS], T]
+	        := getTerm(metaParse(M, VS, QL, '@ExtRuleBody@))
+	/\ PRHS := getTerm(metaParse(M, VS, downTerm(RHS, (nil).QidList), getKind(M, getType(RP)))) .
+
+	eq makeExtendedRule(M, VS, RP, Q, QL) =
+		if metaParse(M, VS, QL, getKind(M, getType(RP))) :: ResultPair then
+			< rl getTerm(RP) => getTerm(metaParse(M, VS, QL, getKind(M, getType(RP))))
+			      [label (Q)] . ; < Q, exted('here.Target) > >
+		else
+			emptyPair
+		fi
+	[owise] .
+
+	*** Shorcut to descend rule labels
+	op downLabel : Term -> Qid .
+	eq downLabel(T) = downTerm(T, 'UNNAMED) .
+
+	***
+	*** Variables
+
+	eq gatherVariables('var_:_.['tokenSeq[LHS], 'token[T]]) =
+		buildVariables(downTerm(LHS, (nil).QidList),
+		               downTerm(T, (nil).QidList)) .
+	eq gatherVariables('vars_:_.[TL]) = gatherVariables('var_:_.[TL]) .
+	eq gatherVariables('__[D, DL]) = gatherVariables(D) ; gatherVariables(DL) .
+	eq gatherVariables(H) = none [owise] .
+
+	op buildVariables : QidList Qid -> VariableSet .
+	eq buildVariables(nil, Q1) = none .
+	eq buildVariables(Q QL, Q1) = qid(string(Q) + ":" + string(Q1)) ; buildVariables(QL, Q1) .
+
+	***
+	*** Strategies, i.e the priority of rules
+
+	eq makeMembraneRules(MRIs, 'membrane_is_end['token[T], DL]) =
+		if DL =/= 'nil.List`{@DeclMembrane@`} then
+			(sd 'membraneRules[[makeMembName(T), 'S0:ObjSoup]]
+			   := genPriorityStrat(MRIs[downTerm(T, 'UNNAMED)],
+				               gatherPriority(DL)) [none] .)
+			*** Strong priority strategies are only generated if
+			*** priority constraints are present
+			if gatherPriority(DL) == none then none else
+***			   (genStrongPrStrats(MRIs[downTerm(T, 'UNNAMED)],
+				             gatherPriority(DL), 'mpr-strong,
+					     makeMembName(T)))
+			   (sd 'mpr-strong[[makeMembName(T), 'S0:ObjSoup, 'AR:QidSet]] :=
+			     genStrongPrStrat(MRIs[downTerm(T, 'UNNAMED)],
+			                      gatherPriority(DL),
+			                      'mpr-strong,
+			                      makeMembName(T)) [none] .)
+			fi
+		else
+			(sd 'membraneRules[[makeMembName(T), 'S0:ObjSoup]] := fail [none] .)
+		fi .
+	eq makeMembraneRules(MRIs, 'membrane_is`end['token[T]]) =
+		(sd 'membraneRules[[makeMembName(T), 'S0:ObjSoup]] := fail [none] .) .
+	eq makeMembraneRules(MRIs, '__[D, DL]) = makeMembraneRules(MRIs, D) makeMembraneRules(MRIs, DL) .
+	eq makeMembraneRules(MRIs, H) = none [owise] .
+
+	eq gatherPriority('pr_>_.['gtSeq[LHS], 'bubble[RHS]]) =
+		makePriorityPairs(downTerm(LHS, (nil).QidList), downTerm(RHS, (nil).QidList)) .
+	eq gatherPriority('__[D, DL]) = gatherPriority(D) gatherPriority(DL) .
+	eq gatherPriority(H) = none [owise] .
+
+	**** Make membrane name of a parsed tokens
+	op makeMembName : Qid -> Constant .
+	eq makeMembName(T) = qid(string(downTerm(T, 'UNNAMED)) + ".MembraneName") .
+
+	*** Since priorities can be given as r1 ... rn > r, r > r1 ... rn,
+	*** or even r1 ... rn > r'1 ... r'm, this function generates the
+	*** priority pairs yield by the combination of the rules at both sides
+	op makePriorityPairs : QidList QidList -> PriorityRelation .
+	op makePriorityPairs : QidList QidList QidList -> PriorityRelation .
+
+	eq makePriorityPairs(QL1, QL2) = makePriorityPairs(QL1, QL1, QL2) .
+	eq makePriorityPairs(AQL, QL1, nil) = none .
+	eq makePriorityPairs(AQL, nil, Q2 QL2) = makePriorityPairs(AQL, AQL, QL2) .
+	eq makePriorityPairs(AQL, Q1 QL1, Q2 QL2) = Q1 > Q2 makePriorityPairs(AQL, QL1, Q2 QL2) .
+
+	***
+	*** Membrane system info (used essentially for the show command)
+
+	op makeMembraneSystemInfo2 : Map{Qid, RuleInfoSet} Term -> Map{Term, MembraneInfo} .
+
+	eq makeMembraneSystemInfo(MRIs, T) = msinfo(makeMembraneSystemInfo2(MRIs, T), strong) .
+
+	eq makeMembraneSystemInfo2(MRIs, '__[D, DL]) = makeMembraneSystemInfo2(MRIs, D), 
+		makeMembraneSystemInfo2(MRIs, DL) .
+	eq makeMembraneSystemInfo2(MRIs, 'membrane_is_end['token[H], DL]) = makeMembName(H)
+		|-> minfo(MRIs[getName(makeMembName(H))], gatherPriority(DL)) .
+	eq makeMembraneSystemInfo2(MRIs, 'membrane_is`end['token[H]]) = makeMembName(H)
+		|-> minfo(empty, none) .
+	eq makeMembraneSystemInfo2(MRIs, H) = empty [owise] .
+
+	***
+	*** Commands
+
+	op gatherCommands : TermList -> TermList .
+
+	eq gatherCommands('membrane_is_end[H, DL]) = empty .
+	eq gatherCommands('membrane_is`end[H]) = empty .
+	eq gatherCommands('signature`is_end[T]) = empty .
+	eq gatherCommands('transition_.[T]) = 'transition_.[T] .
+	eq gatherCommands('trans_.[T]) = 'transition_.[T] .
+	eq gatherCommands('compute_.[T]) = 'compute_.[T] .
+	eq gatherCommands('dfs_[T]) = 'dfs_[T] .
+	eq gatherCommands('check_.[T]) = 'check_.[T] .
+	eq gatherCommands('show_.[T]) = 'show_.[T] .
+	eq gatherCommands('set_.[T]) = 'set_.[T] .
+	eq gatherCommands('__[D, DL]) = gatherCommands(D), gatherCommands(DL) .
+
+	***
+	*** Signature-related
+
+	op hasSignature : TermList -> Bool .
+
+	eq hasSignature('__[D, DL]) = hasSignature(D) or-else hasSignature(DL) .
+	eq hasSignature('signature`is_end[T]) = true .
+	eq hasSignature(T) = false [owise] .
+
+	op gatherImports : TermList -> ImportList .
+
+	eq gatherImports('__[D, DL]) = gatherImports(D) gatherImports(DL) .
+	eq gatherImports('signature`is_end[T]) = gatherImports(T) .
+	eq gatherImports('import_.['token[T]]) = including downTerm(T, (nil).QidList) . .
+	eq gatherImports(T) = nil .
+
+	op gatherObDecls : TermList -> OpDeclSet .
+
+	eq gatherObDecls('__[D, DL]) = gatherObDecls(D) gatherObDecls(DL) .
+	eq gatherObDecls('signature`is_end[T]) = gatherObDecls(T) .
+	eq gatherObDecls('ob_.['token[T]]) = op downTerm(T, (nil).QidList) : nil -> 'Obj [none] . .
+	eq gatherObDecls('obs_.['tokenSeq[T]]) = declareObs(downTerm(T, (nil).QidList), nil, none) .
+	eq gatherObDecls('ob_:_.['token[T], 'bubble[DL]]) = op downTerm(T, (nil).QidList) : getTypeList(downTerm(DL, (nil).QidList)) -> 'Obj [getAttrSet(downTerm(DL, (nil).QidList))] . .
+	eq gatherObDecls('obs_:_.['tokenSeq[T], 'bubble[DL]]) = declareObs(downTerm(T, (nil).QidList), getTypeList(downTerm(DL, (nil).QidList)), getAttrSet(downTerm(DL, (nil).QidList))) .
+	eq gatherObDecls(T) = none [owise] .
+
+	*** Since multiple objects may be declared at once (like in Maude's
+	*** ops), this function builds the op declaration one by one
+	op declareObs : QidList TypeList AttrSet -> OpDeclSet .
+
+	eq declareObs(nil, TyL, Attrs) = none .
+	eq declareObs(Q QL, TyL, Attrs) = op Q : TyL -> 'Obj [Attrs] . declareObs(QL, TyL, Attrs) .
+
+	op getTypeList : QidList -> QidList .
+	eq getTypeList(QL '`[ AQL '`]) = QL .
+	eq getTypeList(QL) = QL [owise] .
+
+	*** Get and parse declaration attributes
+	*** (more attributes can be easily supported)
+	op getAttrSet   : QidList -> AttrSet .
+	op parseAttrSet : QidList -> AttrSet .
+
+	eq getAttrSet(QL '`[ AQL '`]) = parseAttrSet(AQL) .
+	eq getAttrSet(QL) = none [owise] .
+
+	eq parseAttrSet(nil) = none .
+	eq parseAttrSet('assoc QL) = assoc parseAttrSet(QL) .
+	eq parseAttrSet('comm QL) = comm parseAttrSet(QL) .
+	eq parseAttrSet('id: Q QL) = id(qid(string(Q) + ".Obj")) parseAttrSet(QL) .
+	eq parseAttrSet('prec Q QL) = prec(rat(string(Q), 10)) parseAttrSet(QL) .
+	eq parseAttrSet(Q QL) = parseAttrSet(QL) [owise] .
+
+	***
+	*** Auxiliary functions
+
+	*** Convert a QidList into a QidSet
+	op toQidSet : QidList -> QidSet .
+
+	eq toQidSet(nil) = none .
+	eq toQidSet(Q QL) = Q ; toQidSet(QL) .
+
+endfm *** MEMBRANE-LANGUAGE-PARSER
+
+*** Removes Maude-like line and block comments from the input file.
+
+fmod MEMBRANE-LEXER is
+	protecting LEXICAL .
+	protecting QID-LIST .
+
+	*** Parse the input as a list of tokens, removing comments
+	op stripComments : String -> QidList .
+
+	*** The first argument is the pending input and the second is
+	*** the already processed one. Text is tokenized line by line.
+	op stripComments : String String -> QidList .
+
+	*** Detect whether a block comment starts at the beginning of the
+	*** input string. If so, it returns the number of characters to
+	*** skip the block comment marker. Otherwise, it returns zero.
+	op isBlockComment   : String -> Nat .
+	op skipLineComment  : String -> QidList .
+	op skipBlockComment : String Nat -> QidList .
+
+	var  QL          : QidList .
+	vars S Line Rest : String .
+	var  N           : Nat .
+	var  C           : Char .
+
+	eq stripComments(S) = stripComments(S, "") .
+
+	eq stripComments("", Line) = tokenize(Line) .
+	ceq stripComments(S, Line) = tokenize(Line)
+	 if substr(S, 0, 3) = "eof" .
+	ceq stripComments(S, Line) = tokenize(Line)
+	      stripComments(substr(S, 1, sd(length(S), 1)), "")
+	 if substr(S, 0, 1) = "\n" .
+        ceq stripComments(S, Line) = tokenize(Line) if isBlockComment(Rest) > 0 then
+			skipBlockComment(substr(Rest, isBlockComment(Rest),
+				sd(length(Rest), isBlockComment(Rest))), 1)
+		else
+			skipLineComment(Rest)
+		fi
+	 if substr(S, 0, 3) = "***" /\ Rest := substr(S, 3, sd(length(S), 3)) .
+	eq stripComments(S, Line) = stripComments(substr(S, 1, sd(length(S), 1)),
+	                                           Line + substr(S, 0, 1)) [owise] .
+
+	eq skipLineComment(S) = if find(S, "\n", 0) :: Nat then
+			stripComments(substr(S, find(S, "\n", 0),
+				sd(length(S), find(S, "\n", 0))), "")
+		else
+			nil
+		fi .
+
+	eq skipBlockComment("", N) = nil .
+	ceq skipBlockComment(S, N) = if isBlockComment(Rest) > 0 then
+			skipBlockComment(substr(Rest, isBlockComment(Rest),
+				sd(length(Rest), isBlockComment(Rest))), s(N))
+		else
+			skipBlockComment(Rest, N)
+		fi
+	 if substr(S, 0, 3) = "***" /\ Rest := substr(S, 3, sd(length(S), 3)) .
+	ceq skipBlockComment(S, s(N)) = if N > 0 then
+			skipBlockComment(Rest, N)
+		else
+			stripComments(Rest, "")
+		fi
+	 if substr(S, 0, 1) = ")" /\ Rest := substr(S, 1, sd(length(S), 1)) .
+	eq skipBlockComment(S, N) = skipBlockComment(substr(S, 1, sd(length(S), 1)), N) [owise] .
+
+	eq isBlockComment("") = 0 .
+	ceq isBlockComment(S) = if C == " " or C == "\t" or C == "*" then
+			if isBlockComment(Rest) == 0 then 0 else s(isBlockComment(Rest)) fi
+		else
+			if C == "(" then 1 else 0 fi
+		fi
+	 if C := substr(S, 0, 1) /\ Rest := substr(S, 1, sd(length(S), 1)) .
+
+endfm *** MEMBRANE-LEXER
+
+*** MEMBRANE-PARSE extends MEMBRANE-READ to parse the file when
+*** it is fully read.
+
+mod MEMBRANE-PARSE is
+	protecting MEMBRANE-LANGUAGE-PARSER .
+	protecting MEMBRANE-LEXER .
+	extending MEMBRANE-READ .
+
+	*** Message sent by the parser when finished
+	*** Arguments are: receiver, sender, filename, membrane system info,
+	*** module to parse commands, strategy module representing the
+	*** membrane system, and commands.
+	op parsedFile : Oid Oid String MembraneSystemInfo Module StratModule TermList -> Msg [ctor msg format (b o)] .
+	*** The file cannot be correctly parsed
+	op badParse : Oid Oid String Nat -> Msg [ctor msg format (b o)] .
+
+	vars O Sender : Oid .
+	var  B FN     : String .
+	var  Attrs    : AttributeSet .
+	var  T        : Term .
+	var  PM       : Module .
+	var  M        : StratModule .
+	var  KM       : [Module] .
+	var  Q        : Qid .
+	var  QL       : QidList .
+	var  N        : Nat .
+	var  MSP      : [MembraneSystemPair] .
+
+	op parsedTerm:_ : ResultPair? -> Attribute [ctor gather (&)] .
+
+	crl [parseFile] :
+		< O : Memparse | state: stopped, buffer: B, sender: Sender, filename: FN, Attrs >
+	=>
+		< O : Memparse | state: init, Attrs >
+		if MSP :: MembraneSystemPair then
+			parsedFile(Sender, O, FN, getMembraneSystemInfo(MSP), PM, getModule(MSP), gatherCommands(T))
+		else
+			badParse(Sender, O, FN, 0)
+		fi
+	if T   := getTerm(metaParse(upModule('MEMBRANE-SIGN, false), stripComments(B), '@Input@))
+	/\ PM  := makeParseModule(T)
+	/\ MSP := makeMembraneModule(PM, T) .
+
+	crl [noParseFile] :
+		< O : Memparse | state: stopped, buffer: B, sender: Sender, filename: FN, Attrs >
+	=>
+		< O : Memparse | state: init, Attrs >
+		badParse(Sender, O, FN, N)
+	if noParse(N) := metaParse(upModule('MEMBRANE-SIGN, false), stripComments(B), '@Input@) .
+
+endm *** MEMBRANE-PARSE
+
+***
+*** Some functions to manipulate the membrane system module and
+*** enable logging, model checking, etc.
+
+mod MEMBRANE-MODULE-AUX is
+	protecting MEMBRANE-SYSTEM-INFO .
+
+	var  M            : Module .
+	var  ML           : MembraneSystemInfo .
+	var  Eqs          : EquationSet .
+	var  Rl           : Rule .
+	var  Rls          : RuleSet .
+	vars St St'       : Strategy .
+	vars Sds Sds'     : StratDefSet .
+	var  T L R        : Term .
+	var  TL           : TermList .
+	var  C            : EqCondition .
+	var  Q            : Qid .
+	vars Attrs Attrs' : AttrSet .
+	var  MIM          : Map{Term, MembraneInfo} .
+	var  RIs          : RuleInfoSet .
+	var  PR           : PriorityRelation .
+	var  RT           : RuleType .
+	var  RP           : RulePriority .
+
+	***
+	*** This function manipulates the module to enable
+	*** evolution rule logging
+
+	op enableLog : Map{Term, MembraneInfo} Module -> Module .
+
+	eq enableLog(MIM, M) = smod getName(M) is
+		(extending 'P-SYSTEM-LOG .)
+		getImports(M)
+		sorts getSorts(M) .
+		getSubsorts(M)
+		getOps(M)
+		getMbs(M)
+		getEqs(M)
+		enableLog(MIM, getRls(M))
+		getStrats(M)
+		getSds(M)
+	endsm .
+
+	*** Enable logging on evolution rules
+	op enableLog : Map{Term, MembraneInfo} RuleSet -> RuleSet .
+	op enableLog : RuleInfoSet RuleSet -> RuleSet .
+
+	eq enableLog(MIM, (rl L => R [Attrs label('wrapMsg)] .) Rls) =
+		(rl L => '__[R, 'log['RL:Qid]] [Attrs label('wrapMsg)] .)
+		enableLog(allRuleInfos(MIM),  Rls) .
+
+	eq enableLog((empty).RuleInfoSet, Rls) = Rls .
+	eq enableLog(< Q, RT > RIs, rl L => R [label(Q) Attrs] . Rls) =
+		if RT == normal or RT == proted then
+			rl L => '__[R, 'log[upQid(Q)]] [label(Q) Attrs] .
+		else
+			rl L => R [label(Q) Attrs] .
+		fi
+		enableLog(RIs, Rls) .
+	eq enableLog(< Q, cond > RIs, crl L => R if C [label(Q) Attrs] . Rls) =
+		(crl L => '__[R, 'log[upQid(Q)]] if C [label(Q) Attrs] .)
+		enableLog(RIs, Rls) .
+
+	*** Gather all membrane info from any membrane
+	op allRuleInfos : Map{Term, MembraneInfo} -> RuleInfoSet .
+
+	eq allRuleInfos(empty) = empty .
+	eq allRuleInfos((T |-> minfo(RIs, PR), MIM)) = RIs allRuleInfos(MIM) .
+
+	***
+	*** This function manipulates the module to enable the strong
+	*** interpretation of priorities
+
+	op enableStrong : Module RulePriority -> Module .
+	op enableStrong : StratDefSet -> StratDefSet .
+	op enableStrong2 : StratDefSet -> StratDefSet .
+	op enableStrong2 : Term StratDefSet -> StratDefSet .
+
+	eq enableStrong(M, weak) = M .
+	eq enableStrong(M, strong) = smod getName(M) is
+		getImports(M)
+		sorts getSorts(M) .
+		getSubsorts(M)
+		getOps(M)
+		getMbs(M)
+		getEqs(M)
+		getRls(M)
+		getStrats(M)
+		enableStrong(getSds(M))
+	endsm .
+
+	*** There is a general handleMembrane definition to inner-mpr by default
+	*** in the membrane system module, so we remove it first
+
+	eq enableStrong(sd 'handleMembrane[['MN:MembraneName, TL]] := St [Attrs] . Sds) =
+		enableStrong2(Sds) .
+	eq enableStrong(Sds) = Sds [owise] .
+
+	*** Then, handleMembrane is set for each membrane of the system,
+	*** which are iterated via their membraneRule definitions
+
+	eq enableStrong2(sd 'membraneRules[[T, TL]] := St [Attrs] . Sds) =
+		(sd 'membraneRules[[T, TL]] := St [Attrs] .)
+		enableStrong2(T, Sds) .
+	eq enableStrong2(Sds) = Sds [owise] .
+
+	*** Membrane with priorities have a mpr-strong definition,
+	*** towards handleMembrane is linked
+
+	eq enableStrong2(T, sd 'mpr-strong[[T, TL]] := St [Attrs] . Sds) =
+		(sd 'mpr-strong[[T, TL]] := St [Attrs] .)
+		(sd 'handleMembrane[[T, 'S0:ObjSoup]] := 'mpr-strong[[T, 'S0:ObjSoup, 'empty.QidSet]] [none] .)
+		enableStrong2(Sds) .
+
+	*** Membrane without priorities keep the handleMembrane definition
+
+	eq enableStrong2(T, Sds) =
+		(sd 'handleMembrane[[T, 'S0:ObjSoup]] := 'inner-mpr[[T, 'S0:ObjSoup]] [none] .)
+		enableStrong2(Sds) [owise] .
+
+
+	*** Transform the modules to enable model checking
+	*** (MembraneSystemInfo is not used)
+
+	op enableModelCheck : Module MembraneSystemInfo -> Module .
+	op enableBoundedModelCheck : Module MembraneSystemInfo Term -> Module .
+
+	eq enableModelCheck(M, msinfo(MIM, RP)) = enableLog(MIM, smod getName(M) is
+		(extending 'P-SYSTEM-PREDS .)
+		(including 'STRATEGY-MODEL-CHECKER .)
+		getImports(M)
+		sorts getSorts(M) .
+		getSubsorts(M)
+		getOps(M)
+		getMbs(M)
+		getEqs(M)
+		getRls(M)
+		getStrats(M)
+		*** The standard mcomp is not used since logs are wanted to
+		*** get informative counterexamples, and they must be removed
+		*** before each evolution step not to get confused
+		(strat '%mcomp% : nil @ 'Soup [none] .)
+		(strat '%step%  : nil @ 'Soup [none] .)
+		getSds(M)
+		(sd '%mcomp%[[empty]] := '%step%[[empty]] ? '%mcomp%[[empty]] : idle [none] .)
+		(sd '%step%[[empty]]  := ('purgeLog[none]{empty}) ! ; 'mpr[[empty]] [none] .)
+	endsm) .
+
+	eq enableBoundedModelCheck(M, msinfo(MIM, RP), T) = enableLog(MIM, smod getName(M) is
+		(extending 'P-SYSTEM-PREDS .)
+		(including 'STRATEGY-MODEL-CHECKER .)
+		getImports(M)
+		sorts getSorts(M) .
+		getSubsorts(M)
+		getOps(M)
+		getMbs(M)
+		getEqs(M)
+		getRls(M)
+		getStrats(M)
+		(strat '%mcomp% : nil @ 'Soup [none] .)
+		(strat '%mcomp% : 'Nat @ 'Soup [none] .)
+		(strat '%step%  : nil @ 'Soup [none] .)
+		getSds(M)
+		*** Since the modelCheck symbol only admits strategies without
+		*** arguments, this definition is required
+		(sd '%mcomp%[[empty]] := '%mcomp%[[T]] [none] .)
+		*** This definition stops computing steps when the number of
+		*** objects reaches the given bound T
+		(sd '%mcomp%[['N:Nat]] := match 'S:Soup s.t. ('_>=_['numObjsRec['S:Soup], 'N:Nat] = 'true.Bool)
+			or-else ('%step%[[empty]] ? '%mcomp%[['N:Nat]] : idle) [none] .)
+		(sd '%step%[[empty]] := ('purgeLog[none]{empty}) ! ; 'mpr[[empty]] [none] .)
+	endsm) .
+endm
+
+*** Build the module for a given membrane specification without
+*** using the interactive interface. Useful for external model checking
+
+mod MEMBRANE-EXTERNAL is
+	protecting MEMBRANE-PARSE .
+	protecting MEMBRANE-MODULE-AUX .
+
+	*** Module where membrane specifications can be model checked
+	*** Arguments are: the membrane specification text, whether the strong
+	*** priority must be used, and the bound on the number of objects (or 0)
+	op makeMMCModule : String Bool Nat ~> Module .
+
+	var S   : String .
+	var B   : Bool .
+	var N   : Nat .
+	var T   : Term .
+	var M   : Module .
+	var MSI : MembraneSystemInfo .
+
+	ceq makeMMCModule(S, B, N) = if N == 0 then
+			enableModelCheck(enableStrong(M, if B then strong else weak fi), MSI)
+		else
+			enableBoundedModelCheck(enableStrong(M, if B then strong else weak fi), MSI, upTerm(N))
+		fi
+	if T          := getTerm(metaParse(upModule('MEMBRANE-SIGN, false), stripComments(S), '@Input@))
+	/\ < M, MSI > := makeMembraneModule(T) .
+endm
+
+*** Messages to appear in the REPL interface
+
+fmod MEMBRANE-REPL-TEXTS is
+	protecting LEXICAL .
+	protecting CONVERSION .
+
+	var  S     : String .
+	var  N     : Nat .
+	var  QL    : QidList .
+	vars Q1 Q2 : Qid .
+
+	ops greetingText promptText helpText unknownCommandText notLoadedText horizontalLine : -> String .
+	ops fileProblemText fileLoadedText badParseText : String -> String .
+	op priorityChangeText : Qid Qid -> String .
+	op solutionText : Nat QidList -> String .
+
+	eq greetingText = printTokens('\n '\t '\t '\! '** '\s 'Membrane 'system 'environment 'in 'Maude '** '\o '\n '\n) .
+	eq promptText = "Membrane> " .
+	eq horizontalLine = "==========================================\n" .
+	eq unknownCommandText = printTokens('\r 'Error: '\o 'Unknown 'command 'or 'missing 'period. '\n) .
+	eq helpText =  printTokens('Available 'commands: '\n
+		'\s '\s '\b '\! 'load '\o '"filename" '\t '\t '\t '\t 'Loads 'a 'membrane 'system 'from 'a 'file '\n
+		'\s '\s '\b '\! '`[ 'dfs '`] 'transition '\o '<membrane> '. '\n
+		'\s '\s '\b '\! '`[ 'dfs '`] 'trans '\o '<membrane> '. '\t '\t '\t 'Simulates 'a 'single 'evolution 'step '\n
+		'\s '\s '\b '\! '`[ 'dfs '`] 'compute '\o '<membrane> '. '\t '\t '\t 'Simulates 'a 'membrane 'computation '\n
+		'\s '\s '\b '\! 'check '\o '<membrane> 'satisfies '<formula> '. '\t 'Model 'check 'the 'formula '\n
+		'\s '\s '\b '\! 'show 'membranes '\o '. '\t '\t '\t '\t 'Show 'the 'names 'of 'the 'current 'membranes '\n
+		'\s '\s '\b '\! 'show '\o '<membrane 'name> '. '\t '\t '\t 'Show 'the 'membrane 'definition 'for 'the 'given 'name '\n
+		'\s '\s '\b '\! 'show 'strats '\o '<membrane 'name> '. '\t '\t '\t 'Show 'the 'strategies 'generated 'for 'a 'given 'membrane '\n
+		'\s '\s '\b '\! 'set 'priority '\o '\s '`[ 'weak '| 'strong '`] '. '\t '\t 'Set 'how 'priority 'is 'understood '\n
+		'\s '\s '\b '\! 'quit '\o '. '\t '\t '\t '\t '\t 'Quits 'from 'the 'interpreter '\n) .
+	eq badParseText(S) = printTokens('\r 'Error: '\o 'The 'file '\g tokenize(S) '\o 'is 'not
+		'a 'correct 'membrane 'specification. '\n) .
+
+	eq notLoadedText = printTokens('\r 'Error: '\o '\s 'No 'membrane 'system 'is 'loaded. '\n) .
+
+	eq fileProblemText(S) = printTokens('\r 'Error: '\o '\s) + S + ".\n" .
+	eq fileLoadedText(S) = printTokens('File '\g tokenize(S) '\o 'has 'been 'loaded. '\n) .
+
+	eq solutionText(N, QL) = printTokens('Solution qid(string(s(N), 10) + ":") '\t QL '\n) .
+
+	eq priorityChangeText(Q1, Q2) = printTokens(if Q1 == Q2 then
+			'Priority 'was 'already '\b Q1 '\o
+		else
+			'Priority 'is 'now 'set 'to '\b Q2 '\o
+		fi) .
+
+endfm *** MEMBRANE-REPL-TEXTS
+
+*** Generic and reusable task worker
+
+mod TASK-WORKER is
+	protecting CONFIGURATION .
+	protecting STD-STREAM .
+
+	sort WorkerTask TaskResult .
+
+	*** This function must be defined for each task (this
+	*** is the parameter of this module)
+	op runTask : WorkerTask -> TaskResult .
+
+	*** The possible outcomes of a task execution
+
+	*** Continue updating the task and printing a message
+	op continue : WorkerTask String -> TaskResult [ctor] .
+	*** Continue updating the task, delegating a new task to another worker
+	*** and printing a message
+	op delegate : Oid WorkerTask WorkerTask String -> TaskResult [ctor] .
+	*** Finish by printing a message
+	op finish   : String            -> TaskResult [ctor] .
+	*** Finish by sending a message
+	op finish   : Msg           -> TaskResult [ctor] .
+
+	*** Init a task, creating a worker to handle it (if needed)
+	op initTask : Oid Oid WorkerTask -> Configuration .
+
+	***
+	*** Worker class
+
+	op Worker : -> Cid [ctor] .
+
+	op task:_   : WorkerTask -> Attribute [ctor gather (&)] .
+	op master:_ : Oid        -> Attribute [ctor gather (&)] .
+
+	vars O SO NO : Oid .
+	var  S       : String .
+	vars T NT    : WorkerTask .
+	var  TR      : TaskResult .
+	var  Ms      : Msg .
+
+	op initTask : Oid Oid TaskResult -> Configuration .
+
+	eq initTask(O, SO, T) = initTask(O, SO, runTask(T)) .
+	eq initTask(O, SO, finish(S)) = write(stdout, SO, S) .
+	eq initTask(O, SO, finish(Ms)) = Ms .
+	eq initTask(O, SO, continue(T, S)) =
+		< O : Worker | master: SO, task: T >
+		write(stdout, O, S) .
+	eq initTask(O, SO, delegate(NO, T, NT, S)) =
+		< O  : Worker | master: SO, task: T >
+		< NO : Worker | master: O, task: NT >
+		write(stdout, NO, S) .
+
+	rl [workTask] :
+		< O : Worker | master: SO, task: T >
+		wrote(O, stdout)
+	=>
+		initTask(O, SO, T) .
+
+endm *** TASK-WORKER
+
+*** The interactive REPL environment for membrane systems
+
+mod MEMBRANE-REPL is
+	protecting MEMBRANE-REPL-TEXTS .
+	protecting MEMBRANE-PARSE .
+	protecting MEMBRANE-MODULE-AUX .
+	protecting STD-STREAM .
+	protecting TASK-WORKER .
+
+	*** Message to initiate the REPL
+	op initREPL : Oid -> Msg [ctor msg format (b o)] .
+	*** Message to change the rule priority interpretation
+	op changePriorityMode : Oid RulePriority -> Msg [ctor msg format (b o)] .
+
+	*** MemREPL processes and replies to the user input.
+	op MemREPL : -> Cid [ctor] .
+
+	op currentSystem:_ : CurrentSystem -> Attribute [ctor gather (&)] .
+
+	sort CurrentSystem .
+
+	*** The system information tuple includes the file name, the list of
+	*** membranes, the parsing module, and the module for execution.
+	op system : String MembraneSystemInfo Module StratModule -> CurrentSystem [ctor] .
+	op notLoaded : -> CurrentSystem [ctor] .
+
+	*** Identifiers for the objects
+	ops repl cmdRunner solgen : -> Oid .
+
+	var  Attrs       : AttributeSet .
+	var  Ats         : AttrSet .
+	vars S FN        : String .
+	vars Q Q1 Q2     : Qid .
+	var  QL          : QidList .
+	var  QS          : QidSet .
+	var  PR          : PriorityRelation .
+	vars T QLT MT T1
+             T2 T3 T4 RT : Term .
+	var  ML          : MembraneSystemInfo .
+	var  MIM         : Map{Term, MembraneInfo} .
+	var  MI          : MembraneInfo .
+	vars RP NRP      : RulePriority .
+	var  RIS         : RuleInfoSet .
+	var  Rs          : RuleSet .
+	vars TL TL1 TL2  : TermList .
+	var  NeTL        : NeTermList .
+	var  Cnt         : Constant .
+	vars O SO        : Oid .
+	var  PM          : Module .
+	var  M           : StratModule .
+	var  CS          : CurrentSystem .
+	var  St          : Strategy .
+	vars Sds Sds'    : StratDefSet .
+	var  N K         : Nat .
+	var  B           : Bool .
+	var  Ms          : Msg .
+	vars C1 C2 C     : EqCondition .
+
+	rl [greeting] :
+		< repl : MemREPL | Attrs >
+		initREPL(repl)
+	=>
+		< repl : MemREPL | currentSystem: notLoaded, Attrs >
+		< memp(0) : Memparse | state: init >
+		write(stdout, repl, greetingText) .
+
+	rl [getLine] :
+		< repl : MemREPL | Attrs > wrote(repl, stdout)
+	=>
+		< repl : MemREPL | Attrs > getLine(stdin, repl, promptText) .
+
+	rl [getLine] :
+		< repl : MemREPL | Attrs > wrote(repl, stderr)
+	=>
+		< repl : MemREPL | Attrs > getLine(stdin, repl, promptText) .
+
+	rl [iQuit] :
+		< repl : MemREPL | currentSystem: CS, Attrs >
+		gotLine(repl, stdin, S)
+	=>
+		< repl : MemREPL | currentSystem: CS, Attrs >
+		processInput(CS, S) .
+
+	rl [fileError] :
+		< repl : MemREPL | Attrs > fileError(repl, O, S)
+	=>
+		< repl : MemREPL | Attrs > write(stderr, repl, fileProblemText(S)) .
+
+	rl [parsed] :
+		< repl : MemREPL | currentSystem: CS, Attrs >
+		parsedFile(repl, O, S, ML, PM, M, TL)
+	=>
+		< repl : MemREPL | currentSystem: system(S, ML, PM, M), Attrs >
+		if TL == empty then
+			write(stdout, repl, fileLoadedText(S))
+		else
+			< cmdRunner : Worker | master: repl,
+			                       task: cmdsTask(system(S, ML, PM, M), TL) >
+			write(stdout, cmdRunner, fileLoadedText(S) + "\n")
+		fi .
+
+	rl [onBadParse] :
+		< repl : MemREPL | currentSystem: CS, Attrs >
+		badParse(repl, O, S, N)
+	=>
+		< repl : MemREPL | currentSystem: CS, Attrs >
+		write(stdout, repl, badParseText(S)) .
+
+	rl [rulePriority] :
+		< repl : MemREPL | currentSystem: system(S, msinfo(MIM, RP), PM, M), Attrs >
+		changePriorityMode(repl, NRP)
+	=>
+		< repl : MemREPL | currentSystem: system(S, msinfo(MIM, NRP), PM, M), Attrs >
+		write(stdout, repl, priorityChangeText(if RP == weak then 'weak else 'strong fi,
+		                                       if NRP == weak then 'weak else 'strong fi) + "\n") .
+
+	***
+	*** Parsing and acting on user input
+
+	op processInput : CurrentSystem String -> Configuration .
+	op processInput : CurrentSystem QidList -> Configuration .
+
+	eq processInput(CS, "") = none .
+	eq processInput(CS, "\n") = wrote(repl, stdout) . *** HACK
+	eq processInput(CS, S) = processInput(CS, tokenize(S)) [owise] .
+
+	eq processInput(CS, 'quit '.) = none .
+	eq processInput(CS, 'help '.) = write(stdout, repl, helpText) .
+	ceq processInput(CS, 'load Q) = parseFile(memp(0), repl, FN)
+	 if T  := getTerm(metaParse(upModule('STRING, false), Q, 'String))
+	 /\ FN := downTerm(T, "") .
+	eq processInput(CS, 'load Q) = parseFile(memp(0), repl, string(Q)) [owise] .
+	ceq processInput(CS, QL) = initTask(solgen, repl, processCommand(CS, T))
+	 if T := getTerm(metaParse(upModule('MEMBRANE-COMMANDS-SIGN, false), QL, '@Command@)) .
+	eq processInput(CS, QL) = write(stderr, repl, unknownCommandText) [owise] .
+
+
+	*** Parse a search command
+	op parseSearch : CurrentSystem Qid QidList ~> Term .
+
+	ceq parseSearch(system(S, ML, PM, M), Q, QLT) =
+		if getTerm(metaParse(PM, QL, Q)) :: Term then
+			getTerm(metaParse(PM, QL, Q))
+		else
+			getTerm(metaParse(PM, QL, 'Membrane))
+		fi
+	 if QL := downTerm(QLT, (nil).QidList) .
+
+
+	*** Generate a task for the user command
+	op processCommand : CurrentSystem Term -> WorkerTask .
+
+	eq processCommand(notLoaded, T) = error(notLoadedText) .
+	eq processCommand(CS, 'transition_.['bubble[QLT]]) =
+		processCommand(CS, 'trans_.['bubble[QLT]]) .
+	ceq processCommand(CS, 'trans_.['bubble[QLT]]) =
+		processTransition(CS, MT, false)
+	 if MT := parseSearch(CS, '@TransBody@, QLT) .
+	ceq processCommand(CS, 'dfs_['trans_.['bubble[QLT]]]) =
+		processTransition(CS, MT, true)
+	 if MT := parseSearch(CS, '@TransBody@, QLT) .
+	ceq processCommand(CS, 'compute_.['bubble[QLT]]) =
+		processCompute(CS, MT, false)
+	 if MT := parseSearch(CS, '@ComputeBody@, QLT) .
+	ceq processCommand(CS, 'dfs_['compute_.['bubble[QLT]]]) =
+		processCompute(CS, MT, true)
+	 if MT := parseSearch(CS, '@ComputeBody@, QLT) .
+	ceq processCommand(system(S, ML, PM, M), 'check_.['bubble[QLT]]) =
+		processCheck(system(S, ML, PM, M), MT)
+	 if QL := downTerm(QLT, (nil).QidList)
+	 /\ MT := getTerm(metaParse(PM, QL, '@CheckBody@)) .
+        ceq processCommand(CS, 'show_.['bubble[QLT]]) =
+		processShow(CS, QL)
+	 if QL := downTerm(QLT, (nil).QidList) .
+        ceq processCommand(CS, 'set_.['bubble[QLT]]) =
+		processSet(CS, QL)
+	 if QL := downTerm(QLT, (nil).QidList) .
+	ceq processCommand(CS, Q['bubble[T]]) =
+		error("No parse for command argument: " + printTokens(QL) + ".\n")
+	 if QL := downTerm(T, (nil).QidList) [owise] .
+
+	op processTransition : CurrentSystem Term Bool -> WorkerTask .
+	op processCompute    : CurrentSystem Term Bool -> WorkerTask .
+	op processCheck      : CurrentSystem Term -> WorkerTask .
+        op processShow       : CurrentSystem QidList -> WorkerTask .
+	op processSet        : CurrentSystem QidList -> WorkerTask .
+
+	eq processTransition(system(S, msinfo(MIM, RP), PM, M), '`[_`]_[T, MT], B) =
+		transTask(enableStrong(enableLog(MIM, M), RP), 'mpr[[empty]], MT, B, 0, downTerm(T, 0)) .
+	eq processTransition(system(S, msinfo(MIM, RP), PM, M), MT, B) =
+		transTask(enableStrong(enableLog(MIM, M), RP), 'mpr[[empty]], MT, B, 0, 0) .
+	eq processCompute(system(S, msinfo(MIM, RP), PM, M), '`[_`]_[T, MT], B) =
+		srewTask(enableStrong(M, RP), 'mcomp[[empty]], MT, B, 0, downTerm(T, 0)) .
+	eq processCompute(system(S, msinfo(MIM, RP), PM, M), '`[_`,_`]_[T1, T2, MT], B) =
+		srewTask(enableStrong(M, RP), 'mcomp[[T2]], MT, B, 0, downTerm(T1, 0)) .
+	eq processCompute(system(S, msinfo(MIM, RP), PM, M), '`[`,_`]_[T, MT], B) =
+		srewTask(enableStrong(M, RP), 'mcomp[[T]], MT, B, 0, 0) .
+	eq processCompute(system(S, msinfo(MIM, RP), PM, M), MT, B) =
+		srewTask(enableStrong(M, RP), 'mcomp[[empty]], MT, B, 0, 0) [owise] .
+
+	ceq processCheck(system(S, msinfo(MIM, RP), PM, M), '_satisfies_[MT, T]) =
+		mcheckTask(M, RT)
+	 if RT := getTerm(metaReduce(enableModelCheck(enableStrong(M, RP), msinfo(MIM, RP)),
+	            'modelCheck[MT, T, ''%mcomp%.Qid, ''%step%.Qid, 'false.Bool])) .
+	ceq processCheck(system(S, msinfo(MIM, RP), PM, M), '`[_`]_satisfies_[T1, MT, T]) =
+		mcheckTask(M, RT)
+	 if RT := getTerm(metaReduce(enableBoundedModelCheck(enableStrong(M, RP), msinfo(MIM, RP), T1),
+	            'modelCheck[MT, T, ''%mcomp%.Qid, ''%step%.Qid, 'false.Bool])) .
+	eq processCheck(system(S, ML, PM, M), T) =
+		error("Bad syntax.\n") [owise] .
+
+	eq processShow(system(S, msinfo(MIM, RP), PM, M), 'membranes) =
+		error(printTokens(allMembraneNames(M, MIM)) + "\n") .
+	eq processShow(system(S, msinfo(MIM, RP), PM, M), 'strats Q) =
+		error(printTokens(showStrats(M, getSds(M), qid(string(Q) + ".MembraneName"))) + "\n") .
+	eq processShow(system(S, msinfo(MIM, RP), PM, M), Q) =
+		error(printTokens(showMembrane(M, MIM, qid(string(Q) + ".MembraneName"))) + "\n") [owise] .
+	eq processShow(system(S, msinfo(MIM, RP), PM, M), QL) =
+		error("Bad syntax for show command.\n") [owise] .
+
+	*** The list of all membrane names in the membrane system
+	op allMembraneNames : Module Map{Term, MembraneInfo} -> QidList .
+
+	eq allMembraneNames(M, empty) = nil .
+	eq allMembraneNames(M, (T |-> MI, MIM)) = metaPrettyPrint(M, T, mixfix) '\s allMembraneNames(M, MIM) .
+
+	*** Show a given membrane, its rules and priorities
+	op showMembrane : Module Map{Term, MembraneInfo} Term -> QidList .
+	op showMembrane : Module MembraneInfo Term -> QidList .
+	op showMembraneRules : Module RuleInfoSet -> QidList .		*** not confluent (use RuleInfoList from the start)
+	op showRuleCondition : Module EqCondition -> QidList .
+	op showMembranePriority : PriorityRelation -> QidList .
+	op cleanRuleRHS : TermList -> TermList .
+
+	eq showMembrane(M, (T |-> MI, MIM), T) = showMembrane(M, MI, T) .
+	eq showMembrane(M, MIM, T) = 'No 'such 'membrane '\b getName(T) '\o .
+
+	eq showMembrane(M, minfo(RIS, PR), T) = '\b 'membrane '\o getName(T) '\b 'is '\o '\n
+			showMembraneRules(M, RIS)
+			showMembranePriority(PR)
+		'\b 'end '\o .
+
+	eq showMembraneRules(M, empty) = nil .
+	eq showMembraneRules(M, < Q, proted > RIS) = showMembraneRules(M, < Q, normal > RIS) .
+	ceq showMembraneRules(M, < Q, normal > RIS) = '\s '\s '\b 'ev '\o Q ': metaPrettyPrint(M, T1, mixfix)
+		'-> metaPrettyPrint(M, cleanRuleRHS(T2)) '. '\n
+		showMembraneRules(M, RIS)
+	if rl T1 => T2 [label(Q)] . Rs := getRls(M) .
+	ceq showMembraneRules(M, < Q, cond > RIS) = '\s '\s '\b 'cev '\o Q ': metaPrettyPrint(M, T1, mixfix)
+		'-> metaPrettyPrint(M, cleanRuleRHS(T2)) showRuleCondition(M, C) '. '\n
+		showMembraneRules(M, RIS)
+	if crl T1 => T2 if C [nonexec label(Q)] . Rs := getRls(M) .
+	ceq showMembraneRules(M, < Q, exted(T) > RIS) = '\s '\s '\b 'xev '\o Q ': metaPrettyPrint(M, T1, mixfix)
+		'-> if T == 'here.Target then nil else '`( fi
+		    metaPrettyPrint(M, cleanRuleRHS(T2))
+		    if T == 'here.Target then nil else '`, metaPrettyPrint(M, T, mixfix) '`) fi
+		'. '\n
+		showMembraneRules(M, RIS)
+	if rl T1 => T2 [label(Q)] . Rs := getRls(M) .
+	eq showMembraneRules(M, RI:RuleInfo RIS) = showMembraneRules(M, RIS) [owise] .
+
+	*** Strip here targets on the right-hand side of rules for readability
+	eq cleanRuleRHS(empty) = empty .
+	eq cleanRuleRHS(('`(_`,_`)[T1, 'here.Target], TL)) =
+		T1, cleanRuleRHS(TL) .
+	eq cleanRuleRHS('__[TL]) = wrapTL('__, 'empty.EmptySoup, cleanRuleRHS(TL)) .
+	eq cleanRuleRHS((T, TL)) = T, cleanRuleRHS(TL) [owise] .
+
+	*** Show the condition of a conditional evolution rule
+	eq showRuleCondition(M, nil) = nil .
+	eq showRuleCondition(M, '__[T1, T2, T3] := T) = '\b 'with '\o metaPrettyPrint(M, T2) .
+	eq showRuleCondition(M, 'contains['__[T1, T2], T] = 'false.Bool) = '\b 'without '\o metaPrettyPrint(M, T2) .
+	eq showRuleCondition(M, C1 /\ C2) = showRuleCondition(M, C1) showRuleCondition(M, C2) [owise] .
+
+	eq showMembranePriority(none) = nil .
+	eq showMembranePriority(Q1 > Q2 PR) = '\s '\s '\b 'pr '\o Q1 '> Q2 '. '\n
+		showMembranePriority(PR) .
+
+	*** Show the strategies generated for the given membrane
+	op showStrats : Module StratDefSet Term -> QidList .
+	op showStrongStrat : Module StratDefSet Term -> QidList .
+
+	eq showStrats(M, (sd 'membraneRules[[T, TL]] := St [Ats] .) Sds, T) = '\b 'Weak 'priority: '\o '\s
+		metaPrettyPrintStrategy(M, 'S0:ObjSoup ; 'R:Soup ; 'O:Obj ; 'T:Target, St, mixfix flat format number rat)
+		showStrongStrat(M, Sds, T) .
+	eq showStrats(M, Sds, T) = 'No 'such 'membrane '\b getName(T) '\o [owise] .
+
+	eq showStrongStrat(M, (sd 'mpr-strong[[T, TL]] := St [Ats] .) Sds, T) = '\n '\b 'Strong 'priority: '\o '\s
+		metaPrettyPrintStrategy(M, 'AR:QidSet ; 'S:ObjSoup ; 'TS:TargetSoup ; 'H:Soup, St, mixfix flat format number rat) .
+	eq showStrongStrat(M, Sds, T) = nil [owise] .
+
+	*** Priorities are changed by sending a message to the REPL, since
+	*** tasks cannot directly modify the state
+	eq processSet(system(S, ML, PM, M), 'priority 'weak) = emitMsg(changePriorityMode(repl, weak)) .
+	eq processSet(system(S, ML, PM, M), 'priority 'strong) = emitMsg(changePriorityMode(repl, strong)) .
+	eq processSet(system(S, msinfo(MIM, weak), PM, M), 'priority) = error("weak\n") .
+	eq processSet(system(S, msinfo(MIM, strong), PM, M), 'priority) = error("strong\n") .
+
+
+	***
+	*** The different tasks and their implementation
+	***
+
+	***
+	*** Shows an error message
+
+	op error : String -> WorkerTask [ctor] .
+
+	eq runTask(error(S)) = finish(S) .
+
+	***
+	*** Emits a message
+
+	op emitMsg : Msg -> WorkerTask [ctor] .
+
+	eq runTask(emitMsg(Ms)) = finish(Ms) .
+
+	***
+	*** Perform strategic rewriting and enumerate the solutions
+	*** with an optional bound (used for compute)
+
+	op srewTask  : Module Strategy Term Bool Nat Nat -> WorkerTask [ctor] .
+
+	eq runTask(srewTask(M, St, MT, B, K, N)) = if K == N and N =/= 0 then
+			finish("No more solutions requested.\n")
+		else if metaSrewrite(M, MT, St, if B then depthFirst else breadthFirst fi, K) == failure then
+			finish(if K == 0 then "No solutions.\n" else "No more solutions.\n" fi)
+		else
+			continue(srewTask(M, St, MT, B, s(K), N), solutionText(K,
+				metaPrettyPrint(M, getTerm(metaSrewrite(M, MT, St, if B then depthFirst else breadthFirst fi, K)))))
+		fi fi .
+
+	***
+	*** Execute a list of commands (read from a file)
+
+	op cmdsTask  : CurrentSystem TermList -> WorkerTask [ctor] .
+
+	eq runTask(cmdsTask(CS, empty)) = finish(horizontalLine) .
+	eq runTask(cmdsTask(CS, (T, TL))) = delegate(solgen, cmdsTask(CS, TL), processCommand(CS, T),
+		horizontalLine + formatCommand(T) + "\n\n") .
+
+	op formatCommand : Term -> String .
+	eq formatCommand('transition_.[T]) = formatCommand('trans_.[T]) .
+	eq formatCommand('trans_.['bubble[T]]) = printTokens('\b 'trans '\o downTerm(T, nil) '.) .
+	eq formatCommand('compute_.['bubble[T]]) = printTokens('\b 'compute '\o downTerm(T, nil) '.) .
+	eq formatCommand('dfs_.[T]) = printTokens('\b 'dfs '\o '\s) + formatCommand(T) .
+	eq formatCommand('check_.['bubble[T]]) = printTokens('\b 'check '\o downTerm(T, nil) '.) .
+	eq formatCommand('set_.['bubble[T]]) = printTokens('\b 'set '\o downTerm(T, nil) '.) .
+	eq formatCommand(T) = "" [owise] .
+
+
+	***
+	*** Executes a single transition, showing the multiset of rules that were used
+
+	op transTask : Module Strategy Term Bool Nat Nat -> WorkerTask [ctor] .
+
+	eq runTask(transTask(M, St, MT, B, K, N)) = if K == N and N =/= 0 then
+			finish("No more solutions requested.\n")
+		else if metaSrewrite(M, MT, St, if B then depthFirst else breadthFirst fi, K) == failure then
+			finish(if K == 0 then "No solutions.\n" else "No more solutions.\n" fi)
+		else
+			continue(transTask(M, St, MT, B, s(K), N), transText(M, K,
+				getTerm(metaSrewrite(M, MT, St, if B then depthFirst else breadthFirst fi, K))))
+		fi fi .
+
+	op transText : Module Nat Term -> String .
+	eq transText(M, K, T) = printTokens('Solution qid(string(s(K), 10)) formatLog(T) ': '\n
+		'\t metaPrettyPrint(M, removeLog(T)) '\n) .
+
+	***
+	*** Model checking (more precisely, showing the counterexample)
+
+	op mcheckTask : Module Term -> WorkerTask [ctor] .
+
+	eq runTask(mcheckTask(M, 'true.Bool)) = finish("The property is satisfied.\n") .
+	eq runTask(mcheckTask(M, 'counterexample[T1, T2])) =
+		finish(printTokens(formatCounterexample(M, T1, T2))) [owise] .
+
+	op formatCounterexample : Module Term Term -> QidList .
+
+	eq formatCounterexample(M, 'nil.TransitionList, '__[T2, TL2]) =
+		formatCCycle(M, (T2, TL2), transTerm(T2)) .
+	eq formatCounterexample(M, 'nil.TransitionList, T2) =
+		formatCCycle(M, T2, transTerm(T2)) [owise] .
+	eq formatCounterexample(M, '__[TL1], '__[T2, TL2]) =
+		formatCPath(M, TL1, transTerm(T2))
+		formatCCycle(M, (T2, TL2), transTerm(T2)) .
+	eq formatCounterexample(M, '__[TL1], T2) =
+		formatCPath(M, TL1, transTerm(T2))
+		formatCCycle(M, T2, transTerm(T2)) [owise] .
+	eq formatCounterexample(M, T1, '__[T2, TL2]) =
+		formatCPath(M, T1, transTerm(T2))
+		formatCCycle(M, (T2, TL2), transTerm(T2)) [owise] .
+	eq formatCounterexample(M, T1, T2) =
+		formatCPath(M, T1, transTerm(T2))
+		formatCCycle(M, T2, transTerm(T2)) [owise] .
+
+	op formatCPath : Module NeTermList Term -> QidList .
+	op formatCCycle : Module NeTermList Term -> QidList .
+
+	eq formatCPath(M, '`{_`,_`}[T1, T2], T) =
+		'\r '| '\o metaPrettyPrint(M, removeLog(T1)) '\n
+		'\r '∨ '\o formatLog(T) '\n .
+	eq formatCPath(M, ('`{_`,_`}[T1, T2], '`{_`,_`}[T3, T4], TL), T) =
+		'\r '| '\o metaPrettyPrint(M, removeLog(T1)) '\n
+		'\r '∨ '\o formatLog(T3) '\n formatCPath(M, ('`{_`,_`}[T3, T4], TL), T) .
+
+	eq formatCCycle(M, '`{_`,_`}[T1, 'solution.RuleName], T) =
+		'\g 'X '\o metaPrettyPrint(M, removeLog(T1)) '\n .
+	eq formatCCycle(M, '`{_`,_`}[T1, T2], T) =
+		'\r '| '| '\o metaPrettyPrint(M, removeLog(T1)) '\n
+		'\r '< '∨ '\o formatLog(T2) '\n .
+	eq formatCCycle(M, ('`{_`,_`}[T1, T2], '`{_`,_`}[T3, T4], TL), T) =
+		'\r '| '| '\o metaPrettyPrint(M, removeLog(T1)) '\n
+		'\r '| '∨ '\o formatLog(T3) '\n formatCCycle(M, ('`{_`,_`}[T3, T4], TL), T) .
+
+	*** The term in the transition pair
+	op transTerm : Term -> Term .
+	eq transTerm('`{_`,_`}[T1, T2]) = T1 .
+
+	***
+	*** Utility function related to logs
+
+	op removeLog : TermList -> Term .
+
+	eq removeLog('__[TL]) = wrapTL('__, 'empty.Configuration, removeLog(TL)) .
+	eq removeLog(empty) = empty .
+	eq removeLog(('log[NeTL], TL)) = removeLog(TL) .
+	eq removeLog((T, TL)) = T, removeLog(TL) .
+
+	op formatLog : Term -> QidList .
+	op formatLog : TermList Bool -> QidList .
+
+	eq formatLog('__[TL]) = formatLog(TL, false) .
+	eq formatLog(T) = nil [owise] .
+	eq formatLog(empty, B) = nil .
+	eq formatLog(('log[T1, T2], TL), false) = 'with formatLogRules(T2) 'in
+		'\b getName(T1) '\o formatLog(TL, true) .
+	eq formatLog(('log[T1, T2], TL), true) = '`, formatLogRules(T2) 'in
+		'\b getName(T1) '\o formatLog(TL, true) .
+	eq formatLog((T, TL), B) = formatLog(TL, B) .
+
+	op formatLogRules : TermList -> QidList .
+
+	eq formatLogRules('_;_[TL]) = formatLogRules(TL) .
+	eq formatLogRules(empty) = nil .
+	eq formatLogRules((T, TL)) = downTerm(T, 'UNKNOWN) formatLogRules(TL) .
+
+
+	***
+	*** Auxiliary functions
+
+	*** Wrap the term list of a associative symbol, given
+	*** the operator name and the identity
+	op wrapTL : Qid Constant TermList -> Term .
+
+	eq wrapTL(Q, Cnt, empty) = Cnt .
+	eq wrapTL(Q, Cnt, T) = T .
+	eq wrapTL(Q, Cnt, (T, NeTL)) = Q[T, NeTL] .
+endm

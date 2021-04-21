@@ -1,0 +1,129 @@
+***
+*** Buggy year and day number calculator in the
+*** Freescale MC13783 PMIC processor
+***
+*** Adapted from the SPIN distribution examples (zune.pml)
+***
+
+sload model-checker
+
+mod YEAR-DAY is
+	protecting CONFIGURATION .
+	protecting SET{Nat} .
+
+	ops zune sender : -> Oid [ctor] .
+	ops Zune Sender : -> Cid [ctor] .
+
+	op year:_ : Nat -> Attribute [ctor] .
+	op days:_ : Nat -> Attribute [ctor] .
+	op sent:_ : Bool -> Attribute [ctor] . 
+
+	op toYearDay : Oid Oid Nat -> Msg [ctor msg] .
+	op yearDay : Oid Oid Nat Nat -> Msg [ctor msg] .
+
+	op days : -> Nat [ctor] .
+	eq days = sd(2008, 1980) * 365 + sd(2008, 1980) quo 4 .
+
+	op isLapYear : Nat -> Bool .
+	eq isLapYear(N) = (4 divides N and not(100 divides N)) or (400 divides N) .
+
+	op initial : -> Configuration .
+	eq initial = < sender : Sender | sent: false > < zune : Zune | none > .
+
+	vars N D Y : Nat .
+	var  S     : Set{Nat} .
+
+	crl [send] :
+		< sender : Sender | sent: false >
+	=>
+		< sender : Sender | sent: true >
+		toYearDay(zune, sender, days + N) if N, S := 365, 366, 367
+	.
+
+	rl [receive] :
+		< zune : Zune | none >
+		toYearDay(zune, sender, N)
+	=>
+		< zune : Zune | days: N, year: 1980 >
+	.
+
+	rl [substract] :
+		< zune : Zune | days: D, year: Y >
+	=>
+		< zune : Zune | days: sd(D, N), year: Y >
+
+	[nonexec] .
+
+	rl [addYear] :
+		< zune : Zune | days: D, year: Y >
+	=>
+		< zune : Zune | days: D, year: s(Y) >
+	.
+
+	rl [activeIdle] :
+		< zune : Zune | days: D, year: Y >
+	=>
+		< zune : Zune | days: D, year: Y >
+	.
+
+	crl [finish] :
+		< zune : Zune | days: D, year: Y >
+	=>
+		< zune : Zune | none >
+		yearDay(sender, zune, D, Y)
+
+	if D <= 365 .
+
+endm
+
+mod YEAR-DAY-PREDS is
+	protecting YEAR-DAY .
+	including SATISFACTION .
+
+	subsort Configuration < State .
+
+	ops request response : -> Prop [ctor] .
+
+	vars N D Y : Nat .
+	var  R S   : Oid .
+	var  C     : Configuration .
+
+	eq toYearDay(R, S, N) C |= request = true .
+	eq C |= request = false [owise] .
+
+	eq yearDay(R, S, Y, D) C |= response = true .
+	eq C |= response = false [owise] .
+endm
+
+smod YEAR-DAY-STRAT is
+	protecting YEAR-DAY .
+
+	strat zune @ Configuration .
+
+	vars D Y N : Nat .
+
+	sd zune := send ; receive ; ((amatch < zune : Zune | days: D, year: Y > s.t. D > 365) ; (
+			(amatch < zune : Zune | days: D, year: Y > s.t. isLapYear(Y)) ? (
+				(amatch < zune : Zune | days: D, year: Y > s.t. D > 366) ? (
+					substract[N <- 366] ; addYear
+				) :
+				(
+					activeIdle
+				)
+			) :
+			(
+				substract[N <- 365] ; addYear
+			)
+	)) ! ; finish .
+endsm
+
+smod YEAR-DAY-MAIN is
+	protecting YEAR-DAY-PREDS .
+	protecting YEAR-DAY-STRAT .
+	protecting STRATEGY-MODEL-CHECKER .
+endsm
+
+eof
+
+set verbose on .
+red modelCheck(initial, [] (request -> <> response), 'zune) .

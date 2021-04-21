@@ -1,0 +1,6 @@
+params/wordWrap
+
+srew initial(quijote, 80) using wrange .
+srew initial(dracula, 80) using wrange(77) .
+srew initial(frankestein, 80) using wgreedy .
+srew initial(integer, 80) using wint .

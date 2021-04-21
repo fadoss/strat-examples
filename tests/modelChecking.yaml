@@ -1,0 +1,349 @@
+#
+# Test cases for the Maude model checkers
+#
+
+root: ../modelChecking
+suite:
+  - file: river.maude
+    initial: initial
+    cases:
+      - formula: '[] ~ bad'
+        result: false
+      - strategy: eagerEating
+        formula: '[] ~ bad'
+        result: false
+      - strategy: safe
+        formula: '[] ~ bad'
+        result: true
+      - formula: A [] E <> goal
+        result: false
+      - strategy: eagerEating
+        formula: A [] E <> goal
+        result: false
+      - strategy: safe
+        formula: A [] E <> goal
+        result: true
+      - strategy: eagerEating
+        formula: A [] (bad \/ death \/ E <> goal)
+        result: true
+      - strategy: eagerEating
+        formula: < goat > ~ bad /\ [wolf cabbage alone] bad
+        result: true
+      - formula: '[ goat ] (mu Z . goal \/ < ~ goat > Z)'
+        result: true
+      - strategy: eagerEating
+        formula: '[ goat ] (mu Z . goal \/ < ~ goat > Z)'
+        result: false
+      - strategy: safe
+        formula: '[ goat ] (mu Z . goal \/ < ~ goat > Z)'
+        result: false
+
+  - file: ../games/bridgeTorch.maude
+    initial: initial
+    formula: '[] ~ goal'
+    cases:
+      - strategy: wrong
+        result: true
+      - strategy: wiser
+        result: false
+      - strategy: slowest
+        result: true
+      - strategy: fastest
+        result: false
+      - strategy: no-fastest
+        result: true
+
+  - file: mutex.maude
+    initial: initial
+    cases:
+      - strategy: any
+        formula: '[] ~ (crit(a) /\ crit(b))'
+        result: false
+      - strategy: mutex
+        formula: '[] ~ (crit(a) /\ crit(b))'
+        result: true
+      - strategy: any
+        formula: ([] <> wait(a)) -> ([] <> crit(a))
+        result: false
+      - strategy: mutex
+        formula: ([] <> wait(a)) -> ([] <> crit(a))
+        result: false
+
+  - file: philosophers.maude
+    cases:
+      # Easy cases for pyMC
+      - exclude: [maude, ltsmin, nusmv, spot]
+        strategy: parity
+        cases:
+          - initial: initial(3)
+            formula: '[] ((eats(0) -> O ~ eats(0)) /\ (eats(1) -> O ~ eats(1)) /\ (eats(2) -> O ~ eats(2))) -> <> eats(0)'
+            result: false
+          - initial: initial(5)
+            formula: '[] ((eats(0) -> O ~ eats(0)) /\ (eats(1) -> O ~ eats(1)) /\ (eats(2) -> O ~ eats(2))) -> <> eats(0)'
+            result: false
+          - initial: initial(3)
+            formula: '[] allEat(3)'
+            strategy: turns(0, 3)
+            result: true
+      # Small-size cases
+      - parameter:
+          N: [3, 5, 7]
+        initial: initial($N)
+        cases:
+          - strategy: free
+            formula: <> someoneEats($N)
+            result: false
+          - strategy: parity
+            formula: '[] (hasFork(0) -> <> eats(0))'
+            result: false
+          - strategy: left-first
+            formula: <> someoneEats($N)
+            result: false
+          - strategy: parity
+            formula: '[] <> someoneEats($N)'
+            result: true
+          - strategy: parity
+            formula: <> eats(0)
+            result: false
+          - strategy: parity
+            exclude: pymc
+            formula: '[] ((eats(0) -> O ~ eats(0)) /\ (eats(1) -> O ~ eats(1)) /\ (eats(2) -> O ~ eats(2))) -> <> eats(0)'
+            result: false
+          - strategy: turns(0, $N)
+            formula: '[] <> someoneEats($N)'
+            result: true
+          - strategy: turns(0, $N)
+            exclude: pymc
+            formula: '[] allEat($N)'
+            result: true
+          - formula: A [] E <> eats(0)
+            result: false
+          - strategy: parity
+            formula: A [] E <> eats(0)
+            result: true
+
+  - file: semaphore.maude
+    initial: initial
+    cases:
+      - module: PC-SCHECK
+        result: true
+        cases:
+          - formula: '[] ~ (inCrit(1) /\ inCrit(2))'
+            cases:
+              - strategy: null
+              - strategy: roundRobin
+              - strategy: rr-preemptive
+          - formula: (([] <> exec(1)) /\ ([] <> exec(2))) -> (([] <> inCrit(1)) /\ ([] <> inCrit(2)))
+            exclude: pymc
+            cases:
+              - strategy: null
+              - strategy: rr-fixed
+              - strategy: rr-preemptive
+          - formula: '[] <> inCrit(1)'
+            cases:
+              - strategy: null
+              - strategy: roundRobin
+              - strategy: rr-preemptive
+      - module: CS-SCHECK
+        cases:
+          - formula: onlyOne(4)
+            result: true
+            cases:
+              - strategy: null
+              - strategy: rr-fixed
+          - formula: '[] <> inCrit(2)'
+            result: false
+            cases:
+              - strategy: null
+              - strategy: roundRobin
+              - strategy: rr-fixed
+              - strategy: rr-preemptive
+                result: true
+
+  - file: roundabout.maude
+    initial: initial
+    formula: <> allFinished
+    cases:
+      - result: false
+      - strategy: any
+        result: false
+      - strategy: exclusive-bounded
+        result: true
+      #- strategy: bounded4
+
+  - file: train.maude
+    initial: makeTrainConf(3)
+    cases:
+      - strategy: fifo
+        formula: '[] <> gateOccupied'
+        result: true
+      - strategy: lifo
+        formula: '[] <> gateOccupied'
+        result: true
+      - strategy: free
+        formula: '[] (tstate(1, approaching) -> <> tstate(1, crossed))'
+        result: false
+
+  - file: bakery.maude
+    initial: initial
+    cases:
+      - module: BAKERY-CHECK
+        strategy: bakery
+        formula: '[] (inCS(proc(1)) -> mutexOn)'
+        result: false
+
+  - file: vending.maude
+    initial: initial
+    cases:
+      - strategy: alpha
+        formula: <> hasCake
+        result: false
+      - strategy: beta
+        formula: A [] E <> hasCake
+        result: false
+
+  - file: ../params/linprog/linprog-mc.maude
+    formula: <> final
+    cases:
+      - initial: opt1
+        result: true
+        cases:
+          - strategy: solve
+          - strategy: free
+      - initial: cycles
+        cases:
+          - strategy: simplex
+            result: true
+          - strategy: free
+            result: false
+
+  - file: ../semantics/recfns-mc.maude
+    cases:
+      - formula: <> isLiteral
+        result: true
+        cases:
+          - initial: "'f(0)"
+            strategy: redValue(factorial)
+          - initial: "'f('f(0))"
+            strategy: redValue(factorial)
+          - initial: "'g('f(0))"
+            strategy: redName(nameonly)
+      - formula: nu Z . (literalCond -> ([ apply ] False /\ < cond > True)) /\ [.] Z
+        result: true
+        cases:
+          # The number of states can be easily increased here
+          - initial: 1 + 'A(2, 4)
+            strategy: redName(ackermann)
+          - initial: 1 + 'A(2, 4)
+            strategy: redValue(ackermann)
+
+  - file: ../semantics/ccs-mc.maude
+    strategy: comp
+    cases:
+      - initial: "'Proc"
+        result: true
+        cases:
+          - formula: "[] <> action('a)"
+          - formula: "[] (action('a) -> O action('b))"
+      - initial: "'Ven"
+        result: true
+        cases:
+          - formula: O (~ action('big) /\ ~ action('little))
+          - formula: ([] (action('2p) -> (actionNext('big) /\ ~ actionNext('little))))
+          - formula: ([] ((action('2p) \/ action('1p)) -> ~ O (action('2p) \/ action('1p))))
+          - formula: ([] (((action('2p) \/ action('1p)) /\ O (action('big) \/ action('little))) -> O (actionNext('collectB) \/ actionNext('collectL))))
+          - formula: ~ (O action('1p) /\ O O action('big') /\ O O O action('collectB))
+          - formula: ([] (action('2p) -> O (action('big) /\ ~ action('little))))
+          - formula: ([] (action('2p) -> (processNext('VenB) /\ ~ processNext('VenL))))
+          - formula: ([] (((action('2p) \/ action('1p)) /\ O (action('big) \/ action('little))) -> O O (action('collectB) \/ action('collectL))))
+          - formula: ([] (action('1p) -> O action('big)))
+            result: false
+      - initial: "'Crossing"
+        strategy: compWeak
+        result: true
+        cases:
+          - formula: (O action('car) /\ O O action('train)) -> O O O (action(~ 'tcross) \/ action(~ 'ccross))
+            exclude: pymc
+          - formula: ([] ~ (actionNext(~ 'tcross) /\ actionNext(~ 'ccross)))
+          - formula: ([] ~ (actionNext(~ 'tcross) /\ actionNext(~ 'ccross)))
+            strategy: comp
+          - formula: A O (~ action('car) \/ A O (~ action('train) \/ (E O action(~ 'ccross) /\ E O action(~ 'tcross))))
+            result: false
+
+  - file: ../protocols/RIP.maude
+    initial: linear
+    formula: '[] ~ countReaches(2)'
+    cases:
+      - strategy: iteration
+        result: true
+      - strategy: repeatedIterations
+        opaque: iteration
+        result: true
+      - strategy: breakLink
+        opaque: iteration
+        result: false
+      - strategy: breakLink
+        opaque: iteration
+        formula: '[] ~ countReaches(17)'
+        result: true
+      - strategy: repeatedIterations
+        # This used to cause a SIGSEGV
+        result: true
+
+  - file: ../protocols/bitml-maude/bitml-examples.maude
+    preload: bitml.maude
+    module: Examples-LIQUIDITY-CHECK
+    strategy: bitml
+    formula: <> contract-free
+    cases:
+      - initial: LOTTERY
+        result: false
+      - initial: LIQUID-LOTTERY
+        result: true
+      - initial: LIQUID-LOTTERY
+        formula: '[]<> A has-deposit>= 4 satoshi'
+        result: true
+      - initial: TCconf(TC)
+        result: true
+      - initial: TCconf(TC')
+        result: false
+      - initial: TCconf(TC'')
+        result: true
+
+  - file: zune.maude
+    initial: initial
+    strategy: zune
+    formula: "[] (request -> <> response)"
+    result: false
+
+  - file: ../metalevel/opsem/opsem-river.maude
+    strategy: opsem
+    opaque: ->>
+    cases:
+      - initial: reduced('initial.River) @ 'solution[[empty]]
+        result: true
+        cases:
+          - formula: "[] ~ prop('death.Prop)"
+          - formula: ([] ~ prop('death.Prop) /\ <> prop('goal.Prop))
+      - initial: reduced('initial.River) @ 'eagerEating[[empty]]
+        result: false
+        formula: "[] ~ prop('bad.Prop)"
+
+  - file: ../metalevel/opsem/opsem-philosophers.maude
+    strategy: opsem
+    opaque: ->>
+    cases:
+      - initial: reduced('initial.Table) @ 'parity[[empty]]
+        formula: ([] <> (prop('eats['0.Zero]) \/ prop('eats['s_['0.Zero]]) \/ prop('eats['s_^2['0.Zero]]) \/ prop('eats['s_^3['0.Zero]]) \/ prop('eats['s_^4['0.Zero]])))
+        result: true
+
+  - file: ../biology/membranes/memparse.maude
+    module: MEMBRANE-EXTERNAL
+    metamodule: 'makeMMCModule("membrane M1 is ev r11 : a a -> (a a d, in M2) . ev r12 : a -> (a, in M2) . ev r13 : tic -> (tic, in M2) . end membrane M2 is ev r21 : d a -> c . ev r22 : c -> d . ev r23 : tic -> tac . ev r24 : a tac -> a tic . ev r25 : d tac -> d . ev r26 : tac -> delta . pr r24 > r26 . pr r25 > r26 . end", true, 0)'
+    formula: nu Z . (isAlive(M2) /\ [.] (~ isAlive(M2) \/ [.] Z))
+    strategy: '%mcomp%'
+    opaque: '%step%'
+    result: true
+    cases:
+      - initial: < M1 | a a a a a a a a a a a a tic < M2 | empty > >
+      - initial: < M1 | a a a a a a a a a a a a a a a a tic < M2 | empty > >

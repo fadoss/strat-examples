@@ -1,0 +1,12 @@
+params/fractals
+
+select MAIN .
+srew [1] a a a a a using map .
+srew a a a a a using map .
+srew [1] a a a a a using map2 .
+srew [1] a a a a a using map3 .
+srew [1] a a a a a using map4 .
+srew [1] a a a a a using map5 .
+
+select FRACTALS-STRAT .
+srew (0.0, 0.0) >> (1.0, 0.0) using expandTimes(3) .

@@ -1,0 +1,14 @@
+deduction/completion/examples/example-6.2.7
+
+srew < eqs, mtRlS > using compl .
+srew < eqs, mtRlS > using N-COMP .
+srew < eqs, mtRlS > using S-COMP .
+srew < eqs, mtRlS > using ANS-COMP .
+
+load example-7.1.1
+
+dsrew [1] < eqs, mtRlS > using S-COMP .
+
+load example-groups
+
+dsrew [1] < eqs, mtRlS > using ANS-COMP .

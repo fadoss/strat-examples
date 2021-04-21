@@ -1,0 +1,695 @@
+***
+*** Routing Information Protocol (RIP) v2 -- RFC 2453
+***
+*** Triggered updates are not implemented. Strategies are in charge of:
+***  - Limiting the actions that each router can do in a protocol time slice.
+***  - Distributing multicast and broadcast messages.
+***
+
+fmod IP-ADDR is
+	protecting NAT .
+
+	sort IPAddr IPv4Addr CIDR .
+	subsort IPv4Addr < IPAddr .
+
+	*** An Internet Protocol v4 address
+	op _._._._ : Nat Nat Nat Nat -> IPv4Addr [ctor prec 28] .
+	*** An IP host or network address in Classless Inter-Domain Routing notation
+	op _/_ : IPAddr Nat -> CIDR [prec 30] .
+
+	op zero : -> IPAddr .
+	eq zero = 0 . 0 . 0 . 0 .
+
+	*** Normalization of network identifiers
+	*** (the mask is applied to the address)
+	op normalize : CIDR -> CIDR .
+	op normalizeByte : Nat Nat Nat -> Nat .
+
+	var  Ip1 Ip2     : IPAddr .
+	var  N           : CIDR .
+	vars A B C D L M : Nat .
+
+	eq normalizeByte(A, B, L) =
+	     if L >= 8 * s(B) then A else if L <= B * 8 then 0 else
+	        sd(A, A rem 2 ^ sd(8 * s(B), L))
+	     fi fi .
+	eq normalize((A . B . C . D) / L) = (normalizeByte(A, 0, L) .
+	     normalizeByte(B, 1, L) . normalizeByte(C, 2, L) .
+	     normalizeByte(D, 3, L)) / L .
+
+	*** Network containment
+	op subnetwork : CIDR CIDR -> Bool .
+	eq subnetwork(Ip1 / L, Ip2 / M) = L >= M
+	     and normalize(Ip1 / M) == normalize(Ip2 / M) .
+
+	*** Address containment
+	op inNetwork : IPAddr CIDR -> Bool .
+	eq inNetwork(Ip1, N) = subnetwork(Ip1 / 32, N) .
+endfm
+
+fmod NETWORK-ID is
+	protecting NAT .
+
+	sort NetworkId .
+	*** An identifier for a physical network
+	op netwk : Nat -> NetworkId [ctor] .
+endfm
+
+fmod ROUTE is
+	protecting IP-ADDR .
+	protecting NETWORK-ID .
+
+	sort Interface Route .
+	subsort NetworkId < Interface .
+	*** A route in a device routing table. It contains, according
+	*** to RFC's section 3.5:
+	***  - IP address of the target host or network.
+	***  - The first router along the route to the target.
+	***  - The physical network which must be used to reach the first router.
+	***  - Metric (hop count), distance to the destination.
+	***  - Update timer, the amount of time since the entry was last updated.
+	*** The "route change flag" for triggered updates has been omitted.
+	op <_,_,_,_,_> : CIDR IPAddr Interface Nat Nat -> Route [ctor] .
+endfm
+
+view Route from TRIV to ROUTE is
+	sort Elt to Route .
+endv
+
+fmod ROUTE-TABLE is
+	protecting SET{Route} * (
+		sort Set{Route} to RouteTable,
+		sort NeSet{Route} to NeRouteTable,
+		op _,_ to __
+	) .
+endfm
+
+fmod RIP-ENTRY is
+	protecting IP-ADDR .
+
+	sort RipEntry .
+	*** RIP entry as passed by the RIP datagrams. It contains:
+	***  - The destination network or host IP address, in CIDR notation.
+	***  - The metric to the destination.
+	op <_,_> : CIDR Nat -> RipEntry [ctor] .
+endfm
+
+view RipEntry from TRIV to RIP-ENTRY is
+	sort Elt to RipEntry .
+endv
+
+fmod RIP-ENTRIES is
+	protecting ROUTE-TABLE .
+	protecting SET{RipEntry} * (
+		sort Set{RipEntry} to RipEntries,
+		sort NeSet{RipEntry} to NeRipEntries,
+		op _,_ to __
+	) .
+
+	*** Export RIP entries from a route table
+	op export : RouteTable -> RipEntries .
+	*** Filter route table entries learned from a router,
+	*** according to the split horizon specification
+	op splitHorizon : IPAddr RouteTable -> RouteTable .
+	op splitHorizon* : Interface RouteTable -> RouteTable .
+	*** Change route table entries learned from a router,
+	*** to implement route poisoning.
+	op routePoison : IPAddr RouteTable -> RouteTable .
+	op routePoison* : Interface RouteTable -> RouteTable .
+
+	*** Import RIP entries from a given router to a route table
+	op import : IPAddr Interface RipEntries RouteTable -> RouteTable .
+
+	*** Increment the update timer of the entries in the route table
+	op updateTimer : RouteTable -> RouteTable .
+
+
+	var  RT        : RouteTable .
+	var  RE        : RipEntries .
+	var  N         : CIDR .
+	vars G G'      : IPAddr .
+	var  I I'      : Interface .
+	var  H T H1 H2 : Nat .
+	var  R         : Route .
+
+	eq export(empty) = empty .
+	eq export(< N, G, I, H, T > RT) = < N, H > export(RT) .
+
+	eq splitHorizon(G, empty) = empty .
+	eq splitHorizon*(I, empty) = empty .
+	eq routePoison(G, empty) = empty .
+	eq routePoison*(I, empty) = empty .
+	eq splitHorizon(G, < N, G, I, H, T > RT) = splitHorizon(G, RT) .
+	eq splitHorizon*(I, < N, G, I, H, T > RT) = splitHorizon*(I, RT) .
+	eq routePoison(G, < N, G, I, H, T > RT) = < N, G, I, 16, T > routePoison(G, RT) .
+	eq routePoison*(I, < N, G, I, H, T > RT) = < N, G, I, 16, T > routePoison*(I, RT) .
+	eq splitHorizon(G, R RT) = R splitHorizon(G, RT) [owise] .
+	eq splitHorizon*(I, R RT) = R splitHorizon*(I, RT) [owise] .
+	eq routePoison(G, R RT) = R routePoison(G, RT) [owise] .
+	eq routePoison*(I, R RT) = R routePoison*(I, RT) [owise] .
+
+	*** Increments the hop count in 1 taking care of infinity
+	op hop+ : Nat -> Nat .
+	eq hop+(16) = 16 .
+	eq hop+(H) = s(H) [owise] .
+
+	eq import(G, I, empty, RT) = RT .
+
+	*** The routes that were learned from G are updated directly
+	*** and its metrics are not compared
+	eq import(G, I, < N, H1 > RE, < N, G, I, H2, T > RT) =
+		< N, G, I, hop+(H1), 0 > import(G, I, RE, RT) .
+
+	*** When a route exists from a different router, metrics are
+	*** compared and only the best options are kept
+	eq import(G, I, < N, H1 > RE, < N, G', I', H2, T > RT) =
+		if s(H1) <= H2 then
+			< N, G, I, hop+(H1), 0 >
+		else empty fi
+		if s(H1) >= H2 then
+			< N, G', I', H2, T >
+		else empty fi
+		import(G, I, RE, RT) [owise] .
+
+	*** When a route to this destination is not in the table
+	eq import(G, I, < N, H > RE, RT) =
+		if H < 16 then < N, G, I, s(H), 0 > else empty fi
+		import(G, I, RE, RT) [owise] .
+
+	***
+	*** Update timer and entries because of timers
+	*** (time resolution is 30 seconds)
+
+	eq updateTimer(empty) = empty .
+	*** No timer for manual entries
+	eq updateTimer(< N, G, I, 0, T > RT) = < N, G, I, 0, T > updateTimer(RT) .
+	*** In 180 seconds, the entry is invalidated
+	eq updateTimer(< N, G, I, H, 5 > RT) = < N, G, I, 16, 6 > updateTimer(RT) .
+	*** In 240 seconds, the entry is removed
+	eq updateTimer(< N, G, I, H, 7 > RT) = updateTimer(RT) .
+	eq updateTimer(< N, G, I, H, T > RT) = < N, G, I, H, s(T) > updateTimer(RT) [owise] .
+endfm
+
+mod IP-MESSAGES is
+	protecting CONFIGURATION .
+	protecting IP-ADDR .
+	protecting NETWORK-ID .
+
+	*** IP messages
+	sort IPMsg Payload .
+	subsort IPMsg < Msg < Payload .
+
+	*** Unicast IP datagram
+	op IPMessage : IPAddr IPAddr Payload -> IPMsg [msg format (g o)] .
+	*** Broadcast or multicast IP datagram within a network
+	op IPMessage : IPAddr NetworkId IPAddr Payload -> IPMsg [msg format (y o)] .
+endm
+
+view Oid from TRIV to CONFIGURATION is
+	sort Elt to Oid .
+endv
+
+mod ROUTER is
+	protecting CONFIGURATION .
+	protecting NETWORK-ID .
+	protecting RIP-ENTRIES .
+	protecting SET{Oid} .
+
+	op Router : -> Cid .
+
+	sort Address Interfaces .
+	subsort IPAddr < Address .
+
+	*** Interfaces are associated to the corresponding
+	*** address of the host there
+	op none : -> Interfaces [ctor] .
+	op _|>_ : NetworkId CIDR -> Interfaces [ctor prec 31] .
+	op __ : Interfaces Interfaces -> Interfaces [ctor assoc comm id: none] .
+
+	*** Router attributes
+	op table:_ : RouteTable -> Attribute [ctor gather (&)] .
+	op interfaces:_ : Interfaces -> Attribute [ctor gather (&)] .
+
+	*** Init routing tables based on the configured interfaces.
+	op initTables : Configuration -> Configuration .
+	op initTables : Interfaces -> RouteTable .
+
+	var C   : Configuration .
+	var O   : Object .
+	var N   : CIDR .
+	var NId : NetworkId .
+	var I   : Oid .
+	var Ifs : Interfaces .
+	var RT  : RouteTable .
+
+	eq initTables((none).Interfaces) = empty .
+	eq initTables(NId |> N Ifs) = < normalize(N), zero, NId, 0, 0 > initTables(Ifs) .
+
+	eq initTables((none).Configuration) = none .
+	eq initTables(< I : Router | table: RT, interfaces: Ifs > C) =
+	     < I : Router | table: initTables(Ifs) RT, interfaces: Ifs > initTables(C) .
+	eq initTables(O C) = O initTables(C) [owise] .
+
+
+	*** Collect all the object identifiers in the configuration
+	op allOids : Configuration -> Set{Oid} .
+
+	eq allOids(none) = empty .
+	eq allOids(< I : Class:Cid | Attrs:AttributeSet > C) = I, allOids(C) .
+	eq allOids(M:Msg C) = allOids(C) .
+endm
+
+mod RIP is
+	protecting ROUTER .
+	protecting IP-MESSAGES .
+
+	subsort IPAddr NetworkId < Oid .
+
+	var  I        : Oid .
+	var  N        : CIDR .
+	vars H T Mask : Nat .
+	vars A O G    : IPAddr .
+	var  RT       : RouteTable .
+	vars RE       : RipEntries .
+	var  Ifs      : Interfaces .
+	var  NId      : NetworkId .
+	var  Attrs    : AttributeSet .
+
+	*** Message type (1 is request, 2 is response), RIP version,
+	*** and RIP entries, when needed.
+	op ripMsg : Nat Nat RipEntries -> Payload [ctor] .
+
+	*** Request routing information
+	*** Used initially when a router is connected to the network.
+	*** The protocol admits queries for specific routes only, for
+	*** diagnostics, but we do not support this here.
+	rl [request] :
+		< I : Router | interfaces: NId |> A / Mask Ifs, Attrs >
+	 =>
+		< I : Router | interfaces: NId |> A / Mask Ifs, Attrs >
+		IPMessage(224 . 0 . 0 . 9, NId, A, ripMsg(1, 2, empty)) .
+
+
+	*** Process a routing information response
+	*** Response can be sent as unicast messages, if they are a reply,
+	*** or as multicast messages, if they are unsolicited.
+	rl [readResponse] :
+		< I : Router | table: RT,
+	                       interfaces: NId |> A / Mask Ifs, Attrs >
+		IPMessage(A, O, ripMsg(2, 2, RE))
+	=>
+		< I : Router | table: import(O, NId, RE, RT),
+	                       interfaces: NId |> A / Mask Ifs, Attrs > .
+
+	crl [readResponse] :
+		< I : Router | table: RT,
+	                       interfaces: NId |> A / Mask Ifs, Attrs >
+		IPMessage(224 . 0 . 0 . 9, NId, O, ripMsg(2, 2, RE))
+	=>
+		< I : Router | table: import(O, NId, RE, RT),
+	                       interfaces: NId |> A / Mask Ifs, Attrs >
+		IPMessage(224 . 0 . 0 . 9, NId, O, ripMsg(2, 2, RE))
+	if O =/= A .
+
+	*** Reply to a routing information request
+	*** The routing table of the replicant is sent to the requester by
+	*** a unicast message. Similar rules reply with the split horizont
+	*** and route poisoning measures.
+	crl [reply] :
+		< I : Router | table: RT, interfaces: NId |> A / Mask Ifs, Attrs >
+		IPMessage(224 . 0 . 0 . 9, NId, O, ripMsg(1, 2, empty))
+	=>
+		< I : Router | table: RT, interfaces: NId |> A / Mask Ifs, Attrs >
+		IPMessage(224 . 0 . 0 . 9, NId, O, ripMsg(1, 2, empty))
+		IPMessage(O, A, ripMsg(2, 2, export(RT)))
+	if O =/= A .
+
+	crl [reply-split] :
+		< I : Router | table: RT, interfaces: NId |> A / Mask Ifs, Attrs >
+		IPMessage(224 . 0 . 0 . 9, NId, O, ripMsg(1, 2, empty))
+	=>
+		< I : Router | table: RT, interfaces: NId |> A / Mask Ifs, Attrs >
+		IPMessage(224 . 0 . 0 . 9, NId, O, ripMsg(1, 2, empty))
+		IPMessage(O, A, ripMsg(2, 2, export(splitHorizon(O, RT))))
+	if O =/= A .
+
+	crl [reply-poison] :
+		< I : Router | table: RT, interfaces: NId |> A / Mask Ifs, Attrs >
+		IPMessage(224 . 0 . 0 . 9, NId, O, ripMsg(1, 2, empty))
+	=>
+		< I : Router | table: RT, interfaces: NId |> A / Mask Ifs, Attrs >
+		IPMessage(224 . 0 . 0 . 9, NId, O, ripMsg(1, 2, empty))
+		IPMessage(O, A, ripMsg(2, 2, export(routePoison(O, RT))))
+	if O =/= A .
+
+	*** Send a gratuitous routing information response
+	*** There are also three variants for split horizon and route poisoning.
+	rl [response] :
+		< I : Router | table: RT, interfaces: NId |> A / Mask Ifs, Attrs >
+	=>
+		< I : Router | table: RT, interfaces: NId |> A / Mask Ifs, Attrs >
+		IPMessage(224 . 0 . 0 . 9, NId, A, ripMsg(2, 2, export(RT))) .
+
+	rl [response-split] :
+		< I : Router | table: RT, interfaces: NId |> A / Mask Ifs, Attrs >
+	=>
+		< I : Router | table: RT, interfaces: NId |> A / Mask Ifs, Attrs >
+		IPMessage(224 . 0 . 0 . 9, NId, A, ripMsg(2, 2, export(splitHorizon*(NId, RT)))) .
+
+	rl [response-poison] :
+		< I : Router | table: RT, interfaces: NId |> A / Mask Ifs, Attrs >
+	=>
+		< I : Router | table: RT, interfaces: NId |> A / Mask Ifs, Attrs >
+		IPMessage(224 . 0 . 0 . 9, NId, A, ripMsg(2, 2, export(routePoison*(NId, RT)))) .
+
+
+	*** Remove a broadcast or multicast message
+	rl [remove-message] : IPMessage(A, NId, O, P:Payload) => none .
+
+	*** Update timer check
+	rl [update-timer] :
+		< I : Router | table: RT, Attrs >
+	=>
+		< I : Router | table: updateTimer(RT), Attrs > .
+
+	*** Accidental situation in which a link is broken
+	crl [break-link] :
+		< I : Router | table: < N, 0 . 0 . 0 . 0, NId, 0, T > RT,
+	                       interfaces: NId |> A / Mask Ifs >
+	=>
+		< I : Router | table: RT, interfaces: Ifs >
+	if N = normalize(A / Mask) .
+endm
+
+***
+*** Parameterized infrastructure for handling multicast messages
+
+sth ACTION is
+	protecting RIP .
+
+	strat action : NetworkId IPAddr Payload Oid @ Configuration .
+endsth
+
+smod MULTICAST-STRAT{X :: ACTION} is
+	protecting RIP .
+	protecting SET{Oid} .
+
+	*** Distributes a broadcast or multicast message to all its receivers,
+	*** assuming that the order in which they are delivered does not care
+	strat handleMulticast @ Configuration .
+	strat handleMulticast : NetworkId IPAddr Payload Set{Oid} @ Configuration .
+
+	vars C D : Configuration .
+	vars A O : IPAddr .
+	var  NId : NetworkId .
+	var  P   : Payload .
+	var  I   : Oid .
+	var  IS  : Set{Oid} .
+
+	sd handleMulticast := matchrew C
+	                        s.t. IPMessage(A, NId, O, P) D := C
+	                        by C using (one(handleMulticast(NId, O, P, allOids(C))) ;
+	                                    remove-message[A <- A, NId <- NId, O <- O, P <- P]) .
+
+	sd handleMulticast(NId, O, P, empty) := idle .
+	sd handleMulticast(NId, O, P, (I, IS)) := action(NId, O, P, I) ;
+	                                          one(handleMulticast(NId, O, P, IS)) .
+endsm
+
+view HandleRequest from ACTION to RIP is
+	var NId : NetworkId .
+	var O   : IPAddr .
+	var P   : Payload .
+	var I   : Oid .
+
+	strat action(NId, O, P, I) to expr try(reply[I <- I, NId <- NId, O <- O, P <- P]) .
+endv
+
+view HandleResponse from ACTION to RIP is
+	var NId : NetworkId .
+	var O   : IPAddr .
+	var P   : Payload .
+	var I   : Oid .
+
+	strat action(NId, O, P, I) to expr try(readResponse[I <- I, NId <- NId, O <- O, P <- P]) .
+endv
+
+smod RIP-STRAT is
+	protecting RIP .
+	protecting SET{Oid} .
+	protecting MULTICAST-STRAT{HandleRequest} * (
+		strat handleMulticast to handleRequest
+	) .
+	protecting MULTICAST-STRAT{HandleResponse} * (
+		strat handleMulticast to handleResponse
+	) .
+
+	var  NId    : NetworkId .
+	var  R      : Object .
+	var  N      : CIDR .
+	var  A O G  : IPAddr .
+	vars C D D' : Configuration .
+	vars I J    : Oid .
+	var  IS     : Set{Oid} .
+	var  Ifs    : Interfaces .
+	var  Attrs  : AttributeSet .
+	var  RT     : RouteTable .
+	var  P      : Payload .
+	vars H T    : Nat .
+
+	strats init expiration flush iteration initialRequest @ Configuration .
+	strats iteration expiration initialRequest update-tick : Set{Oid} @ Configuration .
+	strat  initialRequest iteration : Oid Interfaces @ Configuration .
+
+	*** We do not manage time explicitly but we assume the following:
+	***  - Each 'iteration' execution is a time lapse of 30 seconds.
+	***  - Between two iterations all request and replies have been proceesed.
+
+	*** Initial round, each router make its initial request
+	sd init := initialRequest ; (handleRequest | readResponse) ! .
+
+	***
+	*** Initial request to all interfaces of all routers
+	sd initialRequest := matchrew C by C using initialRequest(allOids(C)) .
+
+	sd initialRequest(empty) := idle .
+	sd initialRequest((I, IS)) :=
+		try(matchrew D s.t. < J : Router | interfaces: Ifs, Attrs > D' := D /\ I == J
+	              by D using one(initialRequest(I, Ifs))) ;
+	            one(initialRequest(IS)) .
+
+	sd initialRequest(I, none) := idle .
+	sd initialRequest(I, NId |> N Ifs) := request[I <- I, NId <- NId] ;
+	                                      one(initialRequest(I, Ifs)) .
+
+	***
+	*** Gratuitous response iteration (every 30 seconds)
+	sd iteration := matchrew C by C using (one(update-tick(allOids(C))) ; iteration(allOids(C))) .
+
+	sd update-tick(empty) := idle .
+	sd update-tick((I, IS)) := update-timer[I <- I] ; one(update-tick(IS)) .
+
+	sd iteration(empty) := handleResponse !  .
+	sd iteration((I, IS)) := (matchrew C s.t.
+			            < I : Router | table: RT, interfaces: Ifs > D := C
+	                            by C using one(iteration(I, Ifs))) ;
+	                         handleResponse * ;
+	                         iteration(IS) .
+
+	sd iteration(I, none) := idle .
+	sd iteration(I, NId |> N Ifs) := response[I <- I, NId <- NId] ;
+	                                 one(iteration(I, Ifs)) .
+endsm
+
+mod EXAMPLES is
+	protecting RIP .
+
+	ops r1 r2 r3 r4 r5 : -> Oid .
+
+	ops linear linear4 loop break : -> Configuration .
+
+	*** linear <> - <> - <>
+	***
+	*** Converges in a single iteration, but if we break the link of r2 to
+	*** netwk(1) we can see a count to infinity in the entries for netwk(1)
+	*** in both r2 and r3. Moreover, we can observe how the entry for
+	*** netwk(2) in r1 is invalidated and then removed because of the
+	*** timer. The count to infinity does not happen when using DO or RP.
+
+	eq linear = initTables(
+	             < r1 : Router | table: empty,
+	                             interfaces: netwk(1) |> (1 . 0 . 0 . 1) / 8 >
+	             < r2 : Router | table: empty,
+	                             interfaces: netwk(1) |> (1 . 0 . 0 . 2) / 8
+	                                         netwk(2) |> (2 . 0 . 0 . 2) / 8 >
+	             < r3 : Router | table: empty,
+	                             interfaces: netwk(2) |> (2 . 0 . 0 . 1) / 8 >
+	          ) .
+
+	*** linear4 <> - <> - <> - <>
+	***
+	*** It requires two iterations to converge.
+
+	eq linear4 = initTables(
+	             < r1 : Router | table: empty,
+	                             interfaces: netwk(1) |> (1 . 0 . 0 . 1) / 8 >
+	             < r2 : Router | table: empty,
+	                             interfaces: netwk(1) |> (1 . 0 . 0 . 2) / 8
+	                                         netwk(2) |> (2 . 0 . 0 . 2) / 8 >
+	             < r3 : Router | table: empty,
+	                             interfaces: netwk(2) |> (2 . 0 . 0 . 1) / 8
+	                                         netwk(3) |> (3 . 0 . 0 . 1) / 8 >
+	             < r4 : Router | table: empty,
+	                             interfaces: netwk(3) |> (3 . 0 . 0 . 2) / 8 >
+	          ) .
+
+	*** loop   < >
+	***       /   \
+	***      <> - <>
+
+	eq loop = initTables(
+		    < r1 : Router | table: empty,
+	                            interfaces: netwk(0) |> (1 . 0 . 0 . 1) / 16
+	                                        netwk(1) |> (1 . 1 . 0 . 1) / 16 >
+		    < r2 : Router | table: empty,
+	                            interfaces: netwk(1) |> (1 . 1 . 0 . 2) / 16
+	                                        netwk(2) |> (1 . 2 . 0 . 2) / 16 >
+		    < r3 : Router | table: empty,
+	                            interfaces: netwk(2) |> (1 . 2 . 0 . 3) / 16
+	                                        netwk(0) |> (1 . 0 . 0 . 3) / 16 >
+		  ) .
+
+	*** A more complex network   <4> - (3) - <5> - (4)
+	*** .                         |           |
+	*** .                        (2) - (0)   (1)
+	*** .                         |  /  |  \  |
+	*** .                        <3>   <1>   <2>
+
+	eq break = initTables(
+	             < r1 : Router | table: empty,
+	                             interfaces: netwk(0) |> (1 . 0 . 0 . 1) / 16 >
+	             < r2 : Router | table: empty,
+	                             interfaces: netwk(0) |> (1 . 0 . 0 . 2) / 16
+	                                         netwk(1) |> (1 . 1 . 0 . 2) / 16 >
+	             < r3 : Router | table: empty,
+	                             interfaces: netwk(0) |> (1 . 0 . 0 . 3) / 16
+	                                         netwk(2) |> (1 . 2 . 0 . 3) / 16 >
+	             < r4 : Router | table: empty,
+	                             interfaces: netwk(2) |> (1 . 2 . 0 . 4) / 16
+	                                         netwk(3) |> (1 . 3 . 0 . 4) / 16 >
+	             < r5 : Router | table: empty,
+	                             interfaces: netwk(1) |> (1 . 1 . 0 . 5) / 16
+	                                         netwk(3) |> (1 . 3 . 0 . 5) / 16
+	                                         netwk(4) |> (1 . 4 . 0 . 5) / 16 >
+		   ) .
+
+
+endm
+
+smod MAIN is
+	protecting EXAMPLES .
+	protecting RIP-STRAT .
+endsm
+
+***
+*** Model checking
+***
+
+sload model-checker
+
+mod RIP-PREDS is
+	protecting RIP .
+	including SATISFACTION .
+
+	subsort Configuration < State .
+
+	op timerReaches : Nat -> Prop [ctor] .
+	op countReaches : Nat -> Prop [ctor] .
+	op reachable : Oid CIDR -> Prop [ctor] .
+
+	var  I   : Oid .
+	var  Ifs : Interfaces .
+	var  RT  : RouteTable .
+	var  N   : CIDR .
+	var  G   : IPAddr .
+	var  NId : NetworkId .
+	vars H T : Nat .
+	var  C   : Configuration .
+
+	eq < I : Router | table: < N, G, NId, H, T > RT, interfaces: Ifs > C |= countReaches(H) = true .
+	eq C |= countReaches(H) = false [owise] .
+
+	eq < I : Router | table: < N, G, NId, H, T > RT, interfaces: Ifs > C |= timerReaches(T) = true .
+	eq C |= timerReaches(T) = false [owise] .
+
+	ceq C |= reachable(I, N) = true if < N, G, NId, H, T > := tableEntry(C, I, N) /\ H < 16 .
+	eq C |= reachable(I, N) = false [owise] .
+
+	*** Obtain the table entry for a network in a router
+	op tableEntry : Configuration Oid CIDR -> Route? .
+
+	sort Route? .
+	subsort Route < Route? .
+	op noRoute : -> Route? [ctor] .
+
+	eq tableEntry(< I : Router | table: < N, G, NId, H, T > RT, interfaces: Ifs > C, I, N) = < N, G, NId, H, T > .
+	eq tableEntry(C, I, N) = noRoute [owise] .
+endm
+
+smod RIP-SCHECK is
+	protecting RIP-PREDS .
+	protecting RIP-STRAT .
+	protecting EXAMPLES .
+	including MODEL-CHECKER .
+	including STRATEGY-MODEL-CHECKER .
+
+	var  I   : Oid .
+	var  N   : CIDR .
+	var  RT  : RouteTable .
+	vars H T : Nat .
+	var  A   : IPAddr .
+	var  NId : NetworkId .
+	var  C   : Configuration .
+	var  Ifs : Interfaces .
+
+	*** Repeated iterations over the same strategy
+	*** (intended to be used with opaque iteration)
+	strats repeatedIterations iterateForever @ Configuration .
+
+	sd repeatedIterations := iteration * .
+	sd iterateForever := iteration ? iterateForever : idle .
+
+	*** Repeated iterations after breaking a link
+	strats breakLink breakLink-forever @ Configuration .
+
+	sd breakLink := iteration ;
+	                break-link[I <- r2] ;
+	                iteration * .
+
+	sd breakLink-forever := iteration ;
+	                break-link[I <- r2, NId <- netwk(2)] ;
+	                iterateForever .
+endsm
+
+eof
+
+*** Execution examples
+
+srew linear using iteration .
+srew linear using one(iteration) ; break-link[I <- r2] ; iteration .
+dsrew [3] linear4 using iteration .
+srew loop using iteration .
+
+*** Model checking examples
+
+red modelCheck(linear, [] ~ countReaches(2), 'iteration) .
+result Bool: true (1492 system states, 156235 rewrites, 150ms)
+
+red modelCheck(linear, [] ~ countReaches(2), 'repeatedIterations, 'iteration) .
+result Bool: true (4 system states, 99674 rewrites, 2908ms)
+
+red modelCheck(linear, [] ~ countReaches(2), 'repeatedIterations) .
+result Bool: true (2586 system states, 29683 rewrites, 360ms)
+
+red modelCheck(linear, [] ~ countReaches(2), 'breakLink, 'iteration) .
+result ModelCheckResult: (counterexample) (6 system states, 57115 rewrites, 8392ms)

@@ -1,0 +1,534 @@
+***
+*** Multistrategies
+***
+*** The module MULTISTRAT offers an infrastructure for the execution
+*** of multiple independent strategies on the same subject term, while the
+*** strategy module MULTISTRAT-STRAT controls how they are executed,
+*** either by turns or concurrently. Other modes can be defined.
+***
+
+sload ../stratKit
+
+view Substitution from TRIV to META-TERM is
+	sort Elt to Substitution .
+endv
+
+mod MULTISTRAT is
+	protecting STKIT-EXECUTION .
+	protecting SET{Substitution} .
+
+	sorts MSContext MSThread MSThreadSet .
+	subsort MSThread < MSThreadSet .
+
+	*** Each strategy is handled by a numbered thread that
+	*** updates its strategy during the execution
+
+	op <_%_> : Nat Strategy -> MSThread [ctor] .
+	op none  : -> MSThreadSet [ctor] .
+	op __    : MSThreadSet MSThreadSet -> MSThreadSet [ctor assoc comm id: none] .
+
+
+	*** A log for the last operation executed is included among the
+	*** threads. It is useful to recover the trace for the model checker.
+	sort MSLog .
+	subsort MSLog < MSThreadSet .
+
+	op nolog : -> MSLog [ctor] .
+	op log : Nat Strategy -> MSLog [ctor] .
+
+	*** The full context for the multistrategy execution further includes
+	*** the subject term and the metamodule (which must be or contain the
+	*** module in which the subject term is defined).
+
+	op {_::_,_} : Term MSThreadSet Module -> MSContext [ctor] .
+
+	op getTerm : MSContext -> Term .
+	eq getTerm({ E :: TS, M }) = E .
+
+	*** The makeContext function builds the context given a list of
+	*** strategies and the metarepresentation of a module.
+
+	op makeContext : Term StrategyList Module -> MSContext .
+	op makeThreadSet : StrategyList Nat -> MSThreadSet .
+	eq makeContext(E, SL, M) = { E :: makeThreadSet(SL, 0) nolog, M } .
+
+	eq makeThreadSet(empty, N) = none .
+	eq makeThreadSet((S, SL), N) = < N % S > makeThreadSet(SL, s(N)) .
+
+	*** Sets of terms
+
+	sort TermSet .
+	subsort QidSet Term < TermSet .
+	op _;_ : TermSet TermSet -> TermSet [ctor ditto] .
+
+	***
+	*** Some auxiliary functions
+	***  * allSuccs calculates the term the follow from a strategy.
+	***    It is metaSrewrite as a set.
+	***  * allMatches is equivalently metaMatch as a set.
+
+	op allSuccs : Module Term Strategy -> TermSet .
+	op allSuccs : Module Term Strategy Nat -> TermSet .
+
+	eq allSuccs(M, E, S) = allSuccs(M, E, S, 0) .
+
+	ceq allSuccs(M, T, S, N) = R ; allSuccs(M, T, S, s(N))
+		if {R, Ty} := metaSrewrite(M, T, S, breadthFirst, N) .
+	ceq allSuccs(M, T, S, N) = none
+		if metaSrewrite(M, T, S, breadthFirst, N) = failure .
+
+	op allMatches : Module Term Term Condition -> Set{Substitution} .
+	op allMatches : Module Term Term Condition Nat -> Set{Substitution} .
+
+	eq allMatches(M, T, E, C) = allMatches(M, T, E, C, 0) .
+
+	ceq allMatches(M, T1, T2, C, N) = Sb, allMatches(M, T1, T2, C, N) if Sb := metaMatch(M, T1, T2, C, N) .
+	ceq allMatches(M, T1, T2, C, N) = empty if metaMatch(M, T1, T2, C, N) = noMatch .
+
+
+	***
+	*** Rules
+
+	*** Replace some derived strategy constructor by their definitions equationally
+
+	eq [ms-reduction] : < N % S + ; Ss > = < N % S ; S * ; Ss > .
+	eq [ms-reduction] : < N % (S1 or-else S2) ; Ss > = < N % (S1 ? idle : S2) ; Ss > .
+
+	*** However, other less innocent equivalences are handled by rules
+
+	rl [ms-reduction] : < N % S * ; Ss > => < N % Ss > .
+	rl [ms-reduction] : < N % S * ; Ss > => < N % S ; S * ; Ss > .
+	rl [ms-reduction] : < N % S ! ; Ss > => < N % (S ? S ! : idle) ; Ss > .
+
+	crl [ms-choose] : < N % (S1 | S2) ; Ss > => < N % S1 ; Ss > if S1 =/= fail /\ S2 =/= fail .
+
+	*** In general, matchrew operator are treated as atomic operations:
+	*** they assume some structural requirements that might not be
+	*** maintained during the whole execution by the other strategies.
+	***
+	*** However, to allow retrieving information from the subject term,
+	*** those whose main pattern is a single variable are not atomic.
+
+	crl [ms-reduction] : { E :: < N % (matchrew X s.t. Cond by X using S) ; Ss > TS, M }
+			  => { E :: < N % applySubs(S, Sb)                    ; Ss > TS, M }
+		if Sb, Sbs := allMatches(M, X, E, Cond) .
+
+	*** The condition of a conditional expression is atomic too.
+
+	crl [ms-cond] : { E  :: < N % (S1 ? S2 : S3) ; Ss > TS LG, M }
+	             => { E' :: < N % S2 ; Ss > TS log(N, S1), M }
+		if E' ; Es := allSuccs(M, E, S1) .
+
+	crl [ms-else] : { E :: < N % (S1 ? S2 : S3) ; Ss > TS, M }
+	             => { E :: < N % S3 ; Ss > TS, M }
+		if allSuccs(M, E, S1) = none .
+
+	*** Tests are handled as silent operations. Sometimes it could
+	*** be interesting to treat them as transitions.
+
+	crl [ms-test] : { E :: < N % match P s.t. C ; Ss > TS LG, M }
+	             => { E :: < N % Ss > TS log(N, match P s.t. C), M }
+		if allSuccs(M, E, match P s.t. C) =/= none .
+
+	crl [ms-test] : { E :: < N % xmatch P s.t. C ; Ss > TS LG, M }
+	             => { E :: < N % Ss > TS log(N, xmatch P s.t. C), M }
+		if allSuccs(M, E, xmatch P s.t. C) =/= none .
+
+	crl [ms-test] : { E :: < N % amatch P s.t. C ; Ss > TS LG, M }
+	             => { E :: < N % Ss > TS log(N, amatch P s.t. C), M }
+		if allSuccs(M, E, amatch P s.t. C) =/= none .
+
+	*** Strategy calls are replaced by any instantiated definition
+	*** that matches the call term.
+
+	crl [ms-def] : { E :: < N % CS ; Ss > TS, M }
+	            => { E :: < N % S  ; Ss > TS, M }
+		if S $ Sset := allDefs(M, CS) .
+
+	*** Execute the next strategy in the concatenated list.
+
+	crl [ms-run] : { E  :: < N % S ; Ss > TS LG, M }
+	            => { E' :: < N % Ss > TS log(N, S), M }
+		if S =/= idle
+		/\ atomicStrategy(S)
+		/\ E' ; Es := allSuccs(M, E, S) .
+
+	op atomicStrategy : Strategy -> Bool .
+
+	eq atomicStrategy(Q[Sb]{SL}) = true .
+	eq atomicStrategy(try(S)) = true .
+	eq atomicStrategy(not(S)) = true .
+	eq atomicStrategy(test(S)) = true .
+	eq atomicStrategy(top(RA:RuleApplication)) = true .
+	eq atomicStrategy(S) = false [owise] .
+
+	*** Meaningless rule to collapse control transitions when
+	*** required (opaque strategies can be used instead).
+
+	crl [ms-collapse] : MSC => MSC' if MSC => MSC' [nonexec] .
+
+
+	var  N              : Nat .
+	var  C              : Condition .
+	var  X              : Variable .
+	var  M              : Module .
+	vars S S1 S2 S3 Ss  : Strategy .
+	var  SL             : StrategyList .
+	vars E E'           : Term .
+	vars T R CT P T1 T2 : Term .
+	var  Q              : Qid .
+	var  Es             : TermSet .
+	var  Ty             : Type .
+	var  CS             : CallStrategy .
+	var  TS             : MSThreadSet .
+	var  LG             : MSLog .
+	var  Cond           : EqCondition .
+	var  Sb             : Substitution .
+	var  Sbs            : Set{Substitution} .
+	var  Sset           : Set{Strategy} .
+	vars MSC MSC'       : MSContext .
+endm
+
+smod MULTISTRAT-STRAT is
+	protecting MULTISTRAT .
+
+	***
+	*** Control and system steps for a specific thread.
+	***
+	*** System steps apply rules of the underlying module, while
+	*** control steps do auxiliary work to execute the strategy.
+	*** For multistrategies to make sense, certain composites of rule
+	*** rewrites are considered atomic operations:
+	***	1. Matchrew operators except those of the form
+	***	   matchrew X s.t. C by X using S.
+	***	2. Conditions of conditional operators.
+	***	3. Operators that involve conditionals like try, not, or-else,
+	***	   and according to their translations.
+	***
+	strats control system : Nat @ MSContext .
+
+	sd control(N) :=   ms-reduction[N <- N]
+	                 | ms-def[N <- N]
+	                 | ms-choose[N <- N]
+	                 | ms-test[N <- N]
+	                 | ms-else[N <- N] .
+
+	sd system(N) := ms-cond[N <- N] or-else ms-run[N <- N] .	*** can be |
+
+	***
+	*** Rewrite relations for a specific thread.
+	***
+	*** --> represents a control or system transition.
+	*** =>> represents system transition preceded by some control ones.
+	***
+	strats --> =>> : Nat @ MSContext .
+
+	sd -->(N) := control(N) or-else system(N) .
+	sd =>>(N) := ms-collapse{control(N) ! ; system(N)} .
+
+	*** Opaque strategies can be used instead but they seems to be slower
+
+	***
+	*** Predefined modes of execution
+	***
+	*** freec/0	rules and other atomic operations are applied in any order.
+	*** freec/1	the same but for a given number of steps.
+	*** turns/2	strategies are executed in turns (non-terminating).
+	*** turns/3	like turns/2 but for a given number of turns.
+	***
+
+	strat freec :             @ MSContext .
+	strat freec : Nat         @ MSContext .
+	strat turns : Nat Nat     @ MSContext .
+	strat turns : Nat Nat Nat @ MSContext .
+
+	sd freec := (matchrew C s.t. { E :: < N % S > TS, Mod } := C by C using =>>(N))
+	             ? freec
+	             : idle .
+
+	sd freec(0)    := idle .
+	sd freec(s(K)) := (matchrew C s.t. { E :: < N % S > TS, Mod } := C by C using =>>(N))
+	                   ? freec(K)
+	                   : idle .
+
+	sd turns(N, M) := =>>(N)
+	                    ? turns(s(N) rem M, M)
+	                    : idle .
+
+	sd turns(N, M, 0) := idle .
+	sd turns(N, M, s(K)) := =>>(N)
+	                          ? turns(s(N) rem M, M, if s(N) == M then K else s(K) fi)
+	                          : idle .
+
+	***
+	*** Variants of concurrent executions where no thread is explicitly
+	*** selected and control steps are not collapsed. They may be faster,
+	*** but not useful for model checking.
+	***
+	*** free/0	strategies can interleave in any order.
+	*** free/1	like free/0 but for a given number of steps.
+	***
+
+	strat free       @ MSContext .
+	strat free : Nat @ MSContext .
+
+	sd free := (ms-reduction | ms-def | ms-choose | ms-cond | ms-else | ms-run | ms-test)
+	             ? free
+	             : idle .
+
+	sd free(0) := idle .
+	sd free(s(K)) := ((ms-reduction | ms-def | ms-choose | ms-cond | ms-else) * ;
+	                 (ms-run | ms-test))
+	                   ? free(K) 
+	                   : idle .
+
+	***
+	*** Concurrent executions where tests are considered atomic operations.
+	***
+	*** freecat/0	the same as freec but tests are considered atomic operations.
+	*** freecat/1	freecat/0 but for a given number of steps.
+	***
+	*** =>>AT	the same as =>> but considering tests atomic
+	***
+
+	strat  freecat             @ MSContext .
+	strats freecat =>>AT : Nat @ MSContext .
+
+	sd freecat := (matchrew C s.t. { E :: < N % S > TS, Mod } := C by C using =>>AT(N))
+	               ? freecat
+	               : idle .
+
+	sd freecat(0)    := idle .
+	sd freecat(s(K)) := (matchrew C s.t. { E :: < N % S > TS, Mod } := C by C using =>>AT(N))
+	                     ? freecat(K)
+	                     : idle .
+
+	sd =>>AT(N) := ms-collapse{
+		(ms-reduction[N <- N] | ms-def[N <- N] | ms-choose[N <- N] | ms-else[N <- N]) ! ;
+		(ms-test[N <- N] | ms-cond[N <- N] | ms-run[N <- N])
+	} .
+
+	vars N M K : Nat .
+	var  S     : Strategy .
+	var  Mod   : Module .
+	var  TS    : MSThreadSet .
+	var  E     : Term .
+	var  C	   : MSContext .
+endsm
+
+***
+*** Model checking with multiple strategies
+***
+
+sload model-checker
+
+mod MULTISTRAT-PREDS is
+	protecting MULTISTRAT .
+	including SATISFACTION .
+
+	subsort MSContext < State .
+
+	*** Atomic propositions are expressed as metaterms
+	op prop : Term -> Prop [ctor] .
+
+	eq { E :: TS, M } |= prop(P) = getTerm(metaReduce(M, '_|=_[E, P])) == 'true.Bool .
+
+	vars E P : Term .
+	var  TS  : MSThreadSet .
+	var  M   : Module .
+endm
+
+smod MULTISTRAT-EXTERNAL is
+	*** To be used with the external model-checker
+
+	protecting MULTISTRAT-STRAT .
+	protecting MULTISTRAT-PREDS .
+	protecting STRATEGY-MODEL-CHECKER .
+	protecting LEXICAL .
+endsm
+
+mod MULTISTRAT-MODEL-CHECKER is
+	including MODEL-CHECKER-COMMON .
+	including META-LEVEL .
+
+	*** Rule identifier to the strategy
+	op step : Nat RuleName -> RuleName [ctor] .
+
+	***
+	*** Model checking the input system (as specified for the usual model
+	*** checker) controlled by the multiple strategies. There are different
+	*** variants.
+
+	*** Strategies are executed by turns
+	op modelCheckTurns : Qid State Formula StrategyList -> ModelCheckResult .
+	*** Strategies are executed in a limited number of turns
+	op modelCheckTurns : Qid State Formula StrategyList Nat -> ModelCheckResult .
+	*** Strategies are executed concurrently
+	op modelCheckConcurrent : Qid State Formula StrategyList -> ModelCheckResult .
+	*** Strategies are executed concurrently and tests are atomic
+	op modelCheckConcurrentAT : Qid State Formula StrategyList -> ModelCheckResult .
+	*** Like modelCheckConcurrent, but in a limited number of steps
+	op modelCheckConcurrent : Qid State Formula StrategyList Nat -> ModelCheckResult .
+	*** Like modelCheckConcurrentAT, but in a limited number of steps
+	op modelCheckConcurrentAT : Qid State Formula StrategyList Nat -> ModelCheckResult .
+
+	*** All these are defined equationally the generic modelCheckMultistrat below
+
+	eq modelCheckTurns(Q, S, F, SL) = modelCheckMultistrat(Q, S, F, SL,
+		'turns[['0.Zero, upTerm(length(SL))]]) .
+	eq modelCheckTurns(Q, S, F, SL, N) = modelCheckMultistrat(Q, S, F, SL,
+		'turns[['0.Zero, upTerm(length(SL)), upTerm(N)]]) .
+	eq modelCheckConcurrent(Q, S, F, SL) = modelCheckMultistrat(Q, S, F, SL,
+		'freec[[empty]]) .
+	eq modelCheckConcurrentAT(Q, S, F, SL) = modelCheckMultistrat(Q, S, F, SL,
+		'freecat[[empty]]) .
+	eq modelCheckConcurrent(Q, S, F, SL, N) = modelCheckMultistrat(Q, S, F, SL,
+		'freec[[upTerm(N)]]) .
+	eq modelCheckConcurrentAT(Q, S, F, SL, N) = modelCheckMultistrat(Q, S, F, SL,
+		'freecat[[upTerm(N)]]) .
+
+	*** Generic version to define the model checker for specific control strategies.
+	op modelCheckMultistrat : Qid State Formula StrategyList Strategy -> ModelCheckResult .
+	op modelCheckMultistrat : Module Term Term StrategyList Strategy -> Term .
+
+	eq modelCheckMultistrat(Q, S, F, SL, St) =
+		downTerm(modelCheckMultistrat(upModule(Q, true), upTerm(S), upFormula(F), SL, St), false) .
+
+	eq modelCheckMultistrat(M, T1, T2, SL, St) =
+		downMCResult(getTerm(metaReduce(extendModule(St), 'modelCheck[
+			'makeContext[
+				upTerm(T1),
+				upTerm(SL),
+				upTerm(M)
+			],
+			T2, *** LTL formula
+			''%main%.Qid
+		])))
+	.
+
+	*** Metarepresent a formula translating the original atomic
+	*** propositions to prop(Term) propositions.
+	op upFormula : Formula -> Term .
+
+	eq upFormula(True) = 'True.Formula .
+	eq upFormula(False) = 'False.Formula .
+	eq upFormula(~ F) = '~_[upFormula(F)] .
+	eq upFormula(F1 /\ F2) = '_/\_[upFormula(F1), upFormula(F2)] .
+	eq upFormula(F1 \/ F2) = '_\/_[upFormula(F1), upFormula(F2)] .
+	eq upFormula(O F) = 'O_[upFormula(F)] .
+	eq upFormula(F1 U F2) = '_U_[upFormula(F1), upFormula(F2)] .
+	eq upFormula(F1 R F2) = '_R_[upFormula(F1), upFormula(F2)] .
+	eq upFormula(P) = 'prop[upTerm(upTerm(P))] .
+
+	*** Build a module including the model checker, the multistrategies
+	*** infrastructure, and the declaration of a strategy %main%.
+	op extendModule : Strategy -> Module .
+
+	eq extendModule(St) = smod 'MULTISTRAT-INSTANCE is
+		(protecting 'MULTISTRAT-STRAT .)
+		(protecting 'MULTISTRAT-PREDS .)
+		(protecting 'STRATEGY-MODEL-CHECKER .)
+		sorts none .
+		none	*** subsorts
+		none	*** operators
+		none	*** membership axioms
+		none	*** equations
+		none	*** rules
+		(strat '%main% : nil @ 'State [none] .)
+		(sd '%main%[[empty]] := St [none] .)
+	endsm .
+
+	*** Convert the meta-counterexample on the multistrategy infrastructure
+	*** into a meta-counterexample for the original model.
+	op downMCResult : Term -> Term .
+	op downPath     : NeTermList -> NeTermList .
+	op downCycle    : NeTermList Term -> NeTermList .
+
+	eq downMCResult('true.Bool) = 'true.Bool .
+	eq downMCResult('counterexample['nil.TransitionList, '__[T2, NeTL']]) = 'counterexample[
+		'nil.TransitionList,
+		'__[downCycle((T2, NeTL'), T2)]] .
+	eq downMCResult('counterexample['nil.TransitionList, '`{_`,_`}[NeTL']]) = 'counterexample[
+		'nil.TransitionList,
+		makeTransition('`{_`,_`}[NeTL'], '`{_`,_`}[NeTL'])] .
+	eq downMCResult('counterexample['__[NeTL, T1], '__[T2, NeTL']]) = 'counterexample[
+		'__[downPath((NeTL, T1)), makeTransition(T1, T2)],
+		'__[downCycle((T2, NeTL'), T2)]] .
+	eq downMCResult('counterexample['__[NeTL, T1], '`{_`,_`}[NeTL']]) = 'counterexample[
+		'__[downPath((NeTL, T1)), makeTransition(T1, '`{_`,_`}[NeTL'])],
+		makeTransition('`{_`,_`}[NeTL'], '`{_`,_`}[NeTL'])] .
+	eq downMCResult('counterexample['`{_`,_`}[NeTL], '__[T2, NeTL']]) = 'counterexample[
+		makeTransition('`{_`,_`}[NeTL], T2),
+		'__[downCycle((T2, NeTL'), T2)]] .
+	eq downMCResult('counterexample['`{_`,_`}[NeTL], '`{_`,_`}[NeTL']]) = 'counterexample[
+		makeTransition('`{_`,_`}[NeTL], '`{_`,_`}[NeTL']),
+		makeTransition('`{_`,_`}[NeTL], '`{_`,_`}[NeTL'])] .
+	eq downMCResult('nil.TransitionList) = 'nil.TransitionList .
+	eq downMCResult('`{_::_`,_`}[T1, T2, T3]) = T1 .
+	eq downMCResult('`{_`,_`}[T1, T2]) = '`{_`,_`}[downTerm(downMCResult(T1), 'error.Error), downMCResult(T2)] .
+	eq downMCResult('solution.RuleName) = 'deadlock.RuleName .
+	eq downMCResult('unlabeled.RuleName) = 'unlabeled.RuleName .
+	eq downMCResult('opaque[T]) = 'opaque.Qid .
+	eq downMCResult(T) = T [owise] .
+
+	eq downPath((T1, T2)) = makeTransition(T1, T2) .
+	eq downCycle(T, T1) = makeTransition(T, T1) .
+	eq downPath((T1, T2, NeTL)) = makeTransition(T1, T2), downPath((T2, NeTL)) .
+	eq downCycle((T1, T2, TL), T3) = makeTransition(T1, T2), downCycle((T2, TL), T3) .
+
+	op makeTransition : Term Term -> Term .
+	eq makeTransition('`{_`,_`}[T1, 'solution.RuleName], T3) =
+		'`{_`,_`}[downTerm(downMCResult(T1), 'error.Error), 'deadlock.RuleName] .
+	eq makeTransition('`{_`,_`}[T1, T2], T3) = '`{_`,_`}[downTerm(downMCResult(T1), 'error.Error), getMSLog(T3)] .
+
+	*** Get the log of the last execution
+	op getMSLog : Term -> Term .
+	op getMSLog : NeTermList -> Term .
+
+	eq getMSLog('`{_`,_`}[T1, T2]) = getMSLog(T1) .
+	eq getMSLog('`{_::_`,_`}[T1, T2, T3]) = getMSLog(T2) .
+	eq getMSLog('__[NeTL]) = getMSLog(NeTL) .
+	eq getMSLog('<_%_>[T1, T2]) = 'step[T1, 'deadlock.RuleName] .
+	eq getMSLog(('log[T1, T2], TL)) = 'step[T1, identifyStrat(T2)] .
+	eq getMSLog((T, NeTL)) = getMSLog(NeTL) [owise] .
+
+	*** Convert a rule application meta-term to a rule name
+	op identifyStrat : Term -> Term .
+
+	eq identifyStrat('solution.RuleName) = 'deadlock.RuleName .
+	eq identifyStrat('top[T]) = identifyStrat(T) .
+	eq identifyStrat('match_s.t._[T1, T2]) = ''test-match.Qid .
+	eq identifyStrat('xmatch_s.t._[T1, T2]) = ''test-xmatch.Qid .
+	eq identifyStrat('amatch_s.t._[T1, T2]) = ''test-amatch.Qid .
+	eq identifyStrat('matchrew_s.t._by_[T1, T2, T3]) = if downTerm(T1, ''a.Qid) :: Variable 
+		then identifyStrat(T3) else ''matchrew.Qid fi .
+	eq identifyStrat('_using_[T1, T2]) = identifyStrat(T2) .
+	eq identifyStrat('xmatchrew_s.t._by_[T1, T2, T3]) = ''xmatchrew.Qid .
+	eq identifyStrat('amatchrew_s.t._by_[T1, T2, T3]) = ''amatchrew.Qid .
+	*** To identify atomic actions properly, the prefix TL must be checked
+	*** to consist only it test and other non-system actions
+	eq identifyStrat('_;_[TL, T2]) = identifyStrat(T2) .
+	eq identifyStrat('_`[_`]`{_`}[T1, T2, T3]) = T1 .
+	eq identifyStrat('_`[`[_`]`][T1, T2]) = T1 .
+	eq identifyStrat('_or-else_[T1, TL]) = identifyStrat(T1)  .
+	eq identifyStrat('_?_:_[T1, T2, T3]) = identifyStrat(T1) .
+	eq identifyStrat(T) = ''unknown.Qid [owise] .
+
+	*** Length of a strategy list
+	op length : StrategyList -> Nat .
+
+	eq length((empty).StrategyList) = 0 .
+	eq length(St:Strategy, SL) = s(length(SL)) .
+
+	var  M          : Module .
+	vars Q SQ       : Qid .
+	vars S          : State .
+	vars F F1 F2    : Formula .
+	var  P          : Prop .
+	var  St         : Strategy .
+	var  SL         : StrategyList .
+	var  N          : Nat .
+	vars T T1 T2 T3 : Term .
+	var  TL         : TermList .
+	var  NeTL NeTL' : NeTermList .
+endm

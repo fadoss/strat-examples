@@ -1,0 +1,187 @@
+***
+*** Ambient calculus (type system, implementation 1)
+***
+*** Source: Typed Mobile Ambients in Maude
+***	    Fernando Rosa-Velardo, Clara Segura, and Alberto Verdejo
+***	    http://maude.ucm.es/ambients/
+***
+
+
+in ambients-semantics.maude
+
+fmod ENVIRONMENTS is
+
+	including CINNI .
+
+
+	sort  Env .
+	op empty : -> Env .
+	op __ : Env Env -> Env [assoc comm id: empty] .
+	op `(_`,_`) : Acid AType -> Env .
+	op _`[_`] : Env Acid -> AType [prec 0] .
+	op _`[_->_`] : Env Qid AType -> Env [prec 0] .
+	op _`[_`] : Env InputSeq -> Env .
+
+	vars N N' : Acid . vars T T' : AType . var E : Env . var a : Qid .
+	var x : Qidx . vars I1 I2 : InputSeq .
+
+	eq ((N,T) E)[N] = T .
+	eq E[a -> T] = ( [ shiftup a ] E ) ( a{0} , T ) .
+
+	eq E[ x : T ] = E [ x -> T ] .
+	eq E[ I1 , I2 ] = ( E [ I1 ] ) [ I2 ] .
+
+	op __ : Subst Env -> Env .
+
+	var S : Subst .
+	var E1 E2 : Env .
+	eq S empty = empty .
+	eq S ( ( N , T ) E ) = ( ( S N ) , T ) ( S E) .
+
+	*** Environment decoration
+	op dece : Env -> Env .
+	eq dece((a,T)) = (a{0},T) . 
+	ceq dece(E1 E2) = (dece(E1) dece(E2)) if E1 =/= empty /\ E2 =/= empty  .
+	eq dece(E1) = E1 [owise] .
+
+endfm
+
+
+fmod TYPES is
+
+	including ATYPES .
+
+	sort EType .
+	sort MType .
+	sort TMType .
+
+
+	subsorts MType < TMType < EType .
+
+	subsort MType < AType .
+
+	op bint : -> MType .
+	op Shh : -> EType .
+	op _x_ : TMType TMType -> TMType [assoc] .
+
+	op Amb`[_`] : EType -> MType .
+	op Cap`[_`] : EType -> MType .
+
+endfm
+
+mod TYPE-SYSTEM is
+
+	including ENVIRONMENTS .
+	including AC-TYPED-SYNTAX .
+	including TYPES .
+
+	sort JudgeP .
+	op _|-_ : Env Process -> JudgeP .
+
+	sort JudgeM .
+	op _|-_ : Env OutputSeq -> JudgeM .
+
+	op X : -> EType . 
+
+	subsort TMType < JudgeM .
+	subsort EType < JudgeP .
+
+
+	var E : Env .
+	var a : Acid .
+	var n : Qidn .
+	var M1 M2 M : Message .
+	var O : OutputSeq .
+	var P Q  : Process .
+	var NSP NSQ  : NSProcess .
+	var S T : EType .
+	var W : MType .
+	var TW : TMType .
+	var I : InputSeq .
+
+
+
+	rl [Exp] : E |- a => E [ a ] .
+
+	crl [Tup] : E |- M,O => W x TW if E |- M => W /\ E |- O => TW . 
+
+	rl [Empty] : E |- eps => Cap [ X ] .
+
+	crl [Path] : E |- M1 . M2 => Cap [ T ] if  E |- M1 => Cap [ T ]  /\  E |- M2 => Cap [ T ]  .
+
+	crl [Path2] : E |- M1 . M2 => Cap [ T ] if  E |- M1 => Cap [ X ]  /\  E
+			|- M2 => Cap [ T ] /\ T =/= X .
+
+	crl [Path3] : E |- M1 . M2 => Cap [ T ] if  E |- M1 => Cap [ T ] /\ E |- M2 => Cap [ X ] /\ T =/= X .
+
+
+	crl [In] : E |- in [ M ] => Cap [ X ] if E |- M => Amb [ T ] .
+
+	crl [Out] : E |- out [ M ] => Cap [ X ] if E |- M => Amb [ T ] . 
+
+
+	crl [OpenShh] : E |- open[ M ] => Cap [ X ] if E |- M => Amb [ Shh ] .
+
+	***crl [open] : E |- open [ M ] => Cap [ T ]  if E |- M => Amb [ T ] .
+
+	crl [Open] : E |- open [ M ] => Cap [ TW ]  if E |- M => Amb [ TW ] .
+
+	***** Process typings
+
+	rl [Zero] : E |- stop => X .
+
+	crl [Par] : E |- NSP | NSQ => T if E |- NSP => T /\ E |- NSQ => T .
+	crl [Par2] : E |- NSP | NSQ => T if E |- NSP => T /\ E |- NSQ => X .
+
+	crl [Repl] : E |- ! P => T if E |- P => T .
+
+	crl [Prefix] : E |- M . P => T if E |- M => Cap[ T ] /\ E |- P => T .
+
+	crl [Prefix2] : E |- M . P => T if E |- M => Cap[ T ] /\ E |- P => X .
+
+	crl [Prefix3] : E |- M . P => T if E |- M => Cap[ X ] /\ E |- P => T .
+
+	crl [Amb] : E |- M [ P ] => X if E |- M => Amb [ T ] /\ E |- P => T .
+	crl [Amb2] : E |- M [ P ] => X if E |- M => Amb [ T ] /\ E |- P => X .
+
+	crl [Output] : E |- < O > => TW if E |- O => TW . 
+
+	crl [Res] : E |- new [ n : Amb [ S ] ] P => T if E [ n -> Amb [ S ] ] |- P => T .
+
+	crl [Input] : E |- ( I ) P => T if E [ I ] |- P => T /\ typeI( I ) = T /\ T =/= X .
+
+	crl [Input2] : E |- ( I ) P => typeI( I ) if E [ I ] |- P => X .
+
+	var IS : InputSeq .
+	var x : Qidx .
+	op typeI : InputSeq -> TMType .
+
+	eq typeI ( x : T ) = T .
+
+	eq typeI ( ( x : T ) , IS ) = T x typeI ( IS ) .
+
+endm
+
+mod EXAMPLES-TYPES is
+
+	including TYPE-SYSTEM .
+
+	op E : -> Env .
+	op firewall : Process Process -> Process .
+	vars P Q : Process .
+	eq firewall(P, Q) = new ['k : Amb[Shh]] ('n{0} [  open['k{0}] . P ] | new['m : Amb[Shh]] ('m{0} [ 'k{0} [ out['m{0}] . in['n{0}] . in['m{0}] . stop  ] | Q ])) .
+
+	eq E = ( 'n{0} , Amb [ Shh ] ) .
+
+	op fail : -> Process .
+	eq fail = (('x : Amb[Shh] ) ( 'x[ stop ] ) ) | < 'n > | (('y : Cap[Shh]) ('y . stop) ) | 
+	    < open['n] > .
+
+
+endm
+
+eof
+
+rew E |- firewall(stop, stop) .
+
+rew E |- dec(fail) .

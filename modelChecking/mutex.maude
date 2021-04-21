@@ -1,0 +1,66 @@
+***
+*** Mutual exclusion example with strategies
+***
+
+sload model-checker
+
+mod MUTEX is
+	sorts Name Mode Proc Resource Conf .
+	subsorts Resource Proc < Conf .
+
+	op none : -> Conf [ctor] .
+	op __ : Conf Conf -> Conf [ctor assoc comm id: none] .
+	ops a b : -> Name [ctor] .
+	ops wait critical : -> Mode [ctor] .
+	op [_,_] : Name Mode -> Proc [ctor] .
+	ops $ : -> Resource [ctor] .
+
+	rl [a-enter] : $ [a, wait] => [a, critical] .
+	rl [b-enter] : $ [b, wait] => [b, critical] .
+	rl [a-exit] : [a, critical] => [a, wait] $ .
+	rl [b-exit] : [b, critical] => [b, wait] $ .
+endm
+
+mod MUTEX-PREDS is
+	protecting MUTEX .
+	including SATISFACTION .
+
+	subsort Conf < State .
+
+	op crit : Name -> Prop .
+	op wait : Name -> Prop .
+	var N : Name .
+	var C : Conf .
+	var P : Prop .
+
+	eq [N, critical] C |= crit(N) = true .
+	eq [N, wait] C |= wait(N) = true .
+	eq C |= P = false [owise] .
+endm
+
+mod MUTEX-CHECK is
+	protecting MUTEX-PREDS .
+	including STRATEGY-MODEL-CHECKER .
+	including LTL-SIMPLIFIER .
+
+	ops initial : -> Conf .
+
+	eq initial = $ $ [a, wait] [b, wait] .
+endm
+
+smod MUTEX-CHECK-STRAT is
+	including MUTEX-CHECK .
+
+	strat any @ Conf .
+	sd any := all ; any .
+
+	strat mutex @ Conf .
+	sd mutex := ( a-exit | b-exit | not(amatch [X:Name, critical]) ; (a-enter | b-enter) ) ; mutex .
+endsm
+
+eof
+
+red modelCheck(initial, [] ~(crit(a) /\ crit(b)), 'any) .
+red modelCheck(initial, [] ~(crit(a) /\ crit(b)), 'mutex) .
+red modelCheck(initial, ([]<> wait(a)) -> ([]<> crit(a)), 'any) .
+red modelCheck(initial, ([]<> wait(a)) -> ([]<> crit(a)), 'mutex) .

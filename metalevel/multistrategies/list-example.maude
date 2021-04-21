@@ -1,0 +1,105 @@
+***
+*** Simple examples using multistrategies
+***
+
+sload multistrat
+
+***
+*** [1] Appending to a list
+***
+*** Obs: Maude shows some warnings about matching more that expected, but they
+*** can safely be ignored since the strategy top is used.
+
+mod LLIST is
+	sort Letter LList .
+	subsort Letter < LList .
+
+	ops a b c d e f : -> Letter [ctor] .
+
+	op eps : -> LList [ctor] .
+	op __ : LList LList -> LList [ctor assoc id: eps] .
+
+	var LS : LList .
+	var L  : Letter .
+
+	rl [put]   : LS   => LS L [nonexec] .
+	rl [unput] : LS L => LS .
+endm
+
+smod LLIST-STRAT is
+	protecting LLIST .
+
+	strat put : Letter @ LList .
+
+	sd put(L) := top(put[L <- L]) .
+
+	strats a-put b-put @ LList .
+
+	sd a-put := put(a) * .
+	sd b-put := put(b) * .
+
+	strat seq1 seq2 @ LList .
+
+	sd seq1 := put(a) ; put(b) ; put(c) .
+	sd seq2 := put(d) ; put(e) ; put(f) .
+
+	strat seq : LList @ LList .
+
+	sd seq(eps) := idle .
+	sd seq(L LS) := top(put[L <- L]) ; seq(LS) .
+
+	var L  : Letter .
+	var LS : LList .
+endsm
+
+view LList from TRIV to LLIST is
+	sort Elt to LList .
+endv
+
+smod LLIST-MAIN is
+	protecting MULTISTRAT-STRAT .
+	protecting LLIST-STRAT .
+endsm
+
+***
+*** [1bis] Modelchecking example 1
+
+mod LLIST-PREDS is
+	protecting LLIST .
+	protecting NAT .
+	including SATISFACTION .
+
+	subsort LList < State .
+
+	op lengthBelow : Nat -> Prop [ctor] .
+
+	var LS : LList .
+	var L  : Letter .
+	var N  : Nat .
+
+	eq LS |= lengthBelow(N) = length(LS) <= N .
+
+	op length : LList -> Nat [ctor] .
+
+	eq length(eps) = 0 .
+	eq length(L LS) = s(length(LS)) .
+endm
+
+smod LLIST-MC is
+	protecting LLIST-PREDS .
+	protecting LLIST-STRAT .
+	protecting MULTISTRAT-MODEL-CHECKER .
+endsm
+
+eof
+
+set verbose on .
+set print conceal on .
+print conceal smod_is_sorts_._______endsm .
+
+srew in LLIST-MAIN : makeContext(upTerm(eps), ('a-put[[empty]], ('unput[none]{empty}) *), upModule('LLIST-STRAT, false)) using turns(0, 2, 4) .
+srew makeContext(upTerm(eps), ('a-put[[empty]], 'b-put[[empty]]), upModule('LLIST-STRAT, false)) using turns(0, 2, 4) .
+srew makeContext(upTerm(eps), ('seq1[[empty]], 'seq2[[empty]]), upModule('LLIST-STRAT, false)) using turns(0, 2) .
+srew makeContext(upTerm(eps), ('seq1[[empty]], 'seq2[[empty]]), upModule('LLIST-STRAT, false)) using freec .
+
+red in LLIST-MC : modelCheckConcurrent('LLIST-MC, eps, [] lengthBelow(3), ('a-put[[empty]], ('unput[none]{empty}) *)) .

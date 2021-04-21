@@ -1,0 +1,19 @@
+***
+*** Membrane systems
+***
+*** Now remotely based on "Strategy-Based Proof Calculus for
+*** Membrane Systems" by Oana Andrei and Dorel Lucanu.
+***
+*** Directly run the membrane interactive environment. Since file access
+*** is disable by default in Maude 3.1, the flag -allow-files must be used
+*** for this environment to work.
+***
+
+sload memparse
+
+set print attribute on .
+set print conceal on .
+print conceal smod_is_sorts_._______endsm .
+print conceal mod_is_sorts_._____endm .
+
+erew < repl : MemREPL | none > initREPL(repl) .

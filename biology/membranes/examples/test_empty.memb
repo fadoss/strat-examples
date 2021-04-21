@@ -1,0 +1,19 @@
+***
+*** Test to check that empty membrane are properly handled
+***
+
+membrane M1 is
+end
+
+membrane M2 is
+	nil
+end
+
+membrane M3 is
+	ev r1 : a -> b .
+	ev r2 : b -> c .
+end
+
+trans < M1 | < M2 | empty > > .
+compute < M1 | < M2 | empty > < M3 | a > > .
+compute < M1 | < M3 | a < M2 | empty > > > .

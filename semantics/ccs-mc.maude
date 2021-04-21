@@ -1,0 +1,124 @@
+***
+*** Calculus of communicating systems (CCS) (Robin Milner, 1980)
+*** Model checking
+***
+
+sload ccs2
+sload model-checker
+
+mod CCS-MC is
+	including CCS-SEMANTICS .
+
+	vars P Q   : Process .
+	vars A1 A2 : Act .
+
+	*** Only the last action is kept
+	eq {A1}{A2}P = {A2}P .
+	eq {{A1}}{{A2}}P = {{A2}}P .
+endm
+
+smod CCS-MC-STRAT is
+	including CCS-MC .
+	including CCS-SEMANTICS .
+	including CCS-STRAT .
+
+	var A : Act .
+	var P : Process .
+
+	*** CCS computation
+	strat comp @ Process .
+	sd comp := (ccs | matchrew {A}P by P using ccs) ? comp : idle .
+
+	*** CCS computation in the weak semantics
+	strat compWeak @ Process .
+	sd compWeak := (weakS | matchrew {{A}}P by P using weakS) ? compWeak : idle .
+endsm
+
+mod CCS-PREDS is
+	protecting CCS-MC .
+	protecting EXT-BOOL .
+	including SATISFACTION .
+
+	subsort ActProcess < State .
+
+	vars P P1 P2  : Process .
+	var  X        : ProcessId .
+	var  AP       : ActProcess .
+	vars A B C    : Act .
+	var  Ctx      : Context .
+
+	*** An action has just been executed
+	op action : Act -> Prop [ctor] .
+
+	eq {A}P |= action(A) = true .
+	eq {{A}}P |= action(A) = true .
+	eq AP |= action(A) = false [owise] .
+
+	*** A process can be executed in the next step
+	op processNext : ProcessId -> Prop [ctor] .
+
+	eq X |= processNext(X) = true .
+	eq (P1 + P2) |= processNext(X) = P1 |= processNext(X) or-else P2 |= processNext(X) .
+	eq (P1 | P2) |= processNext(X) = P1 |= processNext(X) or-else P2 |= processNext(X) .
+	eq P \ B     |= processNext(X) = P  |= processNext(X) .
+	eq P[B / C]  |= processNext(X) = P  |= processNext(X) .
+	eq {A}P      |= processNext(X) = P  |= processNext(X) .
+	eq {{A}}P    |= processNext(X) = P  |= processNext(X) .
+	eq AP        |= processNext(X) = false [owise] .
+
+	*** An action is in the head position of any process
+	op actionNext : Act -> Prop [ctor] .
+
+	eq A . P     |= actionNext(A) = true .
+	eq (P1 + P2) |= actionNext(A) = P1 |= actionNext(A) or-else P2 |= actionNext(A) .
+	eq (P1 | P2) |= actionNext(A) = P1 |= actionNext(A) or-else P2 |= actionNext(A) .
+	eq P \ B     |= actionNext(A) = B =/= A and-then P |= actionNext(A) .
+	eq P[B / C]  |= actionNext(A) = (B =/= A and-then P |= actionNext(A)) or-else (C == A and-then P |= actionNext(B)) .
+	eq X         |= actionNext(A) = X definedIn context and-then def(X, context) |= actionNext(A) .
+	eq {B}P      |= actionNext(A) = P  |= actionNext(A) .
+	eq {{B}}P    |= actionNext(A) = P  |= actionNext(A) .
+	eq AP        |= actionNext(A) = false [owise] .
+endm
+
+smod CCS-MC-CHECK is
+	protecting CCS-MC-STRAT .
+	protecting CCS-PREDS .
+	including EXAMPLE .
+	including STRATEGY-MODEL-CHECKER .
+endsm
+
+eof
+
+red modelCheck('Proc, [] <> action('a), 'comp) .
+red modelCheck('Proc, [] (action('a) -> O action('b)), 'comp) .
+
+***
+*** Vending machine (examples from A. Verdejo's PhD thesis Section 4.7.3)
+red modelCheck('Ven, O (~ action('big) /\ ~ action('little)), 'comp) .
+red modelCheck('Ven, [] (action('2p) -> (actionNext('big) /\ ~ actionNext('little))), 'comp) .
+red modelCheck('Ven, [] ((action('2p) \/ action('1p)) -> ~ O (action('2p) \/ action('1p))), 'comp) .
+red modelCheck('Ven, [] (((action('2p) \/ action('1p)) /\ O (action('big) \/ action('little))) -> O (actionNext('collectB) \/ actionNext('collectL))), 'comp) .
+
+*** This last (existential) property cannot be expressed in LTL, but its negation can.
+red modelCheck('Ven, ~ (O action('1p) /\ O O action('big') /\ O O O action('collectB)), 'comp) .
+
+*** Some more properties or variations
+red modelCheck('Ven, [] (action('2p) -> O (action('big) /\ ~ action('little))), 'comp) .
+red modelCheck('Ven, [] (action('2p) -> (processNext('VenB) /\ ~ processNext('VenL))), 'comp) .
+red modelCheck('Ven, [] (((action('2p) \/ action('1p)) /\ O (action('big) \/ action('little))) -> O O (action('collectB) \/ action('collectL))), 'comp) .
+red modelCheck('Ven, [] (action('1p) -> O action('big)), 'comp) .
+
+***
+*** Level crossing (examples from A. Verdejo's PhD thesis Section 4.7.4)
+*** (actionNext cannot be used with the weak semantics since it does not see through silent transitions)
+red modelCheck('Crossing, (O action('car) /\ O O action('train)) -> O O O (action(~ 'tcross) \/ action(~ 'ccross)), 'compWeak) .
+
+*** The second property should be verified using a branching-time logic
+*** The external model checker returns false for the CTL property (from 'Crossing and using compWeak)
+
+*** umaudemc check ccs-mc \'Crossing "A O (~ action('car) \/ A O (~ action('train) \/ (E O action(~ 'ccross) /\ E O action(~ 'tcross))))" compWeak
+
+
+*** More properties
+red modelCheck('Crossing, [] ~ (actionNext(~ 'tcross) /\ actionNext(~ 'ccross)), 'comp) .
+red modelCheck('Crossing, [] ~ (actionNext(~ 'tcross) /\ actionNext(~ 'ccross)), 'compWeak) .

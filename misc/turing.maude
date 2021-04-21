@@ -1,0 +1,201 @@
+***
+*** Specification of (deterministic) Turing machines to trivially prove
+*** that the Maude strategy language is Turing complete.
+***
+
+fmod TURING-MACHINE-BASE is
+	sorts Direction BaseElt .
+
+	*** Direction on the tape
+	ops left right : -> Direction [ctor] .
+	*** Blank symbol
+	op $head : -> BaseElt [ctor] .
+	*** Current position of the head (not actually a tape symbol)
+	op @blank : -> BaseElt [ctor] .
+endfm
+
+fth MACHINE-SPEC is
+	protecting BOOL .
+	protecting TURING-MACHINE-BASE .
+
+	*** Machine states, input alphabet, and tape alphabet
+	sorts State InputElt TapeElt .
+	subsorts InputElt BaseElt < TapeElt .
+
+	*** The initial state
+	op initial : -> State .
+	*** Whether the state is final (accepting)
+	op final : State -> Bool .
+
+	*** Transition function
+	sort Transition .
+	op {_,_,_} : State TapeElt Direction -> Transition [ctor] .
+
+	op transition : State TapeElt ~> Transition .
+endfth
+
+fmod TURING-MACHINE{X :: MACHINE-SPEC} is
+	protecting EXT-BOOL .
+
+	sorts Machine Machine? Tape .
+	subsort Machine < Machine? .
+	subsort X$TapeElt < Tape .
+
+	*** A tape is a list of symbols
+	op nil : -> Tape [ctor] .
+	op __ : Tape Tape -> Tape [ctor assoc id: nil] .
+
+	*** Turing machine
+	op [_]{_} : X$State Tape -> Machine [ctor] .
+	op deadlock : -> Machine? [ctor] .
+
+	*** Initial Turing machine
+	op initialMachine : -> Machine .
+	*** Append an input symbol to the tape
+	op append : Machine X$InputElt -> Machine .
+	*** Run the machine and tell whether the word in its tape is accepted
+	op accept : Machine ~> Bool .
+
+	eq initialMachine = [initial]{$head} .
+	eq append([MS]{L}, E) = [MS]{L E} .
+
+	op accept : Machine? ~> Bool .
+
+	eq accept(deadlock) = false .
+	eq accept([MS]{L}) = final(MS) or-else accept(move([MS]{L})) .
+
+	op move : Machine -> Machine? .
+
+	ceq move([MS]{L $head C R}) = [MS']{moveHead(L $head C' R, D)}
+	 if {MS', C', D} := transition(MS, C) .
+	ceq move([MS]{L $head}) = [MS']{moveHead(L $head, D)}
+	 if {MS', C', D} := transition(MS, @blank) .
+	eq move(M) = deadlock [owise] .
+
+	*** Move the head as indicated by the direction (moving
+	*** arbitrarily to the left is allowed, blanks are inserted)
+	op moveHead : Tape Direction -> Tape .
+
+	eq moveHead(L $head C R, right) = L C $head R .
+	eq moveHead(L $head, right) = L @blank $head .
+	eq moveHead(L C $head R, left) = L $head C R .
+	eq moveHead($head R, left) = $head @blank R .
+
+	vars MS MS' : X$State .
+	var  L R    : Tape .
+	var  E      : X$InputElt .
+	vars C C'   : X$TapeElt .
+	var  D      : Direction .
+	var  M      : Machine .
+endfm
+
+smod TURING-MACHINE-STRAT{X :: MACHINE-SPEC} is
+	protecting TURING-MACHINE{X} .
+	protecting NAT .
+
+	vars M M' : Machine .
+	var  N    : Nat .
+	var  S    : X$InputElt .
+
+	*** Rewrite the paths allowed by the Turing machine
+	strat start                   @ X$InputElt .
+	strat climb run : Machine Nat @ X$InputElt .
+
+	sd start := climb(initialMachine, 0) .
+
+	sd climb(M, N) := run(M, N) | climb(M, s(N)) .
+	sd run(M, 0) := match S s.t. accept(append(M, S)) .
+	sd run(M, s(N)) := matchrew S by S using (all ; run(append(M, S), N)) .
+
+	*** Incorrect version of the previous
+	strat start2         @ X$InputElt .
+	strat run2 : Machine @ X$InputElt .
+
+	sd start2 := run2(initialMachine) .
+
+	sd run2(M) := matchrew S s.t. M' := append(M, S) by S using (
+		match S s.t. accept(M') | all ; run2(M')
+	) .
+endsm
+
+***
+*** Example to instantiate the previous (palindromes)
+***
+
+mod PALINDROME-MACHINE is
+	protecting TURING-MACHINE-BASE .
+
+	sorts Letter State TapeElt .
+	subsorts BaseElt Letter < TapeElt .
+
+	ops a b c : -> Letter [ctor] .
+
+	rl a => a .
+	rl a => b .
+	rl a => c .
+	rl b => a .
+	rl b => b .
+	rl b => c .
+	rl c => a .
+	rl c => b .
+	rl c => c .
+
+	*** States of the Turing machine
+
+	*** initial: initial state
+	*** end: final state (the word has been consumed)
+	*** left: going back to the start of the word
+	ops initial end left : -> State [ctor] .
+	*** first: going to the right for the first time (to support single letters)
+	*** right: going to the right to find the mirrored letter
+	*** last: checking whether the last letter coincides with the first
+	ops first right last : Letter -> State [ctor] .
+
+	*** Only end is a final state
+	op final : State -> Bool .
+
+	eq final(end) = true .
+	eq final(S) = false [owise] .
+
+	*** Transition relation
+	op transition : State TapeElt ~> Transition [ctor] .
+
+	*** It check whether a word is a palindrome by checking whether the
+	*** first letter coincides with the last letter. Letters are changed
+	*** by blanks when processed, so the procedure is repeated recursively
+	*** on smaller words.
+
+	eq transition(initial, L) = {first(L), @blank, right} .
+	eq transition(initial, @blank) = {end, @blank, right} .
+	eq transition(left, L) = {left, L, left} .
+	eq transition(left, @blank) = {initial, @blank, right} .
+	eq transition(first(F), @blank) = {end, @blank, left} .
+	eq transition(first(F), L) = {right(F), L, right} .
+	eq transition(right(F), L) = {right(F), L, right} .
+	eq transition(right(F), @blank) = {last(F), @blank, left} .
+	eq transition(last(F), F) = {left, @blank, left} .
+
+	sort Transition .
+	op {_,_,_} : State TapeElt Direction -> Transition [ctor] .
+
+	var  S   : State .
+	vars L F : Letter .
+endm
+
+view Palindrome from MACHINE-SPEC to PALINDROME-MACHINE is
+	sort InputElt to Letter .
+endv
+
+smod MAIN is
+	protecting TURING-MACHINE-STRAT{Palindrome} .
+endsm
+
+*** srew [1] a using start .
+***
+*** Solution 1
+*** rewrites: 17
+*** result Letter: a
+
+*** More interesting output can be obtained by generating graphs for fixed lengths:
+***	umaudemc graph --purge-fails=yes turing.maude a 'run(initialMachine, 4)'
+***	umaudemc graph --depth=5 turing.maude a start2

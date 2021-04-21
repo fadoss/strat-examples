@@ -1,0 +1,5 @@
+metalevel/munorm
+
+red norm(upModule('NATS-FROM, true), 'take['s_^3['0.Zero], 'natsFrom['0.Zero]]) .
+red norm('NATS-FROM, "take(3, natsFrom(0))") .
+red norm('ExSec11_1_Luc02, "first(s(s(s(s(0)))), terms(s(0)))") .

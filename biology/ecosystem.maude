@@ -1,0 +1,326 @@
+***
+*** A simple (and unrealistic) ecosystem model
+***
+
+fmod ECOSYSTEM is
+	protecting NAT .
+
+	*** Any passive or active element of the ecosystem
+	sort Being .
+
+	*** The ecosystem is the multiset of all their beings
+	sort Ecosystem .
+	subsort Being < Ecosystem .
+
+	op nothing : -> Ecosystem [ctor] .
+	op __ : Ecosystem Ecosystem -> Ecosystem [ctor assoc comm id: nothing] .
+
+	*** Some common information for modules that may extend this
+	sort Sex .
+	ops male female : -> Sex [ctor] .
+endfm
+
+fmod HUMANS is
+	extending ECOSYSTEM .
+
+	sort Human .
+	subsort Human < Being .
+
+	*** Human being (age, food, sex)
+	op human : Nat Nat Sex -> Human [ctor] .
+endfm
+
+fmod ANIMALS is
+	extending ECOSYSTEM .
+
+	sort Animal .
+	subsort Animal < Being .
+
+	*** A carnivorous animal
+	op carnivore : Nat Nat Sex -> Animal [ctor] .
+
+	*** An herbivorous animal
+	op herbivore : Nat Nat Sex -> Animal [ctor] .
+
+	*** Their attributes are age, energy and sex
+endfm
+
+fmod PLANTS is
+	extending ECOSYSTEM .
+
+	sort Plant .
+	subsort Plant < Being .
+
+	*** Grass with its water reserves
+	op grass : Nat -> Plant [ctor] .
+endfm
+
+fmod RESOURCES is
+	extending ECOSYSTEM .
+
+	sort Resource .
+	subsort Resource < Being .
+
+	*** A water source with its volume
+	op water : Nat -> Resource [ctor] .
+
+	vars N M	: Nat .
+
+	eq water(N) water(M) = water(N + M) .
+endfm
+
+mod HUMANS-RLS is
+	protecting HUMANS .
+
+	vars A F A1 F1 A2 F2 VF : Nat .
+	vars S S1 S2 : Sex .
+
+	rl [die]  : human(A, F, S) => nothing .
+	rl [tire] : human(A, s(F), S) => human(A, F, S) .
+	rl [grow] : human(A, F, S) => human(s(A), F, S) .
+
+	crl [hfeed] : human(A1, 1, S1)      human(A1, F2, S2)
+	           => human(A1, 1 + VF, S1) human(A1, sd(F2, VF), S2)
+	              if VF < F2 /\ A1 < 18 [nonexec] .
+
+	crl [hrepr] : human(A1, s(F1), female) human(A2, s(F2), male) 
+	           => human(A1, F1, female)    human(A2, F2, male)    human(0, 2, female)
+	              if A1 >= 15 /\ A1 <= 50 .
+
+	crl [hrepr] : human(A1, s(F1), female) human(A2, s(F2), male)
+	           => human(A1, F1, female)    human(A2, F2, male)    human(0, 2, male)
+	              if A1 >= 15 /\ A1 <= 50 .
+endm
+
+mod ANIMALS-RLS is
+	protecting ANIMALS .
+
+	vars A E A2 E2 A3 E3 VE : Nat .
+	vars S S2 S3 : Sex .
+
+	rl [die]  : carnivore(A, E, S) => nothing .
+	rl [die]  : herbivore(A, E, S) => nothing .
+
+	rl [grow] : carnivore(A, E, S) => carnivore(s(A), E, S) .
+	rl [grow] : herbivore(A, E, S) => herbivore(s(A), E, S) .
+
+	rl [prey] : carnivore(A, E, S) herbivore(A2, E2, S2) => carnivore(A, E + E2, S) .
+	rl [prey] : carnivore(A, E, S) carnivore(A2, E2, S2) herbivore(A3, E3, S3)
+	         => carnivore(A, E + E3 quo 2, S) carnivore(A2, E2 + E3 quo 2, S2) .
+
+	rl [tire] : carnivore(A, s(E), S) => carnivore(A, E, S) .
+	rl [tire] : herbivore(A, s(E), S) => herbivore(A, E, S) .
+
+	crl [feed] : carnivore(A, E, S) carnivore(A2, E2, S2)
+		  => carnivore(A, sd(E, VE), S) carnivore(A, E + VE, S)
+	             if VE < E [nonexec] .
+	crl [feed] : herbivore(A, E, S) herbivore(A2, E2, S2) =>
+	             herbivore(A, sd(E, VE), S) herbivore(A, E + VE, S)
+	             if VE < E [nonexec] .
+
+	rl [repr] : carnivore(A, s(E), female) carnivore(A2, s(E2), male)
+	         => carnivore(A, E, female) carnivore(A2, E2, male) carnivore(0, 2, female) .
+	rl [repr] : carnivore(A, s(E), female) carnivore(A2, s(E2), male)
+	         => carnivore(A, E, female) carnivore(A2, E2, male) carnivore(0, 2, male) .
+	rl [repr] : herbivore(A, s(E), female) herbivore(A2, s(E2), male)
+	         => herbivore(A, E, female) herbivore(A2, E2, male) herbivore(0, 2, female) .
+	rl [repr] : herbivore(A, s(E), female) herbivore(A2, s(E2), male)
+	         => herbivore(A, E, female) herbivore(A2, E2, male) herbivore(0, 2, male) .
+endm
+
+mod PLANTS-RLS is
+	protecting PLANTS .
+
+	var N : Nat .
+
+	rl [die]  : grass(0) => nothing .
+endm
+
+mod RESOURCES-RLS is
+	protecting RESOURCES .
+
+	var N : Nat .
+	var E : Ecosystem .
+
+	rl [rain] : E => E water(N) [nonexec] .
+endm
+
+mod COMMON-RLS is
+	protecting HUMANS-RLS .
+	protecting ANIMALS-RLS .
+	protecting PLANTS-RLS .
+	protecting RESOURCES-RLS .
+
+	vars N M A E A1 E1 A2 E2 A3 E3 A4 E4 : Nat .
+	vars S S1 S2 S3 S4 : Sex .
+
+	*** Hunting-related rules
+	rl [hunt] : human(A1, E1, S1) human(A2, E2, S2) carnivore(A, E, S)
+		 => human(A1, E1 + E quo 2, S1) human(A2, E2 + E quo 2, S2) .
+	rl [hunt] : human(A1, E1, S1) human(A2, E2, S2) human(A3, E3, S3) carnivore(A, E, S)
+		 => human(A1, E1 + E quo 3 + 1, S1) human(A2, E2 + E quo 3 + 1, S2) human(A3, E3 + E quo 3 + 1, S3) .
+	rl [hunt] : human(A1, E1, S1) human(A2, E2, S2) herbivore(A, E, S)
+		 => human(A1, E1 + E quo 2, S1) human(A2, E2 + E quo 2, S2) .
+	rl [hunt] : human(A1, E1, S1) human(A2, E2, S2) human(A3, E3, S3) herbivore(A, E, S)
+		 => human(A1, E1 + E quo 3 + 1, S1) human(A2, E2 + E quo 3 + 1, S2) human(A3, E3 + E quo 3 + 1, S3) .
+
+	*** Herbivores eat grass
+	crl [eat] : herbivore(A, E, S) grass(N) => herbivore(A, E + M, S) grass(sd(N, M)) if M < N [nonexec] .
+
+	*** Water-related rules
+	rl [irrigate] : water(s(N)) grass(M) => water(N) grass(s(M)) .
+	rl [hdrink] : water(s(N)) human(A, E, S) => water(N) human(A, s(E), S) .
+	rl [drink] : water(s(N)) carnivore(A, E, S) => water(N) human(A, s(E), S) .
+	rl [drink] : water(s(N)) herbivore(A, E, S) => water(N) herbivore(A, s(E), S) .
+endm
+
+sth NATURE is
+	protecting ECOSYSTEM .
+
+	*** The following two strategies define what to do with a being
+	*** as time goes by. They are applied to each being in the ecosytem
+	*** once every round.
+	strat ageRound @ Ecosystem .
+	*** This one is applied later and receives a round counter (possibly modulo)
+	strat energyRound : Nat @ Ecosystem .
+	*** Updates resources in the ecosystem.
+	strat resources : Nat @ Ecosystem .
+	*** Updates wild life interaction.
+	strat wildLife : Nat @ Ecosystem .
+endsth
+
+smod KIND-NATURE is
+	protecting COMMON-RLS .
+
+	vars A E K N : Nat .
+	var  S : Sex .
+	var  B : Being .
+
+	strat ageRound animalRepr @ Ecosystem .
+	strats energyRound resources wildLife : Nat @ Ecosystem .
+
+	*** People and animals get older and die
+	sd ageRound := match H:Human ; (match human(65, E, S) ? die : grow)
+		| match carnivore(A, E, S) ; (match carnivore(17, E, S) ? die : grow)
+		| match herbivore(A, E, S) ; (match herbivore(30, E, S) ? die : grow)
+		| not(match H:Human | match A:Animal) ; idle .
+
+	*** People and animals loose energy each 3 units of time
+	csd energyRound(K) := tire ; (
+			match human(A, 0, S)
+			| match carnivore(A, 0, S)
+			| match herbivore(A, 0, S) 
+			? die : idle)
+		| not(match H:Human | match A:Animal) ; idle
+	if K rem 3 == 0 .
+
+	csd energyRound(K) := idle if K rem 3 =/= 0 .
+
+	*** Water is provided every two times
+	csd resources(K) := match water(N) s.t. N >= 5000 or-else
+	                    rain[N <- 250] if K rem 2 == 0 .
+	csd resources(K) := idle if K rem 2 == 1 .
+
+	*** How wild life evolves
+	vars ES1 ES2     : Ecosystem .
+	vars A1 A2 E1 E2 : Nat .
+	vars S1 S2       : Sex .
+
+	*** Animals feed their neighbours that are about to die
+	sd wildLife(K) := (matchrew ES1 ES2 s.t. carnivore(A1, 1, S1) carnivore(A2, N, S2) := ES1
+			   by ES1 using feed[VE:Nat <- 2]) ! .
+
+	sd wildLife(K) := (matchrew ES1 ES2 s.t. herbivore(A1, 1, S1) herbivore(A2, N, S2) := ES1
+			   by ES1 using feed[VE:Nat <- 2]) ! .
+
+	*** They reproduce and prey
+	csd wildLife(K) := repr | repr ; repr if K rem 2  == 0 .
+	csd wildLife(K) := prey | prey ; prey | prey ; prey ; prey if K rem 2 == 1 .
+
+	*** Grass is irrigated and eaten by herbivores
+	sd wildLife(K) := ( irrigate | irrigate ; irrigate ) ;
+	                  ( eat | eat ; eat | eat ; eat ; eat ) .
+endsm
+
+view KindNature from NATURE to KIND-NATURE is
+	*** identity
+endv
+
+sth HUMANITY is
+	protecting ECOSYSTEM .
+
+	strat humanLife : Nat @ Ecosystem .
+endsth
+
+smod HUMAN-STRAT is
+	protecting COMMON-RLS .
+
+	strat humanLife : Nat @ Ecosystem .
+
+	var K : Nat .
+
+	*** Drink sometime
+	strat hdrink : Nat @ Ecosystem .
+
+	sd hdrink(0) := idle .
+	sd hdrink(s(K)) := hdrink ; hdrink(K) .
+
+	sd humanLife(K) := feed[VF:Nat <- 2] ! ;
+	                   (hdrink | hdrink(2) | hdrink(3) | hdrink(4)) .
+
+	csd humanLife(K) := hrepr | hrepr ; hrepr if K rem 2 == 0 .
+	csd humanLife(K) := hunt | hunt ; hunt | hunt ; hunt ; hunt if K rem 2 == 1 .
+endsm
+
+view Humans from HUMANITY to HUMAN-STRAT is
+	*** identity
+endv
+
+fmod ECOSYSTEM-ALL is
+	protecting HUMANS .
+	protecting ANIMALS .
+	protecting PLANTS .
+	protecting RESOURCES .
+endfm
+
+smod ECOSYSTEM-RUN{X :: NATURE, Y :: HUMANITY} is
+	protecting ECOSYSTEM-ALL .
+
+	vars N M : Nat .
+	vars E E' : Ecosystem .
+	vars B B' : Being .
+
+	strat srun run : Nat @ Ecosystem .
+	strat run : Nat Nat @ Ecosystem .
+
+	strat age : Ecosystem @ Ecosystem .
+	strat energy : Nat Ecosystem @ Ecosystem .
+
+	*** Up to N steps of ecosystem execution
+	sd run(N) := run(0, N) .
+	sd run(M, M) := idle .
+	csd run(N, M) := srun(N rem 12) ; run(s(N), M) if N < M .
+
+	*** A single step in the evolution of the environment
+	sd srun(N) := 	resources(N) ;
+			wildLife(N) ;
+			try(humanLife(N)) ;
+			matchrew E by E using age(E) ;
+			matchrew E by E using energy(N, E) .
+
+	*** Auxiliary strategies for visiting each being once
+	sd age(B E) := one(matchrew B' E' s.t. B' == B by B' using ageRound) ; age(E) .
+	sd age(nothing) := idle .
+
+	sd energy(N, B E) := one(matchrew B' E' s.t. B' == B by B' using energyRound(N)) ; energy(N, E) .
+	sd energy(N, nothing) := idle .
+endsm
+
+smod MAIN is
+	protecting ECOSYSTEM-RUN{KindNature, Humans} .
+endsm
+
+eof
+
+srew [2] water(8000) carnivore(10, 20, male) carnivore(10, 20, female) herbivore(5, 12, male) using run(2) .
+srew [2] grass(20) human(21, 2, male) human(65, 1, male) carnivore(10, 4, female) herbivore(5, 12, male) using run(1) .

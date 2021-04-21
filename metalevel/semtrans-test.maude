@@ -1,0 +1,47 @@
+***
+*** Rewriting semantics of the Maude strategy language
+*** by a theory transformation
+***
+*** Test file
+***
+
+sload semtrans
+
+mod TEST1 is
+	sort Thing .
+
+	ops a b c : -> Thing [ctor] .
+	op f : Thing Thing -> Thing [ctor] .
+
+	rl [ab] : a => b .
+	rl [ac] : a => c .
+	rl [bc] : b => c .
+endm
+
+mod REWSEM-TEST is
+	protecting REWRITING-SEMANTICS .
+
+	op run : Term -> ResultPair? .
+	op run : Term Term -> ResultPair? .
+	op M : -> Module .
+
+	var T E : Term .
+
+	eq M = defineStrat(declareStrat(transform('TEST1), 'st, nil, 'Thing), 'st.StratCall, 'ab.RuleApp, 'trueC.EqCondition) .
+
+	eq run(E, T) = metaRewrite(M, '<_@_>[E, T], unbounded) .
+	eq run(E) = run(E, 'a.Thing) .
+endm
+
+eof
+
+*** red metaParse(transform('TEST1), tokenize("< idle @ a >"), anyType) .
+
+red run('ab.RuleApp) .
+red run('st.StratCall) .
+red run('match_s.t._['X:Thing, '_=_['X:Thing, 'b.Thing]], 'c.Thing) .
+red run('amatch_s.t._['b.Thing, 'trueC.EqCondition], 'f['b.Thing, 'c.Thing]) .
+red run('_?_:_['ab.RuleApp,'bc.RuleApp,'ac.RuleApp]) .
+red run('matchrew['f['X:Thing, 'b.Thing], 'trueC.EqCondition, '_using_['X:Thing, 'ab.RuleApp]], 'f['a.Thing, 'b.Thing]) .
+red run('matchrew['f['X:Thing, 'Y:Thing], 'trueC.EqCondition, '_`,_['_using_['X:Thing, 'ab.RuleApp], '_using_['Y:Thing, 'bc.RuleApp]]], 'f['a.Thing, 'b.Thing]) .
+red run('matchrew['f['X:Thing, 'Y:Thing], '_=_['X:Thing, 'Y:Thing], '_`,_['_using_['X:Thing, 'ab.RuleApp], '_using_['Y:Thing, 'idle.Strat]]], 'f['a.Thing, 'a.Thing]) .

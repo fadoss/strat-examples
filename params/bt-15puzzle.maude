@@ -1,0 +1,71 @@
+***
+*** 15-puzzle using the generic backtracking algorithm.
+***
+
+sload backtracking
+sload ../games/15puzzle
+
+mod 15PUZZLE-BT is
+	protecting 15PUZZLE-BIS .
+	protecting EXT-BOOL .
+
+	var  Pb  : Puzzle .
+	vars N M : Nat .
+	var  T   : Tile .
+
+	*** The solution is the square that has the hole in the final position
+	op isSolution : Puzzle -> Bool .
+	op isSolutionAux : Puzzle -> Bool .
+
+	eq isSolution([4, 4, b] Pb) = isSolutionAux(Pb) .
+	eq isSolution(Pb) = false [owise] .
+
+	eq isSolutionAux(empty) = true .
+	eq isSolutionAux([N, M, T] Pb) = T == (4 * sd(M, 1) + N) and-then isSolutionAux(Pb) .
+endm
+
+view 15Puzzle from BT-ELEMS to 15PUZZLE-BT is
+	sort State to Puzzle .
+	op isOk(S:State) to term true .
+	strat expand to expr (left | right | down | up) .
+endv
+
+mod EXAMPLES-BIS is
+	protecting EXAMPLES * (sort Puzzle to PuzzleOrig) .
+	protecting 15PUZZLE-BIS .
+
+	*** Convert examples to the bis representation
+	op toBis : PuzzleOrig -> Puzzle .
+
+	op toBis : Row Nat Nat -> Puzzle .
+	op toBis : PuzzleOrig Nat -> Puzzle .
+
+	var  P   : PuzzleOrig .
+	var  R   : Row .
+	vars N M : Nat .
+	var  T   : Tile .
+
+	eq toBis(P) = toBis(P, 1) .
+	eq toBis(R, M) = toBis(R, 1, M) .
+	eq toBis(R ; P, M) = toBis(R, 1, M) toBis(P, s(M)) .
+	eq toBis(nil, N, M) = empty .
+	eq toBis(T R, N, M) = [N, M, T] toBis(R, s(N), M) .
+	
+	ops puzzle1bis puzzle2bis wikipediaBis : -> Puzzle .
+
+	eq puzzle1bis = toBis(puzzle1) .
+	eq puzzle2bis = toBis(puzzle2) .
+	eq wikipediaBis = toBis(wikipedia) .
+endm
+
+smod 15PUZZLE-BT-STRAT is
+	protecting BT-STRAT{15Puzzle} .
+	protecting EXAMPLES-BIS .
+endsm
+
+eof
+
+*** Quick answer
+srew [1] puzzle1bis using solve .
+*** Does not finish in reasonable time
+srew [1] puzzle2bis using solve .

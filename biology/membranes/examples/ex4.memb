@@ -1,0 +1,43 @@
+***
+*** Examples from the prototype of "Strategy-based proof calculus for membrane
+*** systems" by Oana Andrei and Dorel Lucanu (adapted).
+***
+*** Original: https://profs.info.uaic.ro/~rewps/srl-membrane/srl_membrane.zip.
+***
+
+membrane M3 is
+	ev r31 : a a -> (a, here) (b, in M4) .
+	ev r32 : a b -> (c, here) (d, in M4) .
+	ev r33 :   b -> (d, here) (d, here) .
+
+	pr r32 > r33 .
+end
+
+membrane M4 is
+	ev r41 : b b -> (a, here)(a, out) .
+	ev r42 : a -> (a, here) (b, here) .
+end
+
+membrane M5 is
+	ev r51 : a a -> (a, here) (b, in M6) .
+	ev r52 : a b -> (c, here) (d, in M6) .
+	ev r53 :   b -> (d, here) (d, here) .
+
+	pr r52 > r53 .
+end
+
+membrane M6 is
+	ev r61 : a b -> (a, here) delta .
+end
+
+trans < M3 | a a b b > .
+
+trans < M4 | a a b b > .
+
+trans < M5 | a b b > .
+
+trans < M6 | a b b > .
+
+trans < M3 | a a b b < M4 | a a b b > > .
+
+trans < M5 | a a b b < M6 | a b b > > .

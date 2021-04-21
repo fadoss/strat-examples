@@ -1,0 +1,206 @@
+***
+*** Normalization via mu-normalization [Lucas, I&C 178(1): 294-343 (2002)]
+***
+*** The idea and design of the strategy is due to Salvador Lucas
+***
+
+fmod CSR-TRANSFORM is
+	protecting META-MODULE .
+	protecting CONVERSION .
+
+	*** Transform a module for context-sensitive rewriting and define
+	*** a strategy norm-via-munorm that normalizes a term obeying the
+	*** replacement map inferred from the declared evaluation strategies
+	*** and frozen annotations of the operators in the signature.
+	***
+	*** Equations are replaced by rules and evaluation strategies by
+	*** frozen annotations.
+
+	op csrTransform : Module -> StratModule .
+
+	var  M          : Module .
+	vars L R        : Term .
+	var  TyL        : TypeList .
+	var  NeTyL      : NeTypeList .
+	var  Ty         : Type .
+	var  Eqs        : EquationSet .
+	var  Attrs      : AttrSet .
+	vars Q Q1 Q2    : Qid .
+	var  Ops        : OpDeclSet .
+	var  C          : EqCondition .
+	var  NeNL NeNL' : NeNatList .
+	var  NL NL'     : NatList .
+	var  N          : Nat .
+
+	eq csrTransform(M) = smod appendQs(getName(M), 'CSR) is
+		getImports(M)
+		sorts 'FakeSort ; getSorts(M) .
+		getSubsorts(M)
+		strat2frozen(getOps(M))
+		getMbs(M)
+		none
+		getRls(M)
+		eqs2rls(getEqs(M))
+		getStrats(M)
+		(strat 'norm-via-munorm : nil @ 'FakeSort [none] .)
+		(strat 'munorm : nil @ 'FakeSort [none] .)
+		(strat 'decomp : nil @ 'FakeSort [none] .)
+		getSds(M)
+		(sd 'norm-via-munorm[[empty]] := 'munorm[[empty]] ; try('decomp[[empty]]) [none] .)
+		(sd 'munorm[[empty]] := one(all) ! [none] .)
+		(sd 'decomp[[empty]] := makeDecomp(getOps(M)) [none] .)
+	endsm .
+
+	***
+	*** Convert evaluation strategy annotations to frozen annotations
+	op strat2frozen : OpDeclSet -> OpDeclSet [ctor] .
+	op strat2frozen : AttrSet Nat -> AttrSet [ctor] .
+	op makeFrozen : NeNatList Nat -> NeNatList .
+
+	eq strat2frozen(none) = none .
+	eq strat2frozen(op Q : TyL -> Ty [Attrs] . Ops) =
+		op Q : TyL -> Ty [strat2frozen(Attrs, size(TyL))] .
+		strat2frozen(Ops) .
+
+	eq strat2frozen(none, N) = none .
+	eq strat2frozen(frozen(NeNL') strat(NeNL) Attrs, N) =
+		frozen(NeNL' makeFrozen(NeNL, N)) Attrs .
+	eq strat2frozen(strat(NeNL) Attrs, N) =
+		frozen(makeFrozen(NeNL, N)) Attrs [owise] .
+	eq strat2frozen(Attrs, N) = Attrs [owise] .
+
+	eq makeFrozen(NeNL, 0) = nil .
+	eq makeFrozen(NL s(N) NL', s(N)) = makeFrozen(NL s(N) NL', N) .
+	eq makeFrozen(NeNL, s(N)) = s(N) makeFrozen(NeNL, N) [owise] .
+
+	***
+	*** Convert equations to rules
+	op eqs2rls : EquationSet -> RuleSet .
+	op rmOwise : AttrSet -> AttrSet .
+
+	eq eqs2rls(none) = none .
+	eq eqs2rls(eq L = R [Attrs] . Eqs) = rl L => R [rmOwise(Attrs)] . eqs2rls(Eqs) .
+	eq eqs2rls(ceq L = R if C [Attrs] . Eqs) = crl L => R if C [rmOwise(Attrs)] . eqs2rls(Eqs) .
+
+	eq rmOwise(owise Attrs) = Attrs .
+	eq rmOwise(Attrs) = Attrs [owise] .
+
+	***
+	*** Build the decomp strategy expression
+	op makeDecomp : OpDeclSet -> Strategy .
+
+	eq makeDecomp(none) = fail .
+	eq makeDecomp(op Q : nil -> Ty [Attrs] . Ops) = makeDecomp(Ops) .
+	eq makeDecomp(op Q : NeTyL -> Ty [Attrs poly (NeNL)] . Ops) = makeDecomp(Ops) .
+	eq makeDecomp(op Q : NeTyL -> Ty [Attrs] . Ops) =
+		(matchrew Q[makeVarList(NeTyL, 1)] s.t. nil by makeUsingPart(NeTyL, 1)) 
+		| makeDecomp(Ops) [owise] .
+
+	op makeVar : Nat Type -> Variable .
+	eq makeVar(N, Ty) = qid("X" + string(N, 10) + ":" + string(Ty)) .
+
+	op makeVarList : TypeList Nat -> TermList .
+	eq makeVarList(nil, N) = empty .
+	eq makeVarList(Ty TyL, N) = makeVar(N, Ty), makeVarList(TyL, s(N)) .
+
+	op makeUsingPart : NeTypeList Nat -> UsingPairSet .
+	eq makeUsingPart(Ty, N) = makeVar(N, Ty) using 'norm-via-munorm[[empty]] .
+	eq makeUsingPart(Ty NeTyL, N) = makeUsingPart(Ty, N), makeUsingPart(NeTyL, s(N)) .
+
+	*** Combine names with a hyphen
+	op appendQs : Qid Qid -> Qid .
+	eq appendQs(Q1, Q2) = qid(string(Q1) + "-" + string(Q2)) .
+endfm
+
+***
+*** Example from F. Durán, S. Escobar and S. Lucas. New Evaluation Commands
+*** Within Full Maude. WRLA 2004. (10.1016/j.entcs.2004.06.014)
+***
+
+fmod LAZY-LIST{X :: TRIV} is
+	protecting INT .
+	sort LazyList{X} .
+
+	op nil : -> LazyList{X} [ctor] .
+	op _:_ : X$Elt LazyList{X} -> LazyList{X} [ctor strat (1 0)] .
+
+	op take : Nat LazyList{X} -> LazyList{X} .
+
+	var E : X$Elt .
+	var N : Nat .
+	var L : LazyList{X} .
+
+	eq take(0, L) = nil .
+	eq take(s(N), E : L) = E : take(N, L) .
+endfm
+
+fmod NATS-FROM is
+	protecting LAZY-LIST{Nat} .
+
+	op natsFrom : Nat -> LazyList{Nat} .
+
+	var N : Nat .
+
+	eq natsFrom(N) = N : natsFrom(N + 1) .
+endfm
+
+***
+*** Example by Salvador Lucas
+***
+
+mod ExSec11_1_Luc02 is
+	sort S .
+	op 0 : -> S .
+	ops dbl half s recip sqr : S -> S .
+	op terms : S -> S .
+	op nil : -> S .
+	op _:_ : S S -> S [strat (1 0) gather (e E)] .
+	op add : S S -> S .
+	op first : S S -> S .
+	vars m n x : S .
+	var xs : S .
+	eq add(0,n) = n .
+	eq add(s(m),n) = s(add(m,n)) .
+	eq dbl(0) = 0 .
+	eq dbl(s(n)) = s(s(dbl(n))) .
+	eq half(0) = 0 .
+	eq half(s(0)) = 0 .
+	eq half(s(s(n))) = s(half(n)) .
+	eq half(dbl(n)) = n .
+	eq sqr(0) = 0 .
+	eq sqr(s(n)) = s(add(sqr(n),dbl(n))) .
+	eq first(0,xs) = nil .
+	eq first(s(n),x : xs) = x : first(n,xs) .
+	eq terms(n) = recip(sqr(n)) : terms(s(n)) .
+endm
+
+fmod MAIN is
+	protecting CSR-TRANSFORM .
+	protecting META-LEVEL .
+	protecting LEXICAL .
+
+	*** Apply norm-via-munorm to the given term in the given module
+	op norm : Module Term -> Term .
+	*** The same, but the module is given by its name and the term by a string
+	op norm : Qid String -> String .
+
+	var Q : Qid .
+	var M : Module .
+	var T : Term .
+	var S : String .
+
+	eq norm(M, T) = getTerm(metaSrewrite(csrTransform(M), T,
+	                        'norm-via-munorm[[empty]], depthFirst, 0)) .
+
+	ceq norm(Q, S) = printTokens(metaPrettyPrint(upModule(Q, true), T))
+	 if M := upModule(Q, true)
+	 /\ T := norm(M, getTerm(metaParse(M, tokenize(S), anyType))) .
+	eq norm(Q, S) = "error" [owise] .
+endfm
+
+eof
+
+red csrTransform(upModule('NATS-FROM, true)) .
+red norm(upModule('NATS-FROM, true), 'take['s_^3['0.Zero], 'natsFrom['0.Zero]]) .
+red norm('NATS-FROM, "take(3, natsFrom(0))") .
+red norm('ExSec11_1_Luc02, "first(s(s(s(s(0)))), terms(s(0)))") .

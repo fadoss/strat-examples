@@ -1,0 +1,39 @@
+==========================================
+srewrite in MAIN : x(1) = c(1) * x(1) using marmon .
+
+Solution 1
+rewrites: 12
+result [EquationSet]: fail
+
+No more solutions.
+rewrites: 12
+==========================================
+srewrite in MAIN : x(1) = x(3) * c(2) ; x(1) = c(1) * x(2) using marmon .
+
+Solution 1
+rewrites: 454
+result NeEquationSet: x(1) = c(1) * c(2) ; x(2) = c(2) ; x(3) = c(1)
+
+No more solutions.
+rewrites: 454
+==========================================
+srewrite in MAIN : x(1) = x(3) -> x(4) ; x(1) = x(2) * x(3) using marmon .
+
+Solution 1
+rewrites: 94
+result [EquationSet]: fail
+
+No more solutions.
+rewrites: 94
+==========================================
+srewrite in MAIN : x(1) = x(2) ; x(1) = c(1) * c(2) -> x(3) ; x(2) = x(4) -> c(
+    3) using marmon .
+
+Solution 1
+rewrites: 2946
+result NeEquationSet: x(1) = c(1) * c(2) -> c(3) ; x(2) = c(1) * c(2) -> c(3) ;
+    x(3) = c(3) ; x(4) = c(1) * c(2)
+
+No more solutions.
+rewrites: 2946
+Bye.

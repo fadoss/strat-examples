@@ -1,0 +1,66 @@
+***
+*** Operations on relations using strategies
+***
+
+fmod RELATION is
+	protecting NAT .
+
+	sort Entry Relation .
+	subsort Entry < Relation .
+
+	op `(_,_`) : Nat Nat -> Entry [ctor] .
+	op empty : -> Relation .
+	op __ : Relation Relation -> Relation [comm assoc ctor id: empty] .
+
+	op _in_ : Entry Relation -> Bool .
+
+	vars E E' : Entry .
+	var  R    : Relation .
+
+	eq E in E' R = E == E' or E in R .
+	eq E in empty = false .
+endfm
+
+mod RELATION-RULES is
+	protecting RELATION .
+
+	vars X Y Z : Nat .
+	var  R     : Relation .
+
+	rl [sum]  : (X, Y) (X, Z) R => (X, Y + Z) R .
+	rl [swap] : (X, Y) => (Y, X) .
+	rl [add]  : R => R (X, Y) [nonexec].
+	rl [rem]  : (X, Y) => empty [nonexec].
+endm
+
+smod RELATION-STRATS is
+	protecting RELATION-RULES .
+
+	vars X Y Z : Nat .
+	var  E     : Entry .
+	vars R R'  : Relation .
+
+	*** Revert all tuples in the list
+	strat revert @ Nat .
+	sd revert := match empty ? idle : matchrew E R by E using swap, R using revert .
+
+	*** Calculates the transitive closure
+	strat trans @ Nat .
+	sd trans := ( matchrew (X, Y) (Y, Z) R s.t. not ((X, Z) in R) by R using add[X <- X, Y <- Z] ) ! .
+
+	*** Combine pairs of tuples that share end and beginning
+	strat dominoes @ Nat .
+	sd dominoes := ( matchrew R s.t. (X, Y) (Y, Z) R' := R by R using (rem[X <- X, Y <- Y] ; rem[X <- Y, Y <- Z] ; add[X <- X, Y <- Z]) ) ! .
+
+	*** Remove all pairs "reachable" from the argument (where the subject term is a list of vertices)
+	strat remove : Nat @ Nat .
+	sd remove(X) := (matchrew R s.t. (X, Y) R' := R by R using (rem[X <- X, Y <- Y] ; remove(Y)))
+				? remove(X) : idle .
+endsm
+
+eof
+
+srew (1, 10) (10, 1) (2, 20) using revert .
+srew (1, 2) (2, 3) (5, 6) using trans .
+srew (1, 2) (2, 3) (3, 5) (6, 7) using dominoes .
+srew (1, 2) (2, 3) (3, 4) (3, 5) (5, 6) (7, 1) using remove(1) .

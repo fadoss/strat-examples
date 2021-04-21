@@ -1,0 +1,10 @@
+==========================================
+srewrite in HANOI-SOLVE : initial(4, 3) using moveAll(0, 2, 4) .
+
+Solution 1
+rewrites: 62
+result Hanoi: (0)[nil] (1)[nil] (2)[4 3 2 1]
+
+No more solutions.
+rewrites: 62
+Bye.

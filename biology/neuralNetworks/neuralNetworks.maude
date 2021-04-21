@@ -1,0 +1,327 @@
+***
+*** Description: Neural Network with Maude using strategies
+*** Authors: Gustavo Santos-García, Miguel Palomino, and Alberto Verdejo.
+*** email: santos@usal.es, miguelpt@sip.ucm.es, alberto@sip.ucm.es
+*** Date: Apr 14, 2008
+*** Version: 2.7 (adapted by Rubén Rubio <rubenrub@ucm.es> on Dec 2018)
+*** Comments:	- Object oriented approach
+***		- Use strategies
+***		- This is a neuronal version for evaluation and training ANN
+***		- Several patterns can be introduced at the same time
+*** Running from terminal: maude neuralNetworks-data
+***
+
+mod ANN-BASE is
+	protecting CONVERSION .
+	protecting QID .
+	protecting CONFIGURATION .
+
+	*** Messages ***
+
+	*** netStatus(counter, final training pattern, times of training set, final pattern)
+	msg netStatus : Nat Nat Nat Nat -> Msg .
+
+	*** inputPattern(counter, neuron, value)
+	*** outputPattern(counter, neuron, value, state)
+	msg inputPattern : Nat Nat Float -> Msg .
+	msg outputPattern : Nat Nat Float Nat -> Msg .
+
+	*** Classes ***
+
+	*** class Net | e : Float, r : Bool, st : Nat .
+	op Net : -> Cid [ctor] .
+	op e :_ : Float -> Attribute [ctor] .
+	op r :_ : Bool -> Attribute [ctor] .
+	op st :_ : Nat -> Attribute [ctor] .
+	*** class Neuron | x : Float, t : Float, st : Nat .
+	op Neuron : -> Cid [ctor] .
+	op x :_ : Float -> Attribute [ctor] .
+	op t :_ : Float -> Attribute [ctor] .
+	*** class Link | w : Float, st : Nat .
+	op Link : -> Cid [ctor] .
+	op w :_ : Float -> Attribute [ctor] .
+
+	*** Operators ***
+
+	*** Final object representation
+	op net : Nat -> Oid .
+	op neuron : Nat Nat -> Oid .
+	op link : Nat Nat Nat -> Oid .
+
+	*** Initial object representation
+	ops ann inputs layer0 layer1 layer2 : -> Configuration .
+
+	*** Initialization for input, output, desired, threshold, link matricial values
+	*** Input an output pattern matricial values (esto está en indio)
+	ops input0 input1 input2 output0 output1 output2 desired0 desired1 desired2
+		threshold0 threshold1 threshold2 : -> FloatList .
+	ops link1 link2 : -> Matrix .
+	ops inputPattern outputPattern : Nat -> FloatList .
+
+	*** Link matrix
+	sorts FloatList Matrix .
+	subsorts Float < FloatList < Matrix .
+	op __ : FloatList FloatList -> FloatList [assoc prec 14] .
+	op _;_ : Matrix Matrix -> Matrix [assoc] .
+
+	*** Conversion operators
+	ops inPatternConversion outPatternConversion : Nat FloatList Nat -> Configuration .
+	op neuronGeneration : Nat FloatList FloatList Nat -> Configuration .
+	op linkGeneration : Nat Matrix Nat Nat -> Configuration .
+
+	*** Variables ***
+	vars L L' I J K S S2 N0 N N1 N2 : Nat .
+	var MW : Matrix .
+	var B : Bool .
+	vars X D T DT DT1 DT2 E P O W W1 X0 X1 X2 : Float .
+	vars LX LT LW : FloatList .
+	vars C C' : Configuration .
+
+	*** Initial Matricial Representation of Neural Net Model (begin) ***
+	eq ann = layer0 layer1 layer2 .
+	eq layer0 = neuronGeneration(0, input0, threshold0, 0) .
+	eq layer1 = neuronGeneration(1, input1, threshold1, 0) linkGeneration(1, link1, 0, 0) .
+	eq layer2 = neuronGeneration(2, input2, threshold2, 0) linkGeneration(2, link2, 0, 0) .
+	*** Initial Matricial Representation of Neural Net Model (end) ***
+
+	*** Conversion to Object Neural Net Model (begin) ***
+	eq neuronGeneration(L, X LX, T LT, S) = neuronGeneration(L, LX, LT, s(S))
+		< neuron(L, s(S)) : Neuron | x : X, t : T, st : 0 > .
+
+	eq neuronGeneration(L, X, T, S) =
+		< neuron(L, s(S)) : Neuron |  x : X , t : T , st : 0 > .
+
+	*** Link matricial representation to object representation
+	eq linkGeneration(L, ((W LW) ; MW), S, S2) =  linkGeneration(L, (LW ; MW), s(S), S2)
+		< link(L, s(S2), s(S)) : Link | w : W , st : 0 > .
+
+	eq linkGeneration(L, (W ; MW), S, S2) = linkGeneration(L, MW, 0, s(S2))
+		< link(L, s(S2), s(S)) : Link | w : W , st : 0 > .
+
+	eq linkGeneration(L, (W LW), S, S2) = linkGeneration(L, LW, s(S), S2)
+		< link(L, s(S2), s(S)) : Link | w : W , st : 0 > .
+
+	eq linkGeneration(L, W, S, S2) =
+		< link(L, s(S2), s(S)) : Link | w : W , st : 0 > .
+
+	*** Pattern and object matrices to object representation
+	eq inPatternConversion(N, X LX, S) = inPatternConversion(N, LX, s(S))
+		inputPattern(N, s(S), X) .
+
+	eq inPatternConversion(N, X, S) = inputPattern(N, s(S), X) .
+
+	eq outPatternConversion(N, X LX, S) = outPatternConversion(N, LX, s(S))
+		outputPattern(N, s(S), X, 0) .
+
+	eq outPatternConversion(N, X, S) = outputPattern(N, s(S), X, 0)
+		< net(N) : Net |  e : 0.0 , r : false , st : 0 > .
+	*** Conversion to Object Neural Net Model (end) ***
+endm
+
+mod ANN-SYGMOID is
+	protecting ANN-BASE .
+
+	var X : Float .
+
+	op nu : -> Float .
+	eq nu = 2.6 .
+	op syg : Float Nat -> Float .
+	eq syg(X, 0) = X . *** identity function
+	eq syg(X , 1) =  1.0 / (1.0 + exp(nu - X)) .  *** sygmoid function
+	eq syg(X , 2) =  1.0 / (1.0 + exp(nu - X)) .  *** sygmoid function
+	*** identity function: ( X )
+	*** step function:     ( if X >= 0.0 then 1.0 else 0.0 fi )
+	*** sygmoid function:  ( 1.0 / ( 1.0 + exp(_-_(nu , X))))
+endm
+
+mod ANN-EVALUATION is
+	protecting ANN-SYGMOID .
+
+	*** Neural net model rules ***
+
+	var N N0 N1 N2 L I J S : Nat .
+	var X X0 X1 X2 W T E : Float .
+	var B : Bool .
+	var C : Configuration .
+
+	crl [nextPatternTR] : *** use next pattern
+		netStatus(N , N1 , N2 , N0)  =>  netStatus(s(N), N1 , N2 , N0)
+		*** repeating training input pattern
+		*** inPatternConversion(s N, inputPattern(s (N quo N2)), 0)
+		*** outPatternConversion(s N, outputPattern(s (N quo N2)), 0)
+		*** rotating training input pattern
+		inPatternConversion(s(N), inputPattern(s(N rem N1)), 0)
+		outPatternConversion(s(N), outputPattern(s(N rem N1)), 0)
+	  if  s(N) <= (N1 * N2) .
+
+	crl [nextPattern] : *** use next pattern
+		netStatus(N , N1 , N2 , N0)  =>  netStatus(s(N), N1 , N2 , N0)
+		inPatternConversion(s(N), inputPattern(s(N)), 0)
+		outPatternConversion(s(N), outputPattern(s(N)), 0)
+	  if  N < N0 .
+
+	rl [resetNeuron] :    *** reset status for all neurons
+		< neuron(L, I) : Neuron | x : X , st : s(S) > =>
+		< neuron(L, I) : Neuron | x : 0.0 , st : 0 > .
+
+	rl [resetLink] :  C => resetLink(C) .   *** reset status for all links
+
+	op resetLink : Configuration -> Configuration .
+	eq resetLink(C < link(L, I, J) : Link  | w : W , st : 1 >) =
+		resetLink(C < link(L, I, J) : Link  | w : W , st : 0 >) .
+	eq resetLink(C) = C [owise] .
+
+	rl [introducePattern] : *** Introduce pattern into input layer neurons
+		inputPattern(N, I, X0)
+		< neuron(0, I) : Neuron | x : X , st : 0 > =>
+		< neuron(0, I) : Neuron | x : X0 , st : 1 > .
+
+	rl [feedForward] : C => feedForward(C) . *** Compute outputs at every neuron
+	op feedForward : Configuration -> Configuration .
+	eq feedForward(C < link(s(L), I, J) : Link | w : W , st : 0 >
+	        < neuron(L, I)    : Neuron | x : X1 , st : 1 >
+        	< neuron(s(L), J) : Neuron | x : X2 , st : 0 >)
+	  = feedForward(C < link(s(L), I, J) : Link | w : W , st : 1 >
+        	< neuron(L, I)    : Neuron | x : X1 , st : 1 >
+	        < neuron(s(L), J) : Neuron | x : (X2 + (X1 * W)) , st : 0 >) .
+	eq feedForward(C) = C [owise] .
+
+	rl [sygmoid] : *** Compute sygmoid function for output
+		< neuron(L, I) : Neuron |  x : X , t : T ,  st : 0 > =>
+		< neuron(L, I) : Neuron |  x : syg(X - T, L) , t : T ,  st : 1 > .
+
+	***  Compute output and error rules ***
+	op tol : -> Float .
+	eq tol = 1.0e-1 . *** Tolerance value
+
+	rl [computeError] : *** Compute error for last layer
+		< neuron(2, I)  : Neuron |  x : X0 , st : 1 > outputPattern(N, I, X1, 0)
+		< net(N0) : Net |  e : E , st : 0 >
+	  =>
+		< neuron(2, I)  : Neuron |  x : X0 , st : 1 > outputPattern(N, I, X1, 1)
+		*** < net(N0) : Net |  e :  (E + ((X1 - X0) * (_-_(X1, X0)))) , st : 0 > .
+		< net(N0) : Net |  e :  (E + (X1 - X0)) , st : 0 > . *** one neuron
+
+	rl [setNet] : *** set label from 0 to 2 for the last Net
+		< net(N) : Net | e : E , r : B , st : 0 >
+	  =>
+		*** < net(N) : Net | e : E , r : (E <= tol) , st : 2 > .
+		< net(N) : Net | e : E , r : (abs(E) <= tol) , st : 2 > . *** one neuron
+
+	rl [setNetTR] : *** set label from 0 to 1 for the last Net
+		< net(N) : Net | e : E , r : B , st : 0 >
+	  =>
+		*** < net(N) : Net | e : E , r : (E <= tol) , st : 1 > .
+		< net(N) : Net | e : E , r : (abs(E) <= tol) , st : 1 > . *** one neuron
+endm
+
+mod ANN-TRAINING is
+	protecting ANN-EVALUATION .
+
+	*** Classes ***
+	*** class LinkTR | w+1 : Float . subclass LinkTR < Link .
+	op LinkTR : -> Cid [ctor] .
+	op w+1 :_ : Float -> Attribute [ctor] .
+	*** class NeuronTR  | dt : Float . subclass NeuronTR < Neuron .
+	op NeuronTR : -> Cid [ctor] .
+	op dt :_ : Float -> Attribute [ctor] .
+
+	*** Advanced net parameters
+	op eta : -> Float .
+	eq eta = 0.015 . *** Gain term or learning constant
+
+	*** Variables ***
+	vars L L' I J K S S2 N0 N N1 N2 : Nat .
+	var MW : Matrix .
+	var B : Bool .
+	vars X D T DT DT1 DT2 E P O W W1 X0 X1 X2 : Float .
+	vars LX LT LW : FloatList .
+	vars C C' : Configuration .
+
+	*** Training rules ***
+	rl [resetLinkW+1] :  C => resetLinkW+1(C) .
+	op resetLinkW+1 : Configuration -> Configuration .
+	eq resetLinkW+1(C < link(N, I, J) : Link | w : W , st : 1 >) =
+		resetLinkW+1(C < link(N, I, J) : LinkTR | w : W, w+1 : 0.0, st : 2 >) .
+	eq resetLinkW+1(C) = C [owise] .
+
+	rl [resetNeuronTR] : < neuron(L, I) : Neuron | x : X, t : T, st : 1 >
+		=> < neuron(L, I) : NeuronTR | x : X , t : T, dt : 0.0, st : 2 > .
+
+	rl [delta2] :  *** Computes dt (delta) at neurons for output layer
+		< neuron(2, I) : NeuronTR | x : X, dt : DT, st : 2 >
+		outputPattern(N, I, D, 1)
+		=>
+		< neuron(2, I) : NeuronTR | x : X , dt : (X * ((_-_(1.0, X)) * (_-_(D, X)))) , st : 3 > .
+
+	rl [link] : C => link(C) . *** Computes w+1 (updated link) at links for output and hidden layers
+	op link : Configuration -> Configuration .
+	eq link(C < link(s L, I, J) : LinkTR | w : W, w+1 : W1, st : 2 >
+		< neuron(L, I) : NeuronTR | x : X1, st : 2 >
+		< neuron(s L, J) : NeuronTR | dt : DT, st : 3 >)
+	= link(C < link(s L, I, J) : LinkTR | w : W , w+1 : (W + (eta * (DT * X1))) , st : 3 >
+		< neuron(L, I) : NeuronTR | x : X1, st : 2 >
+		< neuron(s L, J) : NeuronTR | dt : DT , st : 3 >) .
+	eq link(C) = C [owise] .
+
+	rl [delta1] :  C => delta1C(delta1B(delta1A(C))) .  *** Compose delta1s
+	ops delta1A delta1B delta1C : Configuration -> Configuration .
+	*** delta1A: Initialize dt (delta) at neurons for hidden layer
+	*** delta1B: Summatory of dt (delta) at neurons for hidden layer
+	*** delta1C: Multiply dt (delta) by X(1-X) at neurons for hidden layer
+	eq delta1A(C < neuron(1, I) : NeuronTR | dt : DT, st : 2 >)
+		=  delta1A(C < neuron(1, I) : NeuronTR | dt : 0.0 , st : 4 >) .
+	eq delta1A(C) = C [owise] .
+
+	eq delta1B(C < link(2, J, K) : LinkTR | w : W, st : 3 >
+		< neuron(1, J) : NeuronTR | dt : DT1 , st : 4 >
+		< neuron(2, K) : NeuronTR | dt : DT2 , st : 3 >)
+		= delta1B(C < link(2, J, K) : LinkTR |  w : W , st : 4 >
+		< neuron(1, J) : NeuronTR | dt : (DT1 + (DT2 * W)), st : 4 >
+		< neuron(2, K) : NeuronTR | dt : DT2 , st : 3 > ) .
+	eq delta1B(C) = C [owise] .
+
+	eq delta1C(C < neuron(1, J) : NeuronTR | x : X, dt : DT, st : 4 >)
+		= delta1C(C < neuron(1, J) : NeuronTR | x : X, dt : (DT * (X * (_-_(1.0, X)))), st : 3 > ) .
+	eq delta1C(C) = C [owise] .
+
+	rl [switchLink] : C => switchLink(C) . *** Switch new links at w (w+1 with old links)
+	op switchLink : Configuration -> Configuration .
+	eq switchLink(C < link(N, I, J) : LinkTR | w : W,  w+1 : W1, st : s(S) >)
+		=  switchLink(C < link(N, I, J) : LinkTR | w : W1, w+1 : W, st : 0 >) .
+	eq switchLink(C) = C [owise] .
+
+	rl [changeStatus] : *** Change status
+	*** netStatus(N , N1 , N2 , N0)  =>  netStatus(N1 , N1 , N2 , N0) .
+		netStatus(N , N1 , N2 , N0)  =>  netStatus(0 , N1 , N2 , N0) .
+endm
+
+smod ANN-STRAT is
+	protecting ANN-TRAINING .
+
+	var L L' : Nat .
+
+	*** strategy 1: evaluation ANN
+	strat evaluateANN @ Configuration .
+	sd evaluateANN := (
+		nextPattern ; one(resetNeuron) ! ; top(resetLink) ; one(introducePattern) ! ;
+		top(feedForward) ; one(sygmoid[L <- 1]) ! ; top(feedForward) ; one(sygmoid[L <- 2]) ! ;
+		one(computeError) ! ; setNetTR ;
+		top(resetLinkW+1) ; one(resetNeuronTR) ! ;
+		one(delta2) ! ; top(link) ; top(delta1) ;  top(link) ;
+		top(switchLink)
+	) .
+
+	*** strategy 2: training ANN
+	strat trainANN : @ Configuration .
+	sd trainANN := (
+		nextPatternTR ;
+		one(resetNeuron) ! ; one(introducePattern) ! ;
+		top(feedForward) ;  one(sygmoid[L <- 1]) ! ;  top(feedForward) ;  one(sygmoid[L <- 2]) ! ;
+		one(computeError) ! ;  setNetTR ;
+		top(resetLinkW+1) ;  one(resetNeuronTR) ! ;
+		one(delta2) ! ; top(link) ;  top(delta1) ;  top(link) ;
+		top(switchLink)
+	) .
+
+endsm

@@ -1,0 +1,19 @@
+***
+*** This is an extended strategy module for the congruence operator extension
+*** that implements the norm-via-munorm strategy for context-sensitive rewriting.
+***
+*** Since it uses extended operators, it cannot be loaded by Maude itself, but it
+*** can be used through the slangExtension.py script:
+***
+***	./slangExtension.py congruenceOpsExt.maude CongOps \
+***		congruence-lazylist.maude --extmodule congruence-lazylist-smod.maude \
+***		'take(3, natsFrom(0))' norm-via-munorm
+***
+
+smod LAZY-LIST-MUNORM is
+	protecting LAZY-LIST-RLS .
+
+	strat norm-via-munorm @ LazyList .
+
+	sd norm-via-munorm := one(all) ! ; gt-all(norm-via-munorm) .
+endsm

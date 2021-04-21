@@ -1,0 +1,930 @@
+***
+*** Grammar of the strategy language expressions and helper modules
+*** to extend the language syntax and semantics.
+***
+
+***
+*** Generic (for any module) part of strategy language grammar.
+***
+*** The complete grammar depends on the target module where strategies are
+*** applied. The SLANG-PARSE module includes a meta-level transformation
+*** that instantiates this grammar for a given module, filling it with
+*** productions for rule applications, strategy calls, and sort tests.
+***
+
+fmod SLANG-GRAMMAR is
+	sorts @UsingPair@ @UsingPairSet@ @Condition@ @Substitution@ .
+	subsort @UsingPair@ < @UsingPairSet@ .
+	sorts @RuleApp@ @CallStrategy@ @Strategy@ @StrategyList@ .
+	subsorts @RuleApp@ @CallStrategy@ < @Strategy@ < @StrategyList@ .
+
+	*** basic operators
+	ops fail idle all  : -> @Strategy@ [ctor] .
+	op top             : @RuleApp@ -> @Strategy@ [ctor] .
+	op match_          : Universal -> @Strategy@ [ctor poly (1) prec 21 gather (&)] .
+	op xmatch_         : Universal -> @Strategy@ [ctor poly (1) prec 21 gather (&)] .
+	op amatch_         : Universal -> @Strategy@ [ctor poly (1) prec 21 gather (&)] .
+	op match___        : Universal @SuchThat@ @Condition@ -> @Strategy@ [ctor poly (1) prec 21 gather (& & &)] .
+	op xmatch___       : Universal @SuchThat@ @Condition@ -> @Strategy@ [ctor poly (1) prec 21 gather (& & &)] .
+	op amatch___       : Universal @SuchThat@ @Condition@ -> @Strategy@ [ctor poly (1) prec 21 gather (& & &)] .
+	op _|_             : @Strategy@ @Strategy@ -> @Strategy@ [ctor assoc prec 41 gather (e E)] .
+	op _;_             : @Strategy@ @Strategy@ -> @Strategy@ [ctor assoc prec 39 gather (e E)] .
+	op _or-else_       : @Strategy@ @Strategy@ -> @Strategy@ [ctor assoc prec 43 gather (e E)] .
+	op _+              : @Strategy@ -> @Strategy@ [ctor prec 0 gather (E)] .
+	op _?_:_           : @Strategy@ @Strategy@ @Strategy@ -> @Strategy@ [ctor prec 55 gather (e & E)] .
+	op matchrew_by_    : Universal @UsingPairSet@ -> @Strategy@ [ctor poly (1) prec 21 gather (& &)] .
+	op xmatchrew_by_   : Universal @UsingPairSet@ -> @Strategy@ [ctor poly (1) prec 21 gather (& &)] .
+	op amatchrew_by_   : Universal @UsingPairSet@ -> @Strategy@ [ctor poly (1) prec 21 gather (& &)] .
+	op matchrew___by_  : Universal @SuchThat@ @Condition@ @UsingPairSet@ -> @Strategy@ [ctor poly (1) prec 21 gather (& & & &)] .
+	op xmatchrew___by_ : Universal @SuchThat@ @Condition@ @UsingPairSet@ -> @Strategy@ [ctor poly (1) prec 21 gather (& & & &)] .
+	op amatchrew___by_ : Universal @SuchThat@ @Condition@ @UsingPairSet@ -> @Strategy@ [ctor poly (1) prec 21 gather (& & & &)] .
+	op one             : @Strategy@ -> @Strategy@ [ctor] .
+
+	sort @SuchThat@ .
+	op s.t.      : -> @SuchThat@ [ctor] .
+	op such that : -> @SuchThat@ [ctor] .
+
+	*** rule applications (are based on rule names that should be generated dynamically)
+	sorts @RuleName@ @CRuleName@ @CRuleApp@ .
+	subsort @CRuleName@ < @RuleName@ @CRuleApp@ < @RuleApp@ .
+
+	op _[_] : @RuleName@ @Substitution@ -> @RuleApp@ [ctor prec 0 gather (& &)] .
+	op _[_] : @CRuleName@ @Substitution@ -> @CRuleApp@ [ctor ditto] .
+	op _{_} : @CRuleApp@ @StrategyList@ -> @RuleApp@ [ctor prec 0 gather (& &)] .
+
+	*** Strategy calls should also be generated dynamically
+
+	*** derived operators
+	op _*   : @Strategy@ -> @Strategy@ [ctor prec 0 gather (E)] .
+	op _!   : @Strategy@ -> @Strategy@ [ctor prec 0 gather (E)] .
+	op not  : @Strategy@ -> @Strategy@ [ctor] .
+	op test : @Strategy@ -> @Strategy@ [ctor] .
+	op try  : @Strategy@ -> @Strategy@ [ctor] .
+
+	*** conditions
+	subsort Bool < @Condition@ .
+
+	op _=_  : Universal Universal -> @Condition@ [ctor poly (1 2) prec 0 gather (& &)] .
+	op _:=_ : Universal Universal -> @Condition@ [ctor poly (1 2) prec 0 gather (& &)] .
+	op _=>_ : Universal Universal -> @Condition@ [ctor poly (1 2) prec 0 gather (& &)] .
+	op _/\_ : @Condition@ @Condition@ -> @Condition@ [ctor assoc prec 0 gather (& &)] .
+
+	*** substitutions
+	op _<-_ : Universal Universal -> @Substitution@ [ctor poly (1 2) prec 75] .
+	op _;_  : @Substitution@ @Substitution@ -> @Substitution@ [ctor assoc prec 95] .
+
+	*** lists
+	op _using_ : Universal @Strategy@ -> @UsingPair@ [ctor poly (1) prec 21 gather (& e)] .
+	op _,_     : @UsingPairSet@ @UsingPairSet@ -> @UsingPairSet@ [ctor assoc prec 61 gather (& &)] .
+	op _,_     : @StrategyList@ @StrategyList@ -> @StrategyList@ [ctor assoc prec 41 gather (& &)] .
+endfm
+
+***
+*** Restricted grammar of strategy modules with extended strategies
+***
+
+fmod SMOD-BASE-SYNTAX is
+	protecting QID-LIST .
+
+	sort @Token@ .
+	sort @Bubble@ @AtBubble@ @SdBubble@ @IfBubble@ @ColonBubble@ .
+
+	op token : Qid -> @Token@ [special (
+		id-hook Bubble (1 1)
+		op-hook qidSymbol (<Qids> : ~> Qid))] .
+
+	op bubble : QidList -> @Bubble@ [special (
+		id-hook Bubble (1 -1)
+		op-hook qidListSymbol (__ : QidList QidList ~> QidList)
+		op-hook qidSymbol (<Qids> : ~> Qid)
+		id-hook Exclude (.))] .
+
+	op atBubble : QidList -> @AtBubble@ [special (
+		id-hook Bubble (1 -1)
+		op-hook qidListSymbol (__ : QidList QidList ~> QidList)
+		op-hook qidSymbol (<Qids> : ~> Qid)
+		id-hook Exclude (. @))] .
+
+	op sdBubble : QidList -> @SdBubble@ [special (
+		id-hook Bubble (1 -1)
+		op-hook qidListSymbol (__ : QidList QidList ~> QidList)
+		op-hook qidSymbol (<Qids> : ~> Qid)
+		id-hook Exclude (. :=))] .
+
+	op ifBubble : QidList -> @IfBubble@ [special (
+		id-hook Bubble (1 -1)
+		op-hook qidListSymbol (__ : QidList QidList ~> QidList)
+		op-hook qidSymbol (<Qids> : ~> Qid)
+		id-hook Exclude (. if))] .
+
+	op colonBubble : QidList -> @ColonBubble@ [special (
+		id-hook Bubble (1 -1)
+		op-hook qidListSymbol (__ : QidList QidList ~> QidList)
+		op-hook qidSymbol (<Qids> : ~> Qid)
+		id-hook Exclude (. :))] .
+endfm
+
+fmod SMOD-GRAMMAR is
+	protecting SMOD-BASE-SYNTAX .
+
+	sorts @StratModule@ @SmodDeclaration@ @SmodDeclList@ @SdLhs@ @SdRhs@ .
+	subsort @SmodDeclaration@ < @SmodDeclList@ .
+
+	op __ : @SmodDeclList@ @SmodDeclList@ -> @SmodDeclList@ [ctor assoc] .
+
+	op protecting_. : @Token@ -> @SmodDeclaration@ [ctor] .
+	op pr_.         : @Token@ -> @SmodDeclaration@ [ctor] .
+	op including_.  : @Token@ -> @SmodDeclaration@ [ctor] .
+	op inc_.        : @Token@ -> @SmodDeclaration@ [ctor] .
+	op extending_.  : @Token@ -> @SmodDeclaration@ [ctor] .
+	op ext_.        : @Token@ -> @SmodDeclaration@ [ctor] .
+
+	*** Variable declarations
+	op var_:_.    : @ColonBubble@ @Token@ -> @SmodDeclaration@ [ctor] .
+	op vars_:_.   : @ColonBubble@ @Token@ -> @SmodDeclaration@ [ctor] .
+
+	*** Strategy declarations
+	op strat_@_.   : @AtBubble@ @Token@ -> @SmodDeclaration@ [ctor] .
+	op strats_@_.  : @AtBubble@ @Token@ -> @SmodDeclaration@ [ctor] .
+	op sd_:=_.     : @SdBubble@ @Bubble@ -> @SmodDeclaration@ [ctor] .
+	op csd_:=_if_. : @SdBubble@ @IfBubble@ @Bubble@ -> @SmodDeclaration@ [ctor] .
+
+	*** Attributes and other statements are not allowed
+
+	op smod_is_endsm : @Token@ @SmodDeclList@ -> @StratModule@ .
+endfm
+
+fmod SLANG-AUX-OPS is
+	protecting META-MODULE .
+
+	*** Remove parentheses from a 0-ary strategy call
+	op removeParens : Qid -> Qid .
+
+	eq removeParens(Q) = if substr(string(Q), sd(length(string(Q)), 2), 2) == "()" then
+			qid(substr(string(Q), 0, sd(length(string(Q)), 2)))
+		else Q fi .
+
+	*** Extract the sort from a test operator
+	op getSortFromTest : Qid ~> Sort .
+
+	ceq getSortFromTest(Q) = qid(substr(string(Q), 3, sd(length(string(Q)), 3)))
+	 if substr(string(Q), 0, 2) == "_:" .
+
+	*** Has rule with the given name?
+	op hasRule : Qid RuleSet -> Bool .
+
+	eq hasRule(Q, rl L => R [label(Q) Attrs] . RlS) = true .
+	eq hasRule(Q, crl L => R if C [label(Q) Attrs] . RlS) = true .
+	eq hasRule(Q, RlS) = false [owise] .
+
+	*** Has rewriting fragments?
+	op hasRewFragments : Condition -> Bool .
+
+	eq hasRewFragments(nil) = false .
+	eq hasRewFragments(L = R /\ C) = hasRewFragments(C) .
+	eq hasRewFragments(L := R /\ C) = hasRewFragments(C) .
+	eq hasRewFragments(L : S /\ C) = hasRewFragments(C) .
+	eq hasRewFragments(L => R /\ C) = true .
+
+	var  Q     : Qid .
+	var  Attrs : AttrSet .
+	var  RlS   : RuleSet .
+	vars L R   : Term .
+	var  S     : Sort .
+	var  C     : Condition .
+endfm
+
+***
+*** Parsing functions for the strategy language of a given module.
+***
+*** The key functions are:
+***  + makeSlangGrammar(Module, Module)
+***      Builds the instance of the grammar for a given target module (second
+***      argument). Moreover, the grammar module (first argument) could be not
+***      only STRAT-GRAMMAR, but a extension of it.
+***  + stratParse(Module, Term)
+***      Given the parsed term from the previous grammar, it is translated to
+***      a strategy meta-representation. A module extending SLANG-PARSE could
+***      define new strategy constructors at the meta-level and complete
+***      stratParse accordingly to support them.
+***  + stratParse(Module, Module, String)
+***      Performs the complete process from a string to a meta-strategy using
+***      the two previous functions.
+***
+
+fmod SLANG-PARSE is
+	protecting META-LEVEL .
+	protecting LEXICAL .
+	protecting SLANG-AUX-OPS .
+
+	*** Builds the strategy language grammar for the given module, taking
+	*** its sorts, rules and strategy definitions into account.
+	***
+	*** The first argument is the language static grammar (SLANG-GRAMMAR
+	*** as default). Users can pass an extended grammar instead.
+	*** Polymorphic strategy constructors will have its Universal type
+	*** argument instantiated by the kinds of the target module.
+
+	op makeSlangGrammar : Module Module -> Module .
+
+	*** The first argument, the grammar module, is only needed to
+	*** distinguish strategy calls from other expressions, and Boolean
+	*** expressions from other conditions.
+	***
+	*** It could have been defined without using the grammar again, but
+	*** this would have made handling the possible extensions of the
+	*** language more difficult.
+
+	op stratParse : Module Term -> Strategy .
+
+	*** Helper functions that apply the whole parsing process
+
+	op stratParse : Module Module String -> Strategy .
+	op stratParse : Qid String -> Strategy .
+
+	vars GM M           : Module .
+	var  Q GQ           : Qid .
+	var  TyL            : TypeList .
+	var  Ty             : Type .
+	var  Attrs          : AttrSet .
+	var  Strats         : StratDeclSet .
+	var  Op             : OpDecl .
+	var  Ops            : OpDeclSet .
+	var  C              : Condition .
+	var  Rl             : Rule .
+	var  RlS            : RuleSet .
+	var  NL             : NeNatList .
+	var  KS             : KindSet .
+	var  K              : Kind .
+	vars L R T T1 T2 DC : Term .
+	vars NeTL           : NeTermList .
+	var  Ct             : Constant .
+	var  St             : Sort .
+	var  Sts            : SortSet .
+	var  X              : Variable .
+	var  Str            : String .
+
+
+	***
+	*** Grammar generation
+	***
+
+	eq makeSlangGrammar(GM, M) = fmod 'SLANG-GRAMMAR-X is
+		getImports(M) getImports(GM)
+		sorts getSorts(M) ; getSorts(GM) .
+		getSubsorts(M)
+		getSubsorts(GM)
+		getOps(M)
+		instantiateSCtors(getOps(GM), removeProblematic(M, getKinds(M)))
+		makeSortTests(M, getSorts(M))
+		makeRuleApps(getRls(M))
+		makeStrategyCalls(getStrats(M), getRls(M))
+		getMbs(M)
+		getEqs(M)
+	endfm .
+
+	*** Remove problematic kinds
+	op removeProblematic : Module KindSet -> KindSet .
+
+	eq removeProblematic(M, none) = none .
+	eq removeProblematic(M, '`[Formula`] ; KS) = removeProblematic(M, KS) .
+	eq removeProblematic(M, K ; KS) = K ; removeProblematic(M, KS) [owise] .
+
+	*** Create a rule name production for each labeled rule
+	op makeRuleApps : RuleSet -> OpDeclSet .
+
+	eq makeRuleApps(none) = none .
+	eq makeRuleApps(rl L => R [label(Q) Attrs] . RlS) =
+		(op Q : nil -> '@RuleName@ [ctor] .)
+		makeRuleApps(RlS) .
+	eq makeRuleApps(crl L => R if C [label(Q) Attrs] . RlS) =
+		(op Q : nil -> if hasRewFragments(C) then '@CRuleName@ else '@RuleName@ fi [ctor] .)
+		makeRuleApps(RlS) .
+	eq makeRuleApps(Rl RlS) =	*** Unlabeled rules
+		makeRuleApps(RlS) [owise] .
+
+	*** Create a strategy call production for each strategy declaration
+	*** (strategies for whose label there is a rule have forced parentheses)
+	op makeStrategyCalls : StratDeclSet RuleSet -> OpDeclSet .
+
+	eq makeStrategyCalls(none, RlS) = none .
+	eq makeStrategyCalls(strat Q : TyL @ Ty [Attrs] . Strats, RlS) =
+		(op (if hasRule(Q, RlS) then qid(string(Q) + "()") else Q fi)
+		     : TyL -> '@CallStrategy@ [ctor] .)
+		makeStrategyCalls(Strats, RlS) [owise] .
+
+
+	*** Create a sort test condition for each sort
+	op makeSortTests : Module SortSet -> OpDeclSet .
+
+	eq makeSortTests(M, none) = none .
+	eq makeSortTests(M, St ; Sts) =
+		(op qid("_: " + string(St)) : getKind(M, St) -> '@Condition@ [ctor] .)
+		makeSortTests(M, Sts) .
+
+	*** Instantiate the polymorphic grammar productions
+	*** to the kinds of the module
+	op instantiateSCtors   : OpDeclSet KindSet -> OpDeclSet .
+	op instantiateSCtor    : Qid TypeList Type AttrSet KindSet -> OpDeclSet .
+	op instantiateTypeList : TypeList Kind -> TypeList .
+
+	eq instantiateSCtors(none, KS) = none .
+	eq instantiateSCtors(op Q : TyL -> '@Strategy@ [poly(NL) Attrs] . Ops, KS) =
+		instantiateSCtor(Q, TyL, '@Strategy@, Attrs, KS)
+		instantiateSCtors(Ops, KS) .
+	eq instantiateSCtors(op Q : TyL -> '@Condition@ [poly(NL) Attrs] . Ops, KS) =
+		instantiateSCtor(Q, TyL, '@Condition@, Attrs, KS)
+		instantiateSCtors(Ops, KS) .
+	eq instantiateSCtors(op Q : TyL -> '@Substitution@ [poly(NL) Attrs] . Ops, KS) =
+		instantiateSCtor(Q, TyL, '@Substitution@, Attrs, KS)
+		instantiateSCtors(Ops, KS) .
+	eq instantiateSCtors(Op Ops, KS) = Op instantiateSCtors(Ops, KS) .
+
+	eq instantiateSCtor(Q, TyL, Ty, Attrs, none) = none .
+	eq instantiateSCtor(Q, TyL, Ty, Attrs, K ; KS) =
+		(op Q : instantiateTypeList(TyL, K) -> Ty [Attrs] .)
+		instantiateSCtor(Q, TyL, Ty, Attrs, KS) .
+
+	eq instantiateTypeList(nil, K) = nil .
+	eq instantiateTypeList('Universal TyL, K) = K instantiateTypeList(TyL, K) .
+	eq instantiateTypeList(Ty TyL, K) = Ty instantiateTypeList(TyL, K) [owise] .
+
+
+	***
+	*** Parsing
+	***
+
+	eq stratParse(GM, M, Str) = stratParse(makeSlangGrammar(GM, M),
+		getTerm(metaParse(makeSlangGrammar(GM, M),
+		                  tokenize(Str), '@Strategy@))) .
+
+	eq stratParse(Q, Str) = stratParse(upModule('SLANG-GRAMMAR, true),
+	                                   upModule(Q, true), Str) .
+
+	op stratParse-subs  : Module TermList -> Substitution .
+	op stratParse-list  : Module TermList -> StrategyList .
+	op stratParse-cond  : Module TermList -> EqCondition .
+	op stratParse-using : Module TermList -> UsingPairSet .
+	op stratParse-union : Module TermList -> Strategy .
+	op stratParse-conc  : Module TermList -> Strategy .
+
+	eq stratParse(GM, 'idle.@Strategy@) = idle .
+	eq stratParse(GM, 'fail.@Strategy@) = fail .
+	eq stratParse(GM, 'all.@Strategy@) = all .
+	eq stratParse(GM, 'top[T]) = top(stratParse(GM, T)) .
+	eq stratParse(GM, 'match_[T]) = match T s.t. nil .
+	eq stratParse(GM, 'xmatch_[T]) = xmatch T s.t. nil .
+	eq stratParse(GM, 'amatch_[T]) = amatch T s.t. nil .
+	eq stratParse(GM, 'match___[T1, DC, T2]) = match T1 s.t. stratParse-cond(GM, T2) .
+	eq stratParse(GM, 'xmatch___[T1, DC, T2]) = xmatch T1 s.t. stratParse-cond(GM, T2) .
+	eq stratParse(GM, 'amatch___[T1, DC, T2]) = amatch T1 s.t. stratParse-cond(GM, T2) .
+	eq stratParse(GM, '_|_[NeTL]) = stratParse-union(GM, NeTL) .
+	eq stratParse(GM, '_;_[NeTL]) = stratParse-conc(GM, NeTL) .
+	eq stratParse(GM, '_or-else_[T1, T2]) = stratParse(GM, T1) or-else stratParse(GM, T2) .
+	eq stratParse(GM, '_+[T]) = stratParse(GM, T) + .
+	eq stratParse(GM, '_?_:_[T, T1, T2]) = stratParse(GM, T) ? stratParse(GM, T1) : stratParse(GM, T2) .
+	eq stratParse(GM, 'matchrew_by_[T1, T2]) = matchrew T1 s.t. nil by stratParse-using(GM, T2) .
+	eq stratParse(GM, 'xmatchrew_by_[T1, T2]) = xmatchrew T1 s.t. nil by stratParse-using(GM, T2) .
+	eq stratParse(GM, 'amatchrew_by_[T1, T2]) = amatchrew T1 s.t. nil by stratParse-using(GM, T2) .
+	eq stratParse(GM, 'matchrew___by_[T, DC, T1, T2]) = matchrew T s.t. stratParse-cond(GM, T1) by stratParse-using(GM, T2) .
+	eq stratParse(GM, 'xmatchrew___by_[T, DC, T1, T2]) = xmatchrew T s.t. stratParse-cond(GM, T1) by stratParse-using(GM, T2) .
+	eq stratParse(GM, 'amatchrew___by_[T, DC, T1, T2]) = amatchrew T s.t. stratParse-cond(GM, T1) by stratParse-using(GM, T2) .
+	eq stratParse(GM, 'one[T]) = one(stratParse(GM, T)) .
+	eq stratParse(GM, '_*[T]) = stratParse(GM, T) * .
+	eq stratParse(GM, '_![T]) = stratParse(GM, T) ! .
+	eq stratParse(GM, 'not[T]) = not(stratParse(GM, T)) .
+	eq stratParse(GM, 'test[T]) = test(stratParse(GM, T)) .
+	eq stratParse(GM, 'try[T]) = try(stratParse(GM, T)) .
+
+	ceq stratParse(GM, '_`{_`}['_`[_`][Ct, T1], T2]) = getName(Ct)[stratParse-subs(GM, T1)]{stratParse-list(GM, T2)}
+         if getType(Ct) = '@CRuleName@ .
+	ceq stratParse(GM, '_`{_`}[Ct, T]) = getName(Ct)[none]{stratParse-list(GM, T)}
+         if getType(Ct) == '@CRuleName@ .
+	ceq stratParse(GM, '_`[_`][Ct, T]) = getName(Ct)[stratParse-subs(GM, T)]{empty}
+         if getType(Ct) == '@RuleName@ or getType(Ct) == '@CRuleName@ .
+	ceq stratParse(GM, Ct) = getName(Ct)[none]{empty}
+	 if getType(Ct) == '@RuleName@ or getType(Ct) == '@CRuleName@ .
+
+	ceq stratParse(GM, Ct) = removeParens(getName(Ct))[[empty]]
+	 if getType(Ct) = '@CallStrategy@ .
+
+	ceq stratParse(GM, Q[NeTL]) = Q[[NeTL]]
+	 if leastSort(GM, Q[NeTL]) == '@CallStrategy@ .
+
+	eq stratParse-subs(GM, '_<-_[X, T]) = X <- T .
+	eq stratParse-subs(GM, '_;_[NeTL]) = stratParse-subs(GM, NeTL) .
+	eq stratParse-subs(GM, (T, NeTL)) = stratParse-subs(GM, T) ; stratParse-subs(GM, NeTL) .
+
+	eq stratParse-list(GM, '_`,_[NeTL]) = stratParse-list(GM, NeTL) .
+	eq stratParse-list(GM, T) = stratParse(GM, T) [owise] .
+	eq stratParse-list(GM, (T, NeTL)) = stratParse(GM, T), stratParse-list(GM, NeTL) .
+
+	eq stratParse-cond(GM, '_/\_[NeTL]) = stratParse-cond(GM, NeTL) .
+	eq stratParse-cond(GM, '_=_[T1, T2]) = T1 = T2 .
+	eq stratParse-cond(GM, '_:=_[T1, T2]) = T1 := T2 .
+	ceq stratParse-cond(GM, Q[T]) = T : St if St := getSortFromTest(Q) .
+	ceq stratParse-cond(GM, T) =  T = 'true.Bool if leastSort(GM, T) == 'Bool .
+	eq stratParse-cond(GM, (T, NeTL)) = stratParse-cond(GM, T) /\ stratParse-cond(GM, NeTL) .
+
+	eq stratParse-using(GM, '_`,_[NeTL]) = stratParse-using(GM, NeTL) .
+	eq stratParse-using(GM, '_using_[X, T]) = X using stratParse(GM, T) .
+	eq stratParse-using(GM, (T, NeTL)) = stratParse-using(GM, T), stratParse-using(GM, NeTL) .
+
+	eq stratParse-union(GM, T) = stratParse(GM, T) .
+	eq stratParse-union(GM, (T, NeTL)) = stratParse(GM, T) | stratParse-union(GM, NeTL) .
+
+	eq stratParse-conc(GM, T) = stratParse(GM, T) .
+	eq stratParse-conc(GM, (T, NeTL)) = stratParse(GM, T) ; stratParse-conc(GM, NeTL) .
+endfm
+
+
+***
+*** Pretty printing of strategy expressions
+***
+
+fmod SLANG-PRETTY-PRINT is
+	protecting META-LEVEL .
+	protecting SLANG-AUX-OPS .
+
+	*** Pretty print a strategy expression in the given module,
+	*** where the printing options are those of metaPrettyPrint.
+
+	op prettyPrint : Module Strategy PrintOptionSet ~> QidList .
+
+	var  P T T1 T2  : Term .
+	var  M          : Module .
+	var  PO         : PrintOptionSet .
+	var  C          : EqCondition .
+	var  Q          : Qid .
+	var  QL         : QidList .
+	vars S S1 S2 S3 : Strategy .
+	var  NeTL       : NeTermList .
+	var  X          : Variable .
+	var  VSP        : UsingPair .
+	var  VSL        : UsingPairSet .
+	var  Sb         : Substitution .
+	var  SL         : StrategyList .
+	var  Asg        : Assignment .
+	vars N N1 N2    : Nat .
+
+	op prettyPrint   : Module Strategy PrintOptionSet Nat ~> QidList .
+	op prettyPrintCn : Module EqCondition PrintOptionSet Qid ~> QidList .
+	op prettyPrint   : Module EqCondition PrintOptionSet ~> QidList .
+	op prettyPrint   : Module UsingPairSet PrintOptionSet ~> QidList .
+	op prettyPrint   : Module NeTermList PrintOptionSet ~> QidList .
+	op prettyPrint   : Module Substitution PrintOptionSet ~> QidList .
+	op prettyPrint   : Module StrategyList PrintOptionSet ~> QidList .
+
+	eq prettyPrint(M, S, PO) = prettyPrint(M, S, PO, 1000) .
+
+	eq prettyPrint(M, idle, PO, N) = 'idle .
+	eq prettyPrint(M, fail, PO, N) = 'fail .
+	eq prettyPrint(M, all, PO, N) = 'all .
+	eq prettyPrint(M, Q[Sb]{SL}, PO, N) = Q
+		if Sb =/= none then '`[ prettyPrint(M, Sb, PO) '`] else nil fi
+		if SL =/= empty then '`{ prettyPrint(M, SL, PO) '`} else nil fi .
+	eq prettyPrint(M, top(S), PO, N) = 'top '`( prettyPrint(M, S, PO) '`) .
+	eq prettyPrint(M, match P s.t. C, PO, N) = maybeParens(N, 21,
+		'match metaPrettyPrint(M, P, PO)
+		prettyPrintCn(M, C, PO, 's.t)) .
+	eq prettyPrint(M, xmatch P s.t. C, PO, N) = maybeParens(N, 21,
+		'xmatch metaPrettyPrint(M, P, PO)
+		prettyPrintCn(M, C, PO, 's.t)) .
+	eq prettyPrint(M, amatch P s.t. C, PO, N) = maybeParens(N, 21,
+		'amatch metaPrettyPrint(M, P, PO)
+		prettyPrintCn(M, C, PO, 's.t)) .
+	ceq prettyPrint(M, S1 ; S2, PO, N) = maybeParens(N, 39,
+		prettyPrint(M, S1, PO, 39) '; prettyPrint(M, S2, PO, 39)
+	) if S1 =/= idle /\ S2 =/= idle .
+	ceq prettyPrint(M, S1 | S2, PO, N) = maybeParens(N, 41,
+		prettyPrint(M, S1, PO, 41) '| prettyPrint(M, S2, PO, 41)
+	) if S1 =/= fail /\ S2 =/= fail .
+	eq prettyPrint(M, S +, PO, N) = prettyPrint(M, S, PO, 0) '+ .
+	eq prettyPrint(M, S1 or-else S2, PO, N) = maybeParens(N, 43,
+		prettyPrint(M, S1, PO, 43) 'or-else prettyPrint(M, S2, PO, 43)) .
+	eq prettyPrint(M, S1 ? S2 : S3, PO, N) = maybeParens(N, 55,
+		prettyPrint(M, S1, PO, 55) '? prettyPrint(M, S2, PO, 55)
+		': prettyPrint(M, S3, PO, 55)) .
+	eq prettyPrint(M, matchrew P s.t. C by VSL, PO, N) = maybeParens(N, 21,
+		'matchrew metaPrettyPrint(M, P, PO) prettyPrintCn(M, C, PO, 's.t)
+		'by prettyPrint(M, VSL, PO)) .
+	eq prettyPrint(M, xmatchrew P s.t. C by VSL, PO, N) = maybeParens(N, 21,
+		'xmatchrew metaPrettyPrint(M, P, PO) prettyPrintCn(M, C, PO, 's.t)
+		'by prettyPrint(M, VSL, PO)) .
+	eq prettyPrint(M, amatchrew P s.t. C by VSL, PO, N) = maybeParens(N, 21,
+		'amatchrew metaPrettyPrint(M, P, PO) prettyPrintCn(M, C, PO, 's.t)
+		'by prettyPrint(M, VSL, PO)) .
+	eq prettyPrint(M, Q[[NeTL]], PO, N) = Q '`( prettyPrint(M, NeTL, PO) '`) .
+	eq prettyPrint(M, Q[[empty]], PO, N) = Q
+		if hasRule(Q, getRls(M)) then '`( '`) else nil fi .
+	eq prettyPrint(M, one(S), PO, N) = 'one '`( prettyPrint(M, S, PO) '`) .
+
+	eq prettyPrint(M, S *, PO, N) = prettyPrint(M, S, PO, 0) '* .
+	eq prettyPrint(M, S !, PO, N) = prettyPrint(M, S, PO, 0) '! .
+	eq prettyPrint(M, not(S), PO, N) = 'not '`( prettyPrint(M, S, PO) '`) .
+	eq prettyPrint(M, test(S), PO, N) = 'test '`( prettyPrint(M, S, PO) '`) .
+	eq prettyPrint(M, try(S), PO, N) = 'try '`( prettyPrint(M, S, PO) '`) .
+
+	eq prettyPrintCn(M, nil, PO, Q) = nil .
+	eq prettyPrintCn(M, C, PO, Q) = Q prettyPrint(M, C, PO) .
+
+	eq prettyPrint(M, (nil).EqCondition, PO) = nil .
+	eq prettyPrint(M, T1 = T2 /\ C, PO) = metaPrettyPrint(M, T1, PO) '=
+		metaPrettyPrint(M, T2, PO) prettyPrintCn(M, C, PO, '/\) .
+	eq prettyPrint(M, T1 := T2 /\ C, PO) = metaPrettyPrint(M, T1, PO) ':=
+		metaPrettyPrint(M, T2, PO) prettyPrintCn(M, C, PO, '/\) .
+	eq prettyPrint(M, T1 : S:Sort /\ C, PO) = metaPrettyPrint(M, T1, PO) ':
+		S:Sort prettyPrintCn(M, C, PO, '/\) .
+	eq prettyPrint(M, T1 => T2 /\ C, PO) = metaPrettyPrint(M, T1, PO) '=>
+		metaPrettyPrint(M, T2, PO) prettyPrintCn(M, C, PO, '/\) .
+
+	eq prettyPrint(M, T, PO) = metaPrettyPrint(M, T, PO) .
+	eq prettyPrint(M, (T, NeTL), PO) = metaPrettyPrint(M, T, PO)
+		'`, prettyPrint(M, NeTL, PO) .
+
+	eq prettyPrint(M, X using S, PO) = metaPrettyPrint(M, X, PO)
+		'using prettyPrint(M, S, PO, 20) .
+	eq prettyPrint(M, (VSP, VSL), PO) = prettyPrint(M, VSP, PO)
+		'`, prettyPrint(M, VSL, PO) .
+
+	eq prettyPrint(M, X <- T, PO) = metaPrettyPrint(M, X, PO)
+		'<- metaPrettyPrint(M, T, PO) .
+	ceq prettyPrint(M, Asg ; Sb, PO) = prettyPrint(M, Asg, PO) ';
+		prettyPrint(M, Sb, PO) if Sb =/= none .
+
+	ceq prettyPrint(M, (S, SL), PO) = prettyPrint(M, S, PO)
+		'`, prettyPrint(M, SL, PO) if SL =/= empty .
+
+
+	*** Put parentheses around expression based on precedences
+	op maybeParens : Nat Nat QidList -> QidList .
+	eq maybeParens(N1, N2, QL) = if N1 < N2 then '`( QL '`) else QL fi .
+endfm
+
+
+***
+*** Auxiliary functions to facilitate writing extensions
+***
+
+fmod SLANG-EXTENSION-HELPER is
+	protecting META-MODULE .
+	protecting CONVERSION .
+
+	var  Prefix : String .
+	var  Q      : Qid .
+	var  Ty     : Type .
+	var  TyL    : TypeList .
+	var  NeTyL  : NeTypeList .
+	var  S      : Strategy .
+	var  SL     : StrategyList .
+	vars N CN   : Nat .
+
+	*** Make a meta-variable with a prefix, a number and its type
+	op makeVar : String Type Nat -> Variable .
+	eq makeVar(Prefix, Ty, N) = qid(Prefix + string(N, 10) + ":" + string(Ty)) .
+
+	*** Make a constant
+	op makeConstant : Qid Type -> Constant .
+	eq makeConstant(Q, Ty) = qid(string(Q) + "." + string(Ty)) .
+
+	*** Make the operator variables for the matching pattern
+	op makeOpVars : TypeList Nat -> Term .
+
+	eq makeOpVars(nil, N) = empty .
+	eq makeOpVars(Ty TyL, N) = makeVar("%X", Ty, N), makeOpVars(TyL, s(N)) .
+endfm
+
+***
+*** SLANG-EXTENSION-STATIC provides some definitions to help extending
+*** the strategy language metalevel with new constructors that are
+*** translated to the standard ones before applying the descent function.
+***
+*** This is a generic approach that can be used for different extensions,
+*** which only need to complete 'transform' with equations for the extended
+*** strategies. Moreover, some auxiliary functions are provided to ease
+*** this task.
+
+fmod SLANG-EXTENSION-STATIC is
+	protecting SLANG-EXTENSION-HELPER .
+	protecting META-LEVEL .
+
+	var  Ty         : Type .
+	var  TyL        : TypeList .
+	var  NeTyL      : NeTypeList .
+	vars N CN       : Nat .
+	var  Q          : Qid .
+	var  T          : Term .
+	var  C          : Condition .
+	var  Sb         : Substitution .
+	vars S S1 S2 S3 : Strategy .
+	var  SL         : StrategyList .
+	var  CS         : CallStrategy .
+	var  VSP        : UsingPair .
+	var  VSL        : UsingPairSet .
+	var  Prefix     : String .
+	var  X          : Variable .
+	var  M          : Module .
+	var  SO         : SrewriteOption .
+
+
+	***
+	*** Replacements for the descent function (using the translation)
+	***
+
+	ops metaSrewriteEx : Module Term Strategy SrewriteOption Nat -> ResultPair? .
+	eq metaSrewriteEx(M, T, S, SO, N) = metaSrewrite(M, T, transform(S, 0), SO, N) .
+
+	***
+	*** Strategy transformation (static part)
+	***
+
+	op transform : Strategy Nat -> Strategy .
+	op transform : StrategyList Nat -> StrategyList .
+	op transform : UsingPairSet Nat -> UsingPairSet .
+
+	eq transform(idle, N) = idle .
+	eq transform(fail, N) = fail .
+	eq transform(all, N) = all .
+	eq transform(Q[Sb]{SL}, N) = Q[Sb]{transform(SL, N)} .
+	eq transform(top(S), N) = top(transform(S, N)) .
+	eq transform(match T s.t. C, N) = match T s.t. C .
+	eq transform(xmatch T s.t. C, N) = xmatch T s.t. C .
+	eq transform(amatch T s.t. C, N) = amatch T s.t. C .
+	ceq transform(S1 | S2, N) = transform(S1, N) | transform(S2, N) if S1 =/= fail /\ S2 =/= fail .
+	ceq transform(S1 ; S2, N) = transform(S1, N) ; transform(S2, N) if S1 =/= idle /\ S2 =/= idle .
+	eq transform(S1 or-else S2, N) = transform(S1, N) or-else transform(S2, N) .
+	eq transform(S1 +, N) = transform(S1, N) + .
+	eq transform(S1 ? S2 : S3, N) = transform(S1, N) ? transform(S2, N) : transform(S3, N) .
+	eq transform(matchrew T s.t. C by VSL, N) = matchrew T s.t. C by transform(VSL, N) .
+	eq transform(xmatchrew T s.t. C by VSL, N) = xmatchrew T s.t. C by transform(VSL, N) .
+	eq transform(amatchrew T s.t. C by VSL, N) = amatchrew T s.t. C by transform(VSL, N) .
+	eq transform(CS, N) = CS .
+	eq transform(one(S), N) = one(transform(S, N)) .
+	eq transform(S *, N) = transform(S, N) * .
+	eq transform(S !, N) = transform(S, N) ! .
+	eq transform(not(S), N) = not(transform(S, N)) .
+	eq transform(test(S), N) = test(transform(S, N)) .
+	eq transform(try(S), N) = try(transform(S, N)) .
+
+	eq transform(empty, N) = empty .
+	ceq transform((S, SL), N) = transform(S, N), transform(SL, N) if SL =/= empty .
+
+	eq transform(X using S, N) = X using transform(S, N) .
+	eq transform((VSP, VSL), N) = transform(VSP, N), transform(VSL, N) .
+
+
+	***
+	*** Common auxiliary functions
+	***
+
+	*** Make the matchrew's variable-strategy pairs
+	***
+	*** In makeUsingPairs(TyL, SL, CN, N) we assume size(TyL) = size(SL) and
+	*** CN >= N + size(SL)
+
+	op makeUsingPairs : TypeList StrategyList Nat Nat -> UsingPairSet .
+
+	eq makeUsingPairs(Ty, S, CN, N) = makeVar("%X", Ty, N) using transform(S, CN) .
+	eq makeUsingPairs(Ty NeTyL, (S, SL), CN, N) = makeUsingPairs(Ty, S, CN, N), makeUsingPairs(NeTyL, SL, CN, s(N)) .
+endfm
+
+
+***
+*** The SLANG-EXTENSION theory specifies the requirements for a
+*** strategy language extension, both in syntax and semantics.
+***
+*** METASLANG-EXTENSION describe the functions that the module
+*** produced by makeMetaSlang must provide. This theory is merely
+*** declarative, since it will not be used in parameterization.
+***
+
+fth METASLANG-EXTENSION is
+	protecting META-LEVEL .
+
+	*** Parse a grammar term into a strategy meta-representation
+	op stratParse : Module Term -> Strategy .
+
+	*** Extended metaSrewrite function for the language extension
+	op metaSrewriteEx : Module Term Strategy SrewriteOption Nat -> ResultPair? .
+endfth
+
+fth SLANG-EXTENSION is
+	protecting META-MODULE .
+
+	*** Build the strategy language grammar for a given subject module
+	op makeSlangGrammar : Module -> Module .
+
+	*** Build the extended meta-level where the extended strategies are
+	*** defined (the resulting module shall satisfy METASLANG-EXTENSION).
+	op makeMetaSlang : Module -> Module .
+endfth
+
+*** Trivial extension (not extension at all)
+view SlangAsIs from SLANG-EXTENSION to SLANG-PARSE is
+	var M : Module .
+	op makeSlangGrammar(M) to term makeSlangGrammar(upModule('SLANG-GRAMMAR, true), M) .
+	op makeMetaSlang(M) to term fmod 'SLANG-AS-IS is
+		(protecting 'SLANG-PARSE .)
+		(protecting 'SLANG-EXTENSION-STATIC .)
+		sorts none .
+		none none none none endfm .
+endv
+
+fmod SMOD-PARSE{X :: SLANG-EXTENSION} is
+	protecting META-LEVEL .
+	protecting LEXICAL .
+
+	var  S        : String .
+	vars QL NL    : QidList .
+	var  VS       : VariableSet .
+	vars Q TQ     : Qid .
+	vars T BT CT  : Term .
+	vars LHS RHS PLHS PRHS PC C : Term .
+	var  IL       : ImportList .
+	var  TL       : TermList .
+	var  M        : Module .
+	var  H        : Header .
+	var  Ss       : SortSet .
+	var  I        : Import .
+	var  Sbss     : SubsortDeclSet .
+	var  Ops      : OpDeclSet .
+	var  Mbs      : MembAxSet .
+	var  Eqs      : EquationSet .
+	var  Rls      : RuleSet .
+	var  Strats   : StratDeclSet .
+	var  Sds      : StratDefSet .
+
+	op parseModule : String ~> Module .
+	op parseModule : QidList ~> Module .
+	op parseModule : Term ~> Module .
+
+	eq parseModule(S) = parseModule(tokenize(S)) .
+
+	ceq parseModule(QL) = parseModule(T)
+	 if T := getTerm(metaParse(['SMOD-GRAMMAR], none, QL, '@StratModule@)) .
+
+	ceq parseModule('smod_is_endsm['token[BT], T]) = smod downTerm(BT, 'NAME) is
+		gatherImports(T)
+		sorts none .
+		none		*** subsort
+		none		*** ops
+		none		*** mbs
+		none		*** eqs
+		none		*** rls
+		gatherStratDecls(T)
+		gatherStratDefs(T, addStratDecls(moduleWithImports(gatherImports(T)), gatherStratDecls(T)), gatherVariables(T))
+	endsm
+	 if VS := gatherVariables(T) .
+
+	*** Gather the importation declared in the module
+
+	op gatherImports : TermList -> ImportList .
+
+	eq gatherImports(empty) = nil .
+	eq gatherImports('__[TL]) = gatherImports(TL) .
+	eq gatherImports(('protecting_.['token[T]], TL)) =
+		protecting downTerm(T, 'BOOL) . gatherImports(TL) .
+	eq gatherImports(('pr_.['token[T]], TL)) =
+		protecting downTerm(T, 'BOOL) . gatherImports(TL) .
+	eq gatherImports(('extending_.['token[T]], TL)) =
+		extending downTerm(T, 'BOOL) . gatherImports(TL) .
+	eq gatherImports(('ext_.['token[T]], TL)) =
+		extending downTerm(T, 'BOOL) . gatherImports(TL) .
+	eq gatherImports(('including_.['token[T]], TL)) =
+		including downTerm(T, 'BOOL) . gatherImports(TL) .
+	eq gatherImports(('inc_.['token[T]], TL)) =
+		including downTerm(T, 'BOOL) . gatherImports(TL) .
+	eq gatherImports((T, TL)) = gatherImports(TL) [owise] .
+
+	*** Generate module with imports
+
+	op moduleWithImports : ImportList ~> Module .
+	op moduleWithImports : ImportList StratModule ~> Module .
+	op getImportName : Import ~> Qid .
+
+	eq moduleWithImports(IL) = moduleWithImports(IL,
+		smod 'BT-BASE is nil sorts none . none none none none none none none endsm) .
+
+	eq moduleWithImports(nil, M) = M .
+	ceq moduleWithImports(I IL, smod H is nil sorts Ss . Sbss Ops Mbs Eqs Rls Strats Sds endsm) =
+	moduleWithImports(IL, smod H is
+		nil
+		sorts Ss ; getSorts(M) .
+		Sbss getSubsorts(M)
+		Ops getOps(M)
+		Mbs getMbs(M)
+		Eqs getEqs(M)
+		Rls getRls(M)
+		Strats getStrats(M)
+		Sds getSds(M)
+	endsm)
+	if M := upModule(getImportName(I), true) .
+
+	eq getImportName(protecting Q .) = Q .
+	eq getImportName(extending Q .) = Q .
+	eq getImportName(including Q .) = Q .
+
+	*** Get flat module for a given module (does not admit module expression in imports)
+
+	op flatModule : Module -> StratModule .
+
+	eq flatModule(M) = moduleWithImports(getImports(M), smod getName(M) is
+		nil
+		sorts getSorts(M) .
+		getSubsorts(M)
+		getOps(M)
+		getMbs(M)
+		getEqs(M)
+		getRls(M)
+		getStrats(M)
+		getSds(M)
+	endsm) .
+
+	*** Gather the variables declared in the module
+
+	op gatherVariables : TermList -> VariableSet .
+	op makeVariables : QidList Qid -> VariableSet .
+
+	eq gatherVariables(empty) = none .
+	eq gatherVariables('__[TL]) = gatherVariables(TL) .
+	eq gatherVariables(('var_:_.['colonBubble[BT], 'token[T]], TL)) =
+		makeVariables(downTerm(BT, (nil).QidList),  downTerm(T, 'Bool)) ;
+		gatherVariables(TL) .
+	eq gatherVariables(('vars_:_.['colonBubble[BT], 'token[T]], TL)) =
+		makeVariables(downTerm(BT, (nil).QidList),  downTerm(T, 'Bool)) ;
+		gatherVariables(TL) .
+	eq gatherVariables((T, TL)) = gatherVariables(TL) [owise] .
+
+	eq makeVariables(nil, TQ) = none .
+	eq makeVariables(Q QL, TQ) = qid(string(Q) + ":" + string(TQ)) ; makeVariables(QL, TQ) .
+
+	*** Gather strategy declarations
+
+	op gatherStratDecls : TermList -> StratDeclSet .
+	op makeStratDecls : QidList Qid -> StratDeclSet .
+	op makeStratDecls : QidList QidList Qid -> StratDeclSet .
+
+	eq gatherStratDecls(empty) = none .
+	eq gatherStratDecls('__[TL]) = gatherStratDecls(TL) .
+	eq gatherStratDecls(('strat_@_.['atBubble[BT], 'token[T]], TL)) =
+		makeStratDecls(downTerm(BT, (nil).QidList), downTerm(T, 'Bool))
+		gatherStratDecls(TL) .
+	eq gatherStratDecls(('strats_@_.['atBubble[BT], 'token[T]], TL)) =
+		makeStratDecls(downTerm(BT, (nil).QidList), downTerm(T, 'Bool))
+		gatherStratDecls(TL) .
+	eq gatherStratDecls((T, TL)) = gatherStratDecls(TL) [owise] .
+
+	eq makeStratDecls(NL ': QL, TQ) = makeStratDecls(NL, QL, TQ) .
+	eq makeStratDecls(NL, TQ) = makeStratDecls(NL, nil, TQ) [owise] .
+
+	eq makeStratDecls(nil, QL, TQ) = none .
+	eq makeStratDecls(Q NL, QL, TQ) = strat Q : QL @ TQ [none] . makeStratDecls(NL, QL, TQ) .
+
+	*** Add strategy declarations to the module
+
+	op addStratDecls : Module StratDeclSet -> StratModule .
+
+	eq addStratDecls(M, Strats) = smod getName(M) is
+		getImports(M)
+		sorts getSorts(M) .
+		getSubsorts(M)
+		getOps(M)
+		getMbs(M)
+		getEqs(M)
+		getRls(M)
+		getStrats(M) Strats
+		getSds(M)
+	endsm .
+
+	*** Gather strategy definitions (attributes are not allowed)
+
+	op gatherStratDefs : TermList Module VariableSet -> StratDefSet .
+
+	eq gatherStratDefs(empty, M, VS) = none .
+	eq gatherStratDefs('__[TL], M, VS) = gatherStratDefs(TL, M, VS) .
+	ceq gatherStratDefs(('sd_:=_.['sdBubble[BT], 'bubble[T]], TL), M, VS) =
+		sd downTerm(LHS, fail) := downTerm(RHS, fail) [none] .
+		gatherStratDefs(TL, M, VS)
+	 if PLHS := getTerm(metaParse(makeSlangGrammar(M), VS, downTerm(BT, (nil).QidList), '@CallStrategy@))
+	 /\ PRHS := getTerm(metaParse(makeSlangGrammar(M), VS, downTerm(T, (nil).QidList), '@Strategy@))
+	 /\ LHS  := getTerm(metaReduce(makeMetaSlang(M), 'transform['stratParse[upTerm(makeSlangGrammar(M)), upTerm(PLHS)], '0.Zero]))
+	 /\ RHS  := getTerm(metaReduce(makeMetaSlang(M), 'transform['stratParse[upTerm(makeSlangGrammar(M)), upTerm(PRHS)], '0.Zero])) .
+	ceq gatherStratDefs(('csd_:=_if_.['sdBubble[BT], 'ifBubble[T], 'bubble[CT]], TL), M, VS) =
+		csd downTerm(LHS, fail) := downTerm(RHS, fail) if makeCondition(PC) [none] .
+		gatherStratDefs(TL, M, VS)
+	 if PLHS := getTerm(metaParse(makeSlangGrammar(M), VS, downTerm(BT, (nil).QidList), '@CallStrategy@))
+	 /\ PRHS := getTerm(metaParse(makeSlangGrammar(M), VS, downTerm(T, (nil).QidList), '@Strategy@))
+	 /\ PC   := getTerm(metaParse(makeSlangGrammar(M), VS, downTerm(CT, (nil).QidList), '@Condition@))
+	 /\ LHS  := getTerm(metaReduce(makeMetaSlang(M), 'transform['stratParse[upTerm(makeSlangGrammar(M)), upTerm(PLHS)], '0.Zero]))
+	 /\ RHS  := getTerm(metaReduce(makeMetaSlang(M), 'transform['stratParse[upTerm(makeSlangGrammar(M)), upTerm(PRHS)], '0.Zero])) .
+	eq gatherStratDefs((T, TL), M, VS) = gatherStratDefs(TL, M, VS) [owise] .
+
+	op makeCondition : Term -> Condition .
+
+	eq makeCondition('_/\_[T, BT]) = makeCondition(T) /\ makeCondition(BT) .
+	eq makeCondition('_=_[T, BT]) = T = BT .
+	eq makeCondition('_:=_[T, BT]) = T := BT .
+	eq makeCondition('_=>_[T, BT]) = T = BT .
+	*** The sort membership condition is not supported
+
+endfm

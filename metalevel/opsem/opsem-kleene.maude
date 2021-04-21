@@ -1,0 +1,143 @@
+***
+*** Operational semantics of the strategy language respecting the Kleene star
+***
+
+sload opsem
+
+smod NOP-KLEENE-SEMANTICS{X :: MODULE} is
+	protecting NOP-RULES{X} .
+
+	sorts WraptState PartialContext ActionTag ActionTags .
+	subsort CtxStack < PartialContext .
+
+	*** Extended contexts stack with subterm variables
+	op sub : Variable -> PartialContext [ctor] .
+	op __  : PartialContext CtxStack -> PartialContext [ditto] .
+	op __  : CtxStack PartialContext -> PartialContext [ditto] .
+
+
+	***
+	*** Action tags
+
+	*** Entering an iteration
+	op enter : PartialContext -> ActionTag [ctor format (y o)] .
+	*** Leaving an iteration
+	op leave : PartialContext -> ActionTag [ctor format (y o)] .
+	*** Calling a function
+	op call : PartialContext -> ActionTag [ctor format (y o)] .
+
+	subsort ActionTag < ActionTags .
+	op none : -> ActionTags [ctor] .
+	op __ : ActionTags ActionTags -> ActionTags [ctor assoc comm id: none] .
+
+	*** Wrapped state
+	op wrap : ExState ActionTags -> WraptState [ctor frozen(2)] .
+
+
+	***
+	*** Rules
+
+	vars XS XS1 XS2 : ExState .
+	var  X          : Variable .
+	var  T          : Term .
+	var  TL         : TermList .
+	var  Sbs        : SubtermSoup .
+	var  A          : ActionTag .
+	vars As As'     : ActionTags .
+	var  C          : CtxStack .
+	vars PC PC'     : PartialContext .
+	var  Q          : Qid .
+	var  QS         : QidSet .
+
+	*** Discard the actions of the previous step
+	rl [discardTags] : wrap(XS, As) => wrap(XS, none) [nonexec] .
+
+	*** Explore a substate recursively
+	crl [recurseSubterm] : wrap(subterm(((X : XS1), Sbs), T) @ C, As)
+	                    => wrap(subterm(((X : XS2), Sbs), T) @ C, As extendActionTags(As', sub(X) C))
+	 if wrap(XS1, none) => wrap(XS2, As') [nonexec] .
+
+	*** Add a tag to the tag record
+	rl [addTag] : As => A As [nonexec] .
+
+	op extendActionTags : ActionTags PartialContext -> ActionTags .
+	op extendActionTag : ActionTag PartialContext -> ActionTag .
+
+	eq extendActionTags(none, PC) = none .
+	eq extendActionTags(A As, PC) = extendActionTag(A, PC) extendActionTags(As, PC) .
+
+	eq extendActionTag(enter(PC'), PC) = enter(PC' PC) .
+	eq extendActionTag(leave(PC'), PC) = leave(PC' PC) .
+	eq extendActionTag(call(PC'), PC) = call(PC' PC) .
+
+
+	***
+	*** Strategies
+
+	*** When searching solutions the original relations are fine
+	strat ->c ->s ->sc opsem-sc @ ExState .
+
+	sd ->sc := ->s | ->c .
+	sd ->c := ctl | ienter | ileave | else{not(opsem-sc)} | rewc{->sc} | call .
+	sd ->s := sys .
+	sd opsem-sc := (match T @ eps) ? idle : (->sc ; opsem-sc) .
+
+	*** Strategies for getting track of relevant actions
+	strat ->> ->>r ->cw opsem @ WraptState .
+
+	sd ->> := discardTags ; ->>r .
+	sd ->>r := match wrap(subterm(Sbs, T) @ C, As)
+		? recurseSubterm{->>r}
+		: (->s | ->cw ; ->>r) .
+
+	sd ->cw := (ctl | else{not(opsem-sc)} | rewc{->sc})
+		| (matchrew wrap(XS, As) s.t. T @ C := XS by XS using ienter, As using addTag[A <- enter(C)])
+		| (matchrew wrap(XS, As) s.t. T @ C := XS by XS using ileave, As using addTag[A <- leave(C)])
+		| (matchrew wrap(XS, As) s.t. T @ C := XS by XS using call, As using addTag[A <- call(C)])
+	.
+
+	sd opsem := test(matchrew wrap(XS, As) by XS using (->c * ; match T @ eps)) | (->> ; opsem) .
+
+	*** Operational semantics relations with opaque strategies
+	strat ->>o ->>ro ->co ->so ->cwo opsemo : QidSet @ WraptState .
+
+	sd ->>o(QS) := discardTags ; ->>ro(QS) .
+	sd ->>ro(QS) := match subterm(Sbs, T)
+		? recurseSubterm{->>ro(QS)}
+		: (->so(QS) | ->cwo(QS) ; ->>ro(QS)) .
+
+	sd ->cwo(QS) := (ctl | else{not(opsem-sc)} | rewc{->sc})
+		| (matchrew wrap(XS, As) s.t. T @ C := XS by XS using ienter, As using addTag[A <- enter(C)])
+		| (matchrew wrap(XS, As) s.t. T @ C := XS by XS using ileave, As using addTag[A <- leave(C)])
+		| (matchrew wrap(XS, As) s.t. T @ Q[[TL]] C := XS /\ not(Q in QS) by XS using call, As using addTag[A <- call(C)])
+	.
+
+	sd ->so(QS) := sys
+		| matchrew XS s.t. T @ Q[[TL]] C := XS /\ Q in QS by XS using opaque{opsem-sc} .
+
+	sd opsemo(QS) := test(matchrew wrap(XS, As) by XS using (->c * ; match T @ eps)) | (->>o(QS) ; opsemo(QS)) .
+endsm
+
+smod NOP-KLEENE-PREDS{X :: MODULE} is
+	protecting NOP-KLEENE-SEMANTICS{X} .
+	including SATISFACTION .
+
+	subsort WraptState < State .
+
+	op prop : Term -> Prop [ctor] .
+
+	op @enter : PartialContext -> Prop [ctor] .
+	op @leave : PartialContext -> Prop [ctor] .
+
+	var XS : ExState .
+	var PC : PartialContext .
+	var As : ActionTags .
+	var P  : Term .
+
+	eq wrap(XS, As) |= prop(P) = getTerm(metaReduce(M, '_|=_[cterm(XS), P])) == 'true.Bool .
+
+	eq wrap(XS, enter(PC) As) |= @enter(PC) = true .
+	eq wrap(XS, As) |= @enter(PC) = false [owise] .
+	eq wrap(XS, leave(PC) As) |= @leave(PC) = true .
+	eq wrap(XS, As) |= @leave(PC) = false [owise] .
+endsm

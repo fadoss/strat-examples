@@ -1,0 +1,108 @@
+***
+*** Parametrized strategy module that acts as a flat map functor.
+***
+*** The parameter strategy is applied to every element of the list separately,
+*** which can be rewritten to a list instead of a single element if desired,
+*** and then the flattened list including all these results is obtained.
+***
+*** Source: Adapted from Towards a Strategy Language for Maude. Section 5.2
+***
+
+fth MAP-LIST-BASE is
+	including TRIV .
+
+	*** A list of elements of the type
+	sort List .
+	subsort Elt < List .
+
+	op nil : -> List [ctor] .
+	op __ : List List -> List [ctor assoc] .
+endfth
+
+sth MAP-LIST is
+	including MAP-LIST-BASE .
+
+	strat st @ List .
+endsth
+
+mod STRAT-LIST{X :: MAP-LIST-BASE} is
+	vars E E' : X$Elt .
+	vars L L' : X$List .
+
+	rl [empty] : nil => nil .
+	crl [nonempty] : E L => E' L' if E => E' /\ L => L' .
+endm
+
+view MapList0 from MAP-LIST-BASE to MAP-LIST is
+	*** identity
+endv
+
+smod STRAT-MAP{X :: MAP-LIST} is
+	protecting STRAT-LIST{MapList0}{X} .
+
+	var L : X$List .
+	var E : X$Elt .
+
+	*** Using the application strategy with controlled rewriting conditions, and
+	*** ignoring errors if the list is empty and the rule pattern does not match
+	strat map : @ X$List .
+	sd map := try(top(nonempty{st, map})) .
+
+	*** Like map, but detecting the empty list with a conditional
+	strat map2 : @ X$List .
+	sd map2 := (match nil) ? idle : top(nonempty{st, map2}) .
+
+	*** The union of two disjoint strategies for the empty and nonempty case
+	strat map3 : @ X$List .
+	sd map3 := top(empty) | top(nonempty{st, map3}) .
+
+	*** Using the parameter strategy directly without auxiliary rules
+	strat map4 : @ X$List .
+	sd map4 := (match nil) or-else
+	           (matchrew E L by E using st, L using map4) .
+
+	*** The same but ignoring failures about the empty list instead of
+	*** considering them explicitly
+	strat map5 : @ X$List .
+	sd map5 := try(matchrew E L by E using st, L using map5) .
+endsm
+
+***
+*** A simple example
+
+mod LETTERS is
+	sort Letter .
+
+	ops a b c : -> Letter .
+
+	rl [ac] : a => c .
+	rl [ab] : b => c .
+endm
+
+view Letters0 from TRIV to LETTERS is
+	sort Elt to Letter .
+endv
+
+mod LETTERS-EXT is
+	protecting LETTERS .
+	protecting LIST{Letters0} .
+endm
+
+view Letters from MAP-LIST to LETTERS-EXT is
+	sort Elt to Letter .
+	sort List to List{Letters0} .
+
+	strat st to expr ac .
+endv
+
+smod MAIN is
+	protecting STRAT-MAP{Letters} .
+endsm
+
+eof
+
+srew a a a a a using map .
+srew a a a a a using map2 .
+srew a a a a a using map3 .
+srew a a a a a using map4 .
+srew a a a a a using map5 .

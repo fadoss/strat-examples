@@ -1,0 +1,41 @@
+==========================================
+srewrite in MAIN : K I Omega using fullReduce .
+
+Solution 1
+rewrites: 17
+result LambdaTerm: \ x . x
+
+No more solutions.
+rewrites: 17
+==========================================
+srewrite in MAIN : \ x . v(1) \ y . v(2) (\ x . v(3) \ y . v(4)) using
+    fullReduce .
+
+Solution 1
+rewrites: 8
+result LambdaTerm: v(1) v(3)
+
+No more solutions.
+rewrites: 8
+==========================================
+srewrite in MAIN : \ x . v(1) \ y . v(2) (\ x . v(3) \ y . v(4)) using
+    applicative .
+
+Solution 1
+rewrites: 4
+result LambdaTerm: \ x . v(1) \ y . v(2) v(3)
+
+No more solutions.
+rewrites: 4
+==========================================
+srewrite in MAIN : A* churchNum(4) (A+ churchNum(2) churchNum(1)) using
+    fullReduce .
+
+Solution 1
+rewrites: 345
+result LambdaTerm: \ z . \ q . \ x . (z (z (z (z (z (z (z (z (z (z (z (z
+    x))))))))))))
+
+No more solutions.
+rewrites: 345
+Bye.

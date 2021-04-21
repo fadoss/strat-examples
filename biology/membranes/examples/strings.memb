@@ -1,0 +1,17 @@
+***
+*** Generalized string rewriting P system example
+***
+
+signature is
+	*** String
+	ob _·_ : Obj Obj [assoc id: eps prec 30] .
+
+	*** Base objects
+	obs a b c d e f g eps .
+end
+
+membrane M1 is
+	xev s1 : a · a -> a .
+	xev s2 : b -> c · c .
+	ev  s3 : a -> c .
+end

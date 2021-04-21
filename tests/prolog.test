@@ -1,0 +1,9 @@
+semantics/prolog
+
+srew < 'sibling('sally, x{1}) | family > using solve .
+srew < 'sibling('sally, x{1}) | family > using wsolve .
+
+dsrew < 'disjoint('cons['4, 'cons['3, 'nil]], 'cons['5, 'cons['3, 'nil]]) | sets > using wsolve-neg .
+dsrew < 'disjoint('cons['4, 'cons['3, 'nil]], 'cons['5, 'cons['6, 'nil]]) | sets > using wsolve-neg .
+
+srew < 'no-children('erica) | family ; negation-bycut ; 'no-children(x{1}) :- '\+('parent[x{1}, x{2}]) > using wsolve .

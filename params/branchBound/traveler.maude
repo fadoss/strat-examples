@@ -1,0 +1,122 @@
+***
+*** Traveling salesperson instance for the generic B&B algorithm
+*** (common code and greedy implementation)
+***
+*** Source: http://maude.ucm.es/skeletons/Skeletons.html (adapted)
+***
+
+fmod TRAVELER-SORTS is
+	pr NAT .
+	pr EXT-BOOL .
+
+	sort City CityPair Path .
+	subsort City < Path .
+
+	vars C C' : City .
+	var  P : Path .
+
+	op mtPath : -> Path .
+	op __ : Path Path -> Path [assoc id: mtPath] .
+
+	op city : Nat -> City .
+	op pair : City City -> CityPair [comm] .
+
+	op in : City Path -> Bool .
+	op size : Path -> Nat .
+
+	eq in(C, C' P) = C == C' or-else in(C, P) .
+	eq in(C, mtPath) = false .
+
+	eq size(mtPath) = 0 .
+	eq size(C P) = s(size(P)) .
+endfm
+
+view CityPair from TRIV to TRAVELER-SORTS is
+	sort Elt to CityPair .
+endv
+
+fmod AUXILIARY-FUNCTIONS is
+	pr MAP{CityPair, Nat} * (sort Map{CityPair, Nat} to Graph) .
+
+	vars C C' C''    : City .
+	var  G           : Graph .
+	vars N N' N''    : Nat .
+	var  NI NI' NI'' : NatInf .
+	vars P P'        : Path .
+	var  PCN         : Pair .
+
+	sort Pair NatInf TravelResult .
+	subsort Nat < NatInf .
+
+	op inf : -> NatInf [ctor] .
+	op minInf : Pair Pair -> Pair [comm] .
+
+	eq minInf(pair(C, inf), pair(C', NI)) = pair(C', NI) .
+	ceq minInf(pair(C, N), pair(C', N')) = pair(C, N)
+		if N <= N' .
+
+	op pair2result : Pair ~> TravelResult .
+	eq pair2result(pair(C, N)) = result(C, N) .
+
+	op result : Path Nat -> TravelResult .
+	op getCity : TravelResult -> Path .
+	op getCost : TravelResult -> Nat .
+
+	op pair : City NatInf -> Pair [ctor] .
+	op getCity : Pair -> City .
+	op getCost : Pair -> NatInf .
+
+	op getCost : City City Path Graph -> NatInf .
+
+	eq getCity(pair(C, NI)) = C .
+	eq getCost(pair(C, NI)) = NI .
+
+	eq getCity(result(P, N)) = P .
+	eq getCost(result(P, N)) = N .
+
+	op cheapest : City Nat Path Graph -> Pair .
+	op cheapest : City Nat Path Graph Nat -> Pair .
+
+	eq cheapest(C, N, P, G) = cheapest(C, N, P, G, 0) .
+
+	ceq cheapest(C, N, P, G, N') = minInf(PCN, cheapest(C, N, P, G, s(N')))
+		if N' < N 
+		/\
+		PCN := pair(city(N'), getCost(C, city(N'), P, G)) .
+
+	eq cheapest(C, N, P, G, N) = pair(city(N), getCost(C, city(N), P, G)) .
+
+	ceq getCost(C, C', P, G) = inf
+		if in(C', P) .
+	ceq getCost(C, C', P, G) = inf
+		if G [ pair(C, C') ] == undefined .
+	eq getCost(C, C', P, G) = G [pair(C, C')] [owise] .
+endfm
+
+fmod GREEDY-TRAVELER is
+	pr AUXILIARY-FUNCTIONS  .
+
+	vars C C' C''    : City .
+	var  G           : Graph .
+	vars N N' N''    : Nat .
+	vars NI NI' NI'' : NatInf .
+	vars P P'        : Path .
+	var  PCN         : Pair .
+
+	*** Initial city, Number of cities, Cost
+	op greedyTravel : City Nat Graph -> TravelResult .
+	op greedyTravel : City Nat Graph Path Nat -> TravelResult .
+
+	eq greedyTravel(C, N, G) = greedyTravel(C, N, G, C, 0) .
+
+	ceq greedyTravel(C, N, G, P C', N') = result(P C' C, N' + (G [ pair(C', C) ]))
+		if size(P) = N .
+	ceq greedyTravel(C, N, G, P C', N') = greedyTravel(C, N, G, P C' C'', N' + N'')
+		if size(P) < N
+		/\
+		PCN := cheapest(C', N, P C', G)
+		/\
+		C'' := getCity(PCN)
+		/\
+		N'' := getCost(PCN) .
+endfm

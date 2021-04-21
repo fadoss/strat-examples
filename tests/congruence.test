@@ -1,0 +1,4 @@
+deduction/congruence
+
+srew < 0, 'a.S = 'b.S 'f['f['a.S]] = 'f['b.S], mtRlS > using Shos .
+dsrew < 0, 'a.S = 'b.S 'f['f['a.S]] = 'f['b.S], mtRlS > using start ; DST .

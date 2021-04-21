@@ -1,0 +1,17 @@
+semantics/lambda
+
+smod MAIN is
+	protecting MAIN-BASE .
+	extending LAMBDA-REDUCE{Normal} .
+endsm
+
+srew K I Omega using fullReduce .
+srew ((\ x . v(1)) (\ y . v(2))) ((\ x . v(3)) (\ y . v(4))) using fullReduce .
+
+smod MAIN is
+	protecting MAIN-BASE .
+	extending LAMBDA-REDUCE{Applicative} .
+endsm
+
+srew ((\ x . v(1)) (\ y . v(2))) ((\ x . v(3)) (\ y . v(4))) using applicative .
+srew A* churchNum(4) (A+ churchNum(2) churchNum(1)) using fullReduce .

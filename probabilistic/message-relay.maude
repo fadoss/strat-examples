@@ -1,0 +1,81 @@
+***
+*** Message transmission sequence
+*** (to be interpreted as a discrete-time Markov decision process)
+***
+
+mod MESSAGE-SEQUENCE is
+	extending CONFIGURATION .
+	protecting NAT .
+
+	*** Nodes in the sequence
+	op node : Nat -> Oid [ctor] .
+	op Node : -> Cid [ctor] .
+
+	op received:_ : Bool -> Attribute [ctor] .
+
+	*** Packet being sent
+	op packet : Oid Oid Oid -> Msg [ctor msg] .
+
+	vars N M   : Nat .
+	var  O     : Oid .
+	var  B     : Bool .
+	var  Attrs : AttributeSet .
+
+	*** Transmit a packet
+	crl [transmit] :
+		< node(N) : Node | Attrs > packet(node(N), O, node(M))
+	=> 
+		< node(N) : Node | Attrs > packet(if M > N then node(s(N)) else node(sd(N, 1)) fi, O, node(M))
+	if N =/= M .
+
+	*** Lose a packet
+	crl [lose] :
+		< node(N) : Node | Attrs > packet(node(N), O, node(M))
+	=> 
+		< node(N) : Node | Attrs >
+	if N =/= M .
+
+	*** Receive a packet
+	rl [receive] :
+		< node(N) : Node | received: B > packet(node(N), O, node(N))
+	=> 
+		< node(N) : Node | received: true > if O == node(0) then packet(node(sd(N, 1)), node(N), O) else none fi
+	.
+
+	*** Initial setting
+	op initial : Nat -> Configuration .
+	op initialAux : Nat -> Configuration .
+
+	eq initial(0) = none .
+	eq initial(s(N)) = packet(node(1), node(0), node(N)) initialAux(s(N)) .
+
+	eq initialAux(0) = none .
+	eq initialAux(s(N)) = < node(N) : Node | received: false > initialAux(N) .
+endm
+
+sload model-checker
+
+mod MESSAGE-PREDS is
+	protecting MESSAGE-SEQUENCE .
+	including SATISFACTION .
+
+	subsort Configuration < State .
+
+	op received : Nat -> Prop [ctor] .
+
+	var N : Nat .
+	var C : Configuration .
+
+	eq < node(N) : Node | received: true > C |= received(N) = true .
+	eq C |= received(N) = false [owise] .
+endm
+
+mod MESSAGE-MAIN is
+	protecting MESSAGE-PREDS .
+	including MODEL-CHECKER .
+endm
+
+*** Receiving the response has low probability if all possibilites are equiprobable...
+*** umaudemc pcheck message-relay 'initial(20)' '<> received(0)'
+*** ...but it is highly likely when losing packages is very unlikely
+*** umaudemc pcheck message-relay 'initial(20)' '<> received(0)' --assign 'uaction(lose.p=0.0001)'

@@ -1,0 +1,327 @@
+***
+*** Strategy language extension with congruence operators
+*** and generic traversals (based on them).
+***
+*** Congruence operators follow the same syntax that the regular data
+*** constructor of a module, but their arguments are replaced by strategies
+*** to be applied to the corresponding subterms. The combinator is applied
+*** when the top of the subject term coincides with the congruence symbol
+*** and fails otherwise.
+***
+*** Generic traversal operators apply a strategy to all the subterms
+*** of the top symbol of a given term (gt-all), to the first subterm in
+*** which it does not fail (gt-any), or to all the subterms in which it
+*** does not fail (gt-any) under the condition that at least one succeeds.
+***
+
+sload slangExtension-iface
+
+fmod SLANG-CONGRUENCE is
+	protecting META-LEVEL .
+	protecting SLANG-EXTENSION-HELPER .
+
+	*** Extend the META-LEVEL module with congruence operators
+	*** and generic traversals for the data constructors of
+	*** the given module.
+	op extendCongOps : Module -> FModule [ctor] .
+
+	var  M       : Module .
+	var  Ty      : Type .
+	var  TyL     : TypeList .
+	var  NeTyL   : NeTypeList .
+	var  Q       : Qid .
+	vars T T1 T2 : Term .
+	var  TL      : TermList .
+	var  NeTL    : NeTermList .
+	var  Attr    : Attr .
+	var  Attrs   : AttrSet .
+	var  Attrs'  : AttrSet .
+	var  Op      : OpDecl .
+	var  Ops     : OpDeclSet .
+	var  Eqs     : EquationSet .
+	vars N K     : Nat .
+	var  Prefix  : String .
+
+	*** Since congruence operators are translated to matchrew and
+	*** they can be nested, we have to ensure that variables are
+	*** fresh, so we cannot translate the extended combinators by
+	*** simple equations.
+
+	eq extendCongOps(M) = fmod 'META-LEVEL+CG is
+		(protecting 'SLANG-EXTENSION-STATIC .)
+		sorts none .
+		none	*** subsorts
+		combineCongOps(generateCongOps(getOps(M)))
+		(op 'gt-all  : 'Strategy -> 'Strategy [none] .)
+		(op 'gt-any  : 'Strategy -> 'Strategy [none] .)
+		(op 'gt-some : 'Strategy -> 'Strategy [none] .)
+		none	*** membership axioms
+		combineCongOpsDefs(generateCongOpsDefs(getOps(M)))
+		(eq 'gt-all['S:Strategy] = wrapAlternatives(generateGTAll(getOps(M))) [none] .)
+		(eq 'gt-any['S:Strategy] = wrapAlternatives(generateGTAny(getOps(M))) [none] .)
+		(eq 'gt-some['S:Strategy] = wrapAlternatives(generateGTSome(getOps(M))) [none] .)
+	endfm .
+
+	***
+	*** Congruence operators
+	***
+
+	*** Declare the congruence operators
+	op generateCongOps : OpDeclSet -> OpDeclSet .
+
+	eq generateCongOps(none) = none .
+	eq generateCongOps(op Q : TyL -> Ty [ctor Attrs] . Ops) =
+		op Q : repeatType('Strategy, size(TyL)) -> 'Strategy
+			[ctor metadata(string(Ty)) removeId(Attrs)] .
+		generateCongOps(Ops) .
+	eq generateCongOps(Op Ops) = generateCongOps(Ops) [owise] .
+
+	*** Remove identities and specials from the attributes
+	op removeId : AttrSet -> AttrSet .
+
+	eq removeId(id(T) Attrs) = removeId(Attrs) .
+	eq removeId(left-id(T) Attrs) = removeId(Attrs) .
+	eq removeId(right-id(T) Attrs) = removeId(Attrs) .
+	eq removeId(special(NeHL:NeHookList) Attrs) = removeId(Attrs) .
+	eq removeId(Attrs) = Attrs [owise] .
+
+	*** Combine congruence operators with identity
+	op combineCongOps : OpDeclSet -> OpDeclSet .
+
+	eq combineCongOps(op Q : TyL -> Ty [ctor Attrs] . op Q : TyL -> Ty [ctor Attrs'] . Ops) =
+		combineCongOps(op Q : TyL -> Ty [ctor atrs-intersection(Attrs, Attrs')] . Ops) .
+	eq combineCongOps(Ops) = Ops [owise] .
+
+	*** Intersection of attribute sets
+	op atrs-intersection : AttrSet AttrSet -> AttrSet .
+
+	eq atrs-intersection(none, Attrs) = none .
+	eq atrs-intersection(Attr Attrs, Attr Attrs') = Attr atrs-intersection(Attrs, Attrs') .
+	eq atrs-intersection(Attr Attrs, Attrs') = atrs-intersection(Attrs, Attrs') .
+
+	*** Translate the congruence operators to standard strategy combinators
+	op generateCongOpsDefs : OpDeclSet -> EquationSet .
+
+	eq generateCongOpsDefs(none) = none .
+	eq generateCongOpsDefs(op Q : NeTyL -> Ty [ctor Attrs] . Ops) =
+		(eq 'transform[Q[makeStratVars(size(NeTyL))], 'N:Nat] =
+			'matchrew_s.t._by_[
+				'_`[_`][upTerm(Q), 'makeOpVars[upTerm(NeTyL), 'N:Nat]],
+				'nil.EqCondition,
+				'makeUsingPairs[upTerm(NeTyL), wrapStratList(makeStratVars(size(NeTyL))),
+                                          '_+_['N:Nat, upTerm(size(NeTyL))], 'N:Nat]
+			] [none] .)
+		generateCongOpsDefs(Ops) .
+	eq generateCongOpsDefs(op Q : nil -> Ty [ctor Attrs] . Ops) =
+		(eq 'transform[qid(string(Q) + ".Strategy"), 'N:Nat] =
+			'match_s.t._[upTerm(qid(string(Q) + "." + string(Ty))), 'nil.EqCondition] [none] .)
+		generateCongOpsDefs(Ops) .
+	eq generateCongOpsDefs(Op Ops) = generateCongOpsDefs(Ops) [owise] .
+
+
+	*** Combine indistinguishable congruence operators' equations into
+	*** a strategy union
+	op combineCongOpsDefs : EquationSet -> EquationSet .
+
+	eq combineCongOpsDefs((eq 'transform[T, 'N:Nat] = T1 [none] .)
+		(eq 'transform[T, 'N:Nat] = T2 [none] .) Eqs) =
+		combineCongOpsDefs(eq 'transform[T, 'N:Nat] = '_|_[T1, T2] [none] . Eqs) .
+	eq combineCongOpsDefs(Eqs) = Eqs [owise] .
+
+
+	***
+	*** Generic traversals
+	***
+
+	*** gt_all alternatives
+	op generateGTAll : OpDeclSet -> TermList .
+
+	eq generateGTAll(none) = empty .
+	eq generateGTAll(op Q : NeTyL -> Ty [ctor Attrs] . Ops) =
+		Q[repeatTerm('S:Strategy, size(NeTyL))], generateGTAll(Ops) .
+	eq generateGTAll(op Q : nil -> Ty [ctor Attrs] . Ops) =
+		'match_s.t._[upTerm(makeConstant(Q, Ty)), 'nil.EqCondition], generateGTAll(Ops) .
+	eq generateGTAll(Op Ops) = generateGTAll(Ops) [owise] .
+
+	*** gt_any alternatives
+	op generateGTAny : OpDeclSet -> TermList .
+	op generateGTAny : Qid Nat Nat -> Term .
+
+	eq generateGTAny(none) = empty .
+	eq generateGTAny(op Q : NeTyL -> Ty [ctor Attrs] . Ops) =
+		generateGTAny(Q, 0, size(NeTyL)), generateGTAny(Ops) .
+	eq generateGTAny(Op Ops) = generateGTAny(Ops) [owise] .
+
+	eq generateGTAny(Q, N, s(N)) = Q[idleTermList('S:Strategy, N, s(N))] .
+	eq generateGTAny(Q, K, N) = '_or-else_[Q[idleTermList('S:Strategy, K, N)],
+	                                       generateGTAny(Q, s(K), N)] [owise] .
+
+	*** gt_some alternatives
+	op generateGTSome : OpDeclSet -> TermList .
+	op generateGTSome : Qid Nat Nat -> Term .
+
+	eq generateGTSome(none) = empty .
+	eq generateGTSome(op Q : NeTyL -> Ty [ctor Attrs] . Ops) =
+		generateGTSome(Q, 0, size(NeTyL)), generateGTSome(Ops) .
+	eq generateGTSome(Op Ops) = generateGTSome(Ops) [owise] .
+
+	eq generateGTSome(Q, N, s(N)) = Q[idleTermList('S:Strategy, N, s(N))] .
+	eq generateGTSome(Q, K, N) = '_or-else_['_;_[Q[idleTermList('S:Strategy, K, N)],
+	                                             Q[tryTermList('S:Strategy, K, N)]],
+		                                generateGTSome(Q, s(K), N)] [owise] .
+
+	***
+	*** Auxiliary functions
+	***
+
+	*** Size of a TypeList
+	op size : TypeList -> Nat .
+
+	eq size((nil).TypeList) = 0 .
+	eq size(Ty TyL) = s(size(TyL)) .
+
+	*** Make a list by repetition of a given type
+	op repeatType : Type Nat -> TypeList .
+
+	eq repeatType(Ty, 0) = nil .
+	eq repeatType(Ty, s(N)) = Ty repeatType(Ty, N) .
+
+	*** Make the strategy expression meta-variables
+	*** for the LHS of an equation
+	op makeStratVars : Nat -> TermList .
+
+	eq makeStratVars(0) = empty .
+	eq makeStratVars(s(N)) = makeStratVars(N), makeVar("S", 'Strategy, N) .
+
+	op wrapStratList : TermList -> Term .
+
+	eq wrapStratList(empty) = 'empty.StrategyList .
+	eq wrapStratList(T) = T .
+	eq wrapStratList((T, TL)) = '_`,_[T, TL] .
+	***
+	*** "Generic" traversals (depend on the given module)
+	***
+
+	*** Wrap a list of terms meta-representing strategies (at a second
+	*** level) into a disjunction
+	op wrapAlternatives : TermList -> Term .
+
+	eq wrapAlternatives(empty) = 'fail.Strategy .
+	eq wrapAlternatives(T) = T .
+	eq wrapAlternatives((T, NeTL)) = '_|_[T, NeTL] .
+
+	*** Make a list by repeating a term
+	op repeatTerm : Term Nat -> TermList .
+
+	eq repeatTerm(T, 0) = empty .
+	eq repeatTerm(T, s(N)) = T, repeatTerm(T, N) .
+
+	*** idleTermList(T, K, N) makes a list of length N that contains
+	*** T in position K and 'idle.Strategy in the rest
+	op idleTermList : Term Nat Nat -> TermList .
+
+	eq idleTermList(T, N, 0) = empty .
+	eq idleTermList(T, K, s(N)) = idleTermList(T, K, N), if K == N then T else 'idle.Strategy fi .
+
+	*** tryTermList(T, K, N) makes a list of length N that contains
+	*** 'try[T] in any position greater that K and 'idle.Strategy in the rest
+	op tryTermList : Term Nat Nat -> TermList .
+
+	eq tryTermList(T, N, 0) = empty .
+	eq tryTermList(T, K, s(N)) = tryTermList(T, K, N), if N > K then 'try[T] else 'idle.Strategy fi .
+endfm
+
+fmod SLANG-CONGRUENCE-EXT is
+	protecting SLANG-PARSE .
+	protecting SLANG-CONGRUENCE .
+
+	ops makeSlangGrammar makeMetaSlang : Module -> Module .
+
+	vars SG M BM : Module .
+	var  Q       : Qid .
+	var  Op      : OpDecl .
+	var  Ops     : OpDeclSet .
+	var  NeTyL   : NeTypeList .
+	var  TyL     : TypeList .
+	var  Ty      : Type .
+	var  Attrs   : AttrSet .
+	var  N       : Nat .
+
+	*** Grammar extension
+	ceq makeSlangGrammar(M) = fmod 'SLANG-GRAMMAR-CONG is
+		getImports(SG)
+		sorts getSorts(SG) .
+		getSubsorts(SG)
+		getOps(SG)
+		generateCongProds(getOps(M))
+		(op 'gt-all  : '@Strategy@ -> '@Strategy@ [ctor] .)
+		(op 'gt-any  : '@Strategy@ -> '@Strategy@ [ctor] .)
+		(op 'gt-some : '@Strategy@ -> '@Strategy@ [ctor] .)
+		getMbs(SG)
+		getEqs(SG)
+	endfm if SG := makeSlangGrammar(upModule('SLANG-GRAMMAR, true), M) .
+
+	*** Metalevel extension
+	ceq makeMetaSlang(M) = fmod 'METASLANG-CONG is
+		getImports(BM)
+		(protecting 'SLANG-PARSE .)
+		sorts getSorts(BM) .
+		getSubsorts(BM)
+		getOps(BM)
+		getMbs(BM)
+		getEqs(BM)
+		(eq 'stratParse['M:Module, '_`[_`][''gt-all.Qid, 'T:Term]] =
+			'gt-all['stratParse['M:Module, 'T:Term]] [none] .)
+		(eq 'stratParse['M:Module, '_`[_`][''gt-any.Qid, 'T:Term]] =
+			'gt-any['stratParse['M:Module, 'T:Term]] [none] .)
+		(eq 'stratParse['M:Module, '_`[_`][''gt-some.Qid, 'T:Term]] =
+			'gt-some['stratParse['M:Module, 'T:Term]] [none] .)
+		generateParseEqs(getOps(M))
+	endfm if BM := extendCongOps(M) .
+
+
+	*** Generate the productions for the congruence operators
+	*** (the same as generateCongOps but at the syntactic level)
+	op generateCongProds : OpDeclSet -> OpDeclSet .
+
+	eq generateCongProds(none) = none .
+	eq generateCongProds(op Q : TyL -> Ty [ctor Attrs] . Ops) =
+		(op Q : repeatType('@Strategy@, size(TyL)) -> '@Strategy@ [ctor] .)
+		generateCongProds(Ops) .
+	eq generateCongProds(Op Ops) = generateCongProds(Ops) [owise] .
+
+	*** Generate the stratParse equations for the new constructors
+	op generateParseEqs : OpDeclSet -> EquationSet .
+
+	eq generateParseEqs(none) = none .
+	eq generateParseEqs(op Q : NeTyL -> Ty [ctor Attrs] . Ops) =
+		(eq 'stratParse['M:Module, '_`[_`][upTerm(Q), wrapStratList(makeTermVars(size(NeTyL)))]]
+			= Q[stratParseRHS(size(NeTyL))] [none] .)
+		generateParseEqs(Ops) .
+	eq generateParseEqs(op Q : nil -> Ty [ctor Attrs] . Ops) =
+		(eq 'stratParse['M:Module, upTerm(qid(string(Q) + ".@Strategy@"))]
+			= qid(string(Q) + ".Strategy") [none] .)
+		generateParseEqs(Ops) .
+	eq generateParseEqs(Op Ops) = generateParseEqs(Ops) [owise] .
+
+	*** Generetes the stratParse application at the right-hand side
+	op stratParseRHS : Nat -> TermList .
+
+	eq stratParseRHS(0) = empty .
+	eq stratParseRHS(s(N)) = stratParseRHS(N),
+		'stratParse['M:Module, makeVar("T", 'Term, s(N))] .
+
+	*** Make term vars (this is repeated many times in different forms)
+	op makeTermVars : Nat -> TermList .
+
+	eq makeTermVars(0) = empty .
+	eq makeTermVars(s(N)) = makeTermVars(N), makeVar("T", 'Term, s(N)) .
+endfm
+
+view CongOps from SLANG-EXTENSION to SLANG-CONGRUENCE-EXT is
+	*** identity
+endv
+
+mod SLANG-CONGRUENCE-MAIN is
+	protecting SLANG-REPL{CongOps} .
+endm

@@ -1,0 +1,152 @@
+***
+*** Metastrategies and metalevel examples.
+***
+
+fmod STRAT-BASIS is
+	protecting META-STRATEGY .
+
+	vars A B C : Strategy .
+	var  P     : Term .
+	var  CD    : Condition .
+	var  VSL   : UsingPairSet .
+	var  SL    : StrategyList .
+	var  V     : Variable .
+	var  Q     : Qid .
+	var  S     : Substitution .
+
+	op toBasis : Strategy -> Strategy .
+	op toBasis : UsingPairSet -> UsingPairSet .
+	op toBasis : StrategyList -> StrategyList .
+
+	*** Derived operator are rewritten in the basic ones
+	eq toBasis(not(A)) = toBasis(A) ? fail : idle .
+	eq toBasis(try(A)) = toBasis(A) ? idle : idle .
+	eq toBasis(test(A)) = toBasis(not(A)) ? fail : idle .
+	eq toBasis(A !) = toBasis(A *) ; toBasis(not(A)) .
+	eq toBasis(A *) = idle | toBasis(A +) .
+
+	*** Recursive definition
+	ceq toBasis(A ; B) = toBasis(A) ; toBasis(B) if A =/= idle /\ B =/= idle .
+	ceq toBasis(A | B) = toBasis(A) | toBasis(B) if A =/= fail /\ B =/= fail .
+	eq toBasis(A +) = toBasis(A) + .
+	eq toBasis(A ? B : C) = toBasis(A) ? toBasis(B) : toBasis(C) .
+	eq toBasis(matchrew P s.t. CD by VSL) = matchrew P s.t. CD by toBasis(VSL) .
+	eq toBasis(xmatchrew P s.t. CD by VSL) = xmatchrew P s.t. CD by toBasis(VSL) .
+	eq toBasis(amatchrew P s.t. CD by VSL) = amatchrew P s.t. CD by toBasis(VSL) .
+	eq toBasis(top(A)) = top(toBasis(A)) .
+	eq toBasis(Q[S]{SL}) = Q[S]{toBasis(SL)} .
+	eq toBasis(A) = A [owise] .
+
+
+	*** Definition for UsingPairSet and StrategyList
+	eq toBasis(V using A) = V using toBasis(A) .
+	eq toBasis(V using A , VSL) = V using toBasis(A) , toBasis(VSL) .
+	eq toBasis(empty) = empty .
+	eq toBasis(A , SL) = toBasis(A) , toBasis(SL) .
+endfm
+
+fmod STRAT-HIGHLEVEL is
+	protecting META-STRATEGY .
+
+	vars E E' : Strategy .
+	var  P    : Term .
+	var  C    : Condition .
+
+	vars Q Q'   : Qid .
+	vars S S'   : Substitution .
+	vars SL SL' : StrategyList .
+
+	*** Imperative loop constructs
+	op repeat-until : Strategy Term Condition -> Strategy .
+	op repeat-while : Strategy Term Condition -> Strategy .
+	op do-while : Strategy Term Condition -> Strategy .
+
+	*** Other strategy manipulation defs
+	op alternate : Strategy Strategy -> Strategy .
+
+	*** The last check is necessary because ! will also finish is E is the identity
+	eq repeat-until(E, P, C) = (match P s.t. C ? idle : E) * ; match P s.t. C .
+	eq repeat-while(E, P, C) = (match P s.t. C ? E : idle) * ; not(match P s.t. C) .
+	eq do-while(E, P, C) = E ; repeat-while(E, P, C) .
+
+	*** Interleaves strategy sequences
+	eq alternate((Q[S]{SL}) ; E, (Q'[S']{SL'}) ; E') = (Q[S]{SL}) ; (Q'[S']{SL'}) ; alternate(E, E') .
+	eq alternate(E, E') = E ; E' [owise] .
+endfm
+
+fmod STRAT-HL-MODULES is
+	protecting META-LEVEL .
+	protecting NAT .
+
+	vars M Q   : Qid .
+	var  IL    : ImportList .
+	var  SS    : SortSet .
+	var  SSDS  : SubsortDeclSet .
+	var  OPDS  : OpDeclSet .
+	var  MAS   : MembAxSet .
+	var  EQS   : EquationSet .
+	var  RLS   : RuleSet .
+	var  E     : Strategy .
+	var  STDS  : StratDeclSet .
+	var  STDFS : StratDefSet .
+	var  V     : Variable .
+
+	*** Operations related to modules
+
+	*** Add a strategy to the module which executes the strategy as many times as its argument tells
+	op addRepeat : StratModule Qid Strategy -> StratModule .
+
+	*** We say that the subject type is Nat but this is not checked
+	eq addRepeat(smod M is IL sorts SS . SSDS OPDS MAS EQS RLS STDS STDFS endsm, Q, E) =
+		smod M is IL sorts SS . SSDS OPDS MAS EQS RLS
+			(STDS
+				strat Q : 'Nat @ 'Nat [none] .
+			)
+			(STDFS 
+				sd Q[['0.Nat]] := idle [none] .
+				sd Q[['s_['N:Nat]]] := E ; Q[['N:Nat]] [none] .
+			)
+		endsm .
+endfm
+
+mod TEST-RULES is
+	protecting STRING .
+
+	var L : Nat .
+	var S : String .
+
+	crl [palin] : S => substr(S, 1, sd(L,2)) if L := length(S)
+		/\ L > 1 /\ substr(S, 0, 1) == substr(S, sd(L,1), 1) .
+
+	op bigPalindrome : Nat -> String .
+
+	eq bigPalindrome(0) = "" .
+	eq bigPalindrome(s(L)) = "a" + bigPalindrome(L) .
+endm
+
+smod TEST is
+	protecting TEST-RULES .
+	protecting STRAT-BASIS .
+	protecting STRAT-HIGHLEVEL .
+	protecting STRAT-HL-MODULES .
+endsm
+
+***
+*** Examples
+***
+
+eof
+
+red metaSrewrite(upModule('TEST, false), upTerm("deleveled"),
+	repeat-until('palin[none]{empty}, 'C:Char, nil), breadthFirst, 0) .
+
+red metaSrewrite(upModule('TEST, false), upTerm("tattarrattat"),
+	repeat-while('palin[none]{empty}, 'S:String, upTerm(length(S:String) > 2) = 'true.Bool), breadthFirst, 0) .
+
+red metaSrewrite(addRepeat(upModule('TEST, false), 'strip, 'palin[none]{empty}),
+	upTerm("evitative"), 'strip(upTerm(3)), breadthFirst, 0) .
+
+*** The following examples show that the internal representation of ! (among other derived operators)
+*** is more efficient that its equivalent translation into the basic ones.
+red metaSrewrite(upModule('TEST, false), upTerm(bigPalindrome(1000)), ('palin[none]{empty}) !, breadthFirst, 4) .
+red metaSrewrite(upModule('TEST, false), upTerm(bigPalindrome(1000)), toBasis(('palin[none]{empty}) !), breadthFirst, 4) .

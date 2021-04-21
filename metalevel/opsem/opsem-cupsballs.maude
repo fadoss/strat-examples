@@ -1,0 +1,36 @@
+***
+*** Operational semantics of the strategy language respecting the Kleene star
+***
+*** Instantiation with the cups and balls game
+***
+
+sload ../../games/cupsballs
+sload opsem-kleene
+
+view CupsBallsModule from MODULE to META-LEVEL is
+	op M to term upModule('CUPS-BALLS-CHECK, true) .
+endv
+
+smod MAIN is
+	protecting NOP-KLEENE-PREDS{CupsBallsModule} .
+	protecting NOP-KLEENE-SEMANTICS{CupsBallsModule} .
+	including MODEL-CHECKER .
+	including STRATEGY-MODEL-CHECKER .
+
+	ops exa exa2 exa3 : -> WraptState .
+
+	eq exa = wrap(reduced('initial.Table) @ 'cups[[empty]], none) .
+	eq exa2 = wrap('__['cup['nothing.MaybeBall], 'cup['ball.MaybeBall], 'cup['nothing.MaybeBall]]
+	                @ 'cups-rec[[empty]], none) .
+	eq exa3 = wrap(reduced('initial.Table) @ ('cover[none]{empty}) !, none) .
+endsm
+
+eof
+
+srew exa3 using opsem .
+
+set verbose on .
+set show command off .
+*** These properties hold only if the iteration is seen as a Kleene star
+red modelCheck(exa, [] <> prop('uncovered.Prop), 'opsem, '->>) .
+red modelCheck(exa2, <> prop('uncovered.Prop), 'opsem, '->>) .

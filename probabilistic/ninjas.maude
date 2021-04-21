@@ -1,0 +1,130 @@
+***
+*** Implementation of the ninja's protocols in «Black Ninjas in the Dark:
+*** Formal Analysis of Population Protocols» (10.1145/3209108.3209110).
+***
+
+mod NINJAS is
+	sorts Mode Vote Ninja Garden .
+	subsort Ninja < Garden .
+
+	ops A P : -> Mode [ctor] .
+	ops Y N : -> Vote [ctor] .
+
+	op {_,_} : Mode Vote -> Ninja [ctor] .
+
+	op empty : -> Garden [ctor] .
+	op __    : Garden Garden -> Garden [ctor assoc comm id: empty] .
+
+	vars V W : Vote .
+
+	rl [r1] : {A, Y} {A, N} => {P, N} {P, N} .
+	rl [r2] : {A, V} {P, W} => {A, V} {P, V} .
+	rl [r3] : {P, Y} {P, N} => {P, N} {P, N} .
+endm
+
+mod NINJAS-SENSEIII is
+	extending NINJAS .
+
+	op T : -> Vote .	*** tie
+
+	rl [r31] : {A, Y} {A, T} => {A, Y} {P, Y} .
+	rl [r32] : {A, Y} {A, N} => {A, T} {P, T} .
+	rl [r33] : {A, T} {A, N} => {A, N} {P, N} .
+	rl [r34] : {A, T} {A, T} => {A, T} {P, T} .
+
+	*** and r2
+endm
+
+mod NINJAS-MAIN is
+	protecting NINJAS .
+	protecting NAT .
+
+	*** Initial garden with the given number of voters
+	op initial : Nat Nat -> Garden .
+	*** Repeat a garden many times
+	op repeat : Garden Nat -> Garden .
+
+	var  G   : Garden .
+	vars M N : Nat .
+
+	eq initial(M, N) = repeat({A, Y}, M) repeat({A, N}, N) .
+
+	eq repeat(G, 0) = empty .
+	eq repeat(G, s(N)) = G repeat(G, N) .
+endm
+
+smod NINJAS-STRAT is
+	extending NINJAS-MAIN .
+	protecting NINJAS-SENSEIII .
+
+	strats sensei sensei-bis senseii senseiii senseiii-v2 @ Garden .
+
+	vars G G' : Garden .
+	vars V W  : Vote .
+
+	*** The votes of r2 are fixed to avoid indempotent applications
+	sd sensei := (r1 | r2[V <- Y, W <- N] | r2[V <- N, W <- Y]) ? sensei : idle .
+
+	*** r1 is applied before r2 (solves the tie problem)
+	sd sensei-bis := (r1 or-else (r2[V <- Y, W <- N] | r2[V <- N, W <- Y])) ! .
+
+	*** Slow protocol of Sensei II
+	sd senseii := (r1 | r2[V <- Y, W <- N] | r2[V <- N, W <- Y] | r3) ? senseii : idle .
+
+	*** Faster protocol of Sensei III
+	sd senseiii := (r31 | r32 | r33 | r34 | matchrew G s.t. {A, V} {P, W} G' := G /\ V =/= W by G using r2[V <- V, W <- W]) ? senseiii : idle .
+
+	**** Faster strategy for the protocol of Sensei III
+	sd senseiii-v2 := (r31 | r32 | r33 | r34 | r2[V <- Y, W <- T] | r2[V <- Y, W <- N]
+	                                         | r2[V <- T, W <- Y] | r2[V <- T, W <- N]
+	                                         | r2[V <- N, W <- Y] | r2[V <- N, W <- T]) ? senseiii-v2 : idle .
+endsm
+
+sload model-checker
+
+mod NINJAS-PREDS is
+	protecting NINJAS-SENSEIII .
+	including SATISFACTION .
+
+	subsort Garden < State .
+
+	var  G   : Garden .
+	var  M   : Mode .
+	vars V W : Vote .
+
+	*** There is a consensus for a given vote
+	op consensus : Vote -> Prop [ctor] .
+	*** There is a consensus (whatever it is)
+	op consensus : -> Prop .
+
+	eq G |= consensus(V) = collect(G) == V .
+	eq G |= consensus = collect(G) =/= diverge .
+
+	*** Collect the votes
+	sort Vote? .
+	subsort Vote < Vote? .
+
+	*** The vote diverges
+	op diverge : -> Vote? [ctor] .
+
+	op collect : Garden -> Vote? .
+	op check : Garden Vote -> Bool .
+
+	eq collect(empty) = diverge .
+	eq collect({M, V} G) = if check(G, V) then V else diverge fi .
+
+	eq check(empty, V) = true .
+	eq check({M, V} G, V) = check(G, V) .
+	eq check({M, W} G, V) = false [owise] .
+endm
+
+smod NINJAS-CHECK is
+	protecting NINJAS-PREDS .
+	protecting NINJAS-STRAT .
+	including STRATEGY-MODEL-CHECKER .
+
+	vars V W : Vote .
+endsm
+
+*** srew initial(N, M) using sensei... .
+*** red modelCheck(initial(N, M), <> consensus, 'sensei...) .

@@ -1,0 +1,73 @@
+***
+*** The Eden programming language in Maude (strategies)
+***
+*** Source: Using Maude and Its Strategies for Defining a Framework for Analyzing Eden Semantics
+***	    Mercedes Hidalgo-Herrero, Alberto Verdejo, and Yolanda Ortega-Mallén
+***	    http://maude.ucm.es/eden/
+***
+
+in eden.maude
+
+smod STRAT-EDEN{X :: NF, Y :: ET} is
+	including EDEN{X, Y} .
+
+  	strat local2 @ Process .
+	sd local2 := top(value)
+	             | top(demand)
+	             | top(blackhole)
+	             | top(app-demand)
+	             | top(sum)
+	             | top(sum-demand)
+	             | top(sub)
+	             | top(sub-demand)
+	             | top(if0)
+	             | top(if0-demand)
+	             | top(beta-reduction) .
+
+	strat local @ Process .
+	sd local := top(let)
+	            | (matchrew < PS, H, N, M > by
+	                 H using local2) .
+
+	strat =par=>p : VarSet @ Process .
+***  	sd =par=>p(mt) = idle .
+	sd =par=>p(NewVS) := extend[VS <- NewVS] ;
+	                     ( parallelp-step{local} ! ) ;
+	                     contract .
+
+	strat =par=> : VarSet @ Process .
+	sd =par=>(VS) := (match empty) ? idle
+	      : (matchrew P S by
+	              P using =par=>p(inters(P, VS)) ,
+	              S using =par=>(VS)) .
+
+	strat =pc=> @ System .		sd =pc=> := pc ! .
+	strat =com=> @ System .		sd =com=> := com ! .
+	strat =wUnbl=> @ System .	sd =wUnbl=> := wUnbl ! .
+	strat =deact=> @ System .	sd =deact=> := deact ! .
+	strat =bpc=> @ System .		sd =bpc=> := bpc ! .
+	strat =pcd=> @ System .		sd =pcd=> := pcd ! .
+	strat =vComd=> @ System .	sd =vComd=> := vComd ! .
+
+	strat =Unbl=> @ System .
+	sd =Unbl=> := =wUnbl=> ; =deact=> ; =bpc=> ; =pcd=> ; =vComd=> .
+
+	strat =sys=> @ System .
+	sd =sys=> := =com=> ; =pc=> ; =Unbl=> .
+
+	strat ==> @ System .
+	sd ==> := (matchrew S by S using =par=>(ET(S))) ; =sys=> .
+
+	strat run @ System .
+	sd run := (match S s.t. (runable(S))) ? (==> ; run) : idle .
+
+	strat start @ System .
+	sd start := run .
+
+	var  S        : System .
+	var  PS       : String .
+	var  P        : Process .
+	var  H        : Heap .
+	vars M N      : Nat .
+	vars VS NewVS : VarSet .
+endsm

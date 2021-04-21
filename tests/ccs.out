@@ -1,0 +1,34 @@
+==========================================
+srewrite [1] in CCS-MAIN : 'Crossing using ccs .
+
+Solution 1
+rewrites: 254
+result ActProcess: {'car}('Rail | 'Signal | 'up . ~ 'ccross . ~ 'down . 'Road)
+    \ 'green \ 'red \ 'up \ 'down
+==========================================
+srewrite [1] in CCS-MAIN : 'Ven using trans ; match {'2p}{'big}{
+    'collectB}AP:ActProcess .
+
+Solution 1
+rewrites: 40
+result ActProcess: {'2p}{'big}{'collectB}'Ven
+==========================================
+srewrite [2] in CCS-MAIN : 'Ven using trans ; match {'1p}{'little}AP:ActProcess
+    .
+
+Solution 1
+rewrites: 32
+result ActProcess: {'1p}{'little}'collectL . 'Ven
+
+Solution 2
+rewrites: 40
+result ActProcess: {'1p}{'little}{'collectL}'Ven
+
+Solution 3
+rewrites: 38
+result ActProcess: {'1p}{'little}{'collectL}{'2p}'VenB
+
+Solution 4
+rewrites: 38
+result ActProcess: {'1p}{'little}{'collectL}{'1p}'VenL
+Bye.

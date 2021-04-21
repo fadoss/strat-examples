@@ -1,0 +1,919 @@
+***
+*** Rewriting semantics of the Maude strategy language
+*** by a theory transformation
+***
+*** Known bugs: all is not implemented
+***
+
+fmod REWSEM-BASE is
+	protecting META-LEVEL * (
+		sort EqCondition  to MetaEqCondition,
+		sort Condition    to MetaCondition,
+		sort UsingPairSet to MetaUsingPairSet,
+		sort UsingPair to MetaUsingPair,
+		sort Substitution to MetaSubstitution,
+		sort StrategyList to MetaStratList
+	) .
+
+	*** REWSEM-BASE specifies the basic infrastructure of the transformed
+	*** module, as well as some auxiliary metalevel functions.
+
+	*** The following types represent the so named entities at the object
+	*** level. Hence, some of their constructors are not given here as
+	*** they must be generated for each sort (or kind) of the input module.
+	*** Many have an equivalent representation at META-LEVEL.
+
+	sorts Substitution Match MatchSet Condition EqCondition Strat
+		StratCall RuleApp StratList UsingPair UsingPairSet
+	        StratDef StratDefs .
+
+	subsort EqCondition < Condition .
+	subsort Match < MatchSet .
+	subsort RuleApp StratCall < Strat < StratList .
+	subsort StratDef < StratDefs .
+	subsort UsingPair < UsingPairSet .
+
+	*** These are the execution states for the strategies. Its constructors
+	*** are also generated at the object level for each kind.
+
+	sorts Task Tasks Cont .
+	subsort Task < Tasks .
+
+
+	***
+	*** Operations
+	***
+
+	*** Substitution and matching (except _<-_ and <_,_>)
+	op none : -> Substitution [ctor] .
+	op _;_ : Substitution Substitution -> Substitution [ctor assoc id: none] .
+	op none : -> MatchSet [ctor] .
+	op __ : MatchSet MatchSet -> MatchSet [ctor assoc comm id: none] .
+
+	*** Conditions (except _=_, _:=_, _=>_ and _: S)
+	op trueC : -> EqCondition [ctor] .
+	op _/\_ : Condition Condition -> Condition [ctor assoc id: trueC] .
+	op _/\_ : EqCondition EqCondition -> EqCondition [ctor assoc id: trueC] .
+
+	*** Strategy constructors (some)
+	ops idle fail all : -> Strat [ctor] .
+	op _|_   : Strat Strat -> Strat [assoc ctor] .
+	op _;_   : Strat Strat -> Strat [assoc ctor] .
+	op _*    : Strat -> Strat [ctor] .
+	op _?_:_ : Strat Strat Strat -> Strat [ctor] .
+	op one   : Strat -> Strat [ctor] .
+	op top   : RuleApp -> Strat [ctor] .
+
+	*** Derived strategy combinators
+	op _+        : Strat -> Strat .
+	op _!        : Strat -> Strat .
+	op _or-else_ : Strat Strat -> Strat .
+	op not       : Strat -> Strat .
+	op test      : Strat -> Strat .
+	op try       : Strat -> Strat .
+
+	*** Execution tasks (except term-strat pairs and solutions)
+	op <_;_> : Tasks Cont -> Task [ctor] .
+	op none  : -> Tasks [ctor] .
+	op __    : Tasks Tasks -> Tasks [ctor assoc comm id: none] .
+
+	*** Auxiliary symbols for strategies (except _using_)
+	op empty : -> StratList [ctor] .
+	op _,_   : StratList StratList -> StratList [ctor assoc id: empty] .
+	op _,_   : UsingPairSet UsingPairSet -> UsingPairSet [ctor assoc] .
+
+	*** Continuations (except ifc, chrew and mrew)
+	op seq   : Strat -> Cont [ctor] .
+	op onec  : -> Cont [ctor] .
+
+	*** Different substitution applications
+	op _·_ : Condition Substitution -> Condition .
+	op _·_ : UsingPairSet Substitution -> UsingPairSet .
+	op _·_ : Strat Substitution -> Strat .
+	op _·_ : StratList Substitution -> StratList .
+	op _·_ : Substitution Substitution -> Substitution .
+
+	*** An auxiliary function to get the first of all variable to strategy
+	*** pairs (since their list are neccesarily non-empty, obtaining it
+	*** by pattern matching requires considering more cases)
+	op firstPair : UsingPairSet -> UsingPair .
+
+	*** Strategy definitions
+	op <_,_,_> : StratCall Strat EqCondition -> StratDef [ctor] .
+	op none    : -> StratDefs [ctor] .
+	op __      : StratDefs StratDefs -> StratDefs [ctor assoc comm id: none] .
+
+	*** This term will be filled with the strategy definitions
+	op DEFS    : -> StratDefs .
+
+
+	***
+	*** Equations
+	***
+
+	var  Sb            : Substitution .
+	vars mSb mSb1 mSb2 : MetaSubstitution .
+	vars E F G         : Strat .
+	var  Tsk           : Task .
+	vars P T T1 T2 R H : Term .
+	vars eC eC1 eC2    : EqCondition .
+        var  Slhs SC       : StratCall .
+	var  SL            : StratList .
+
+	*** Tasks is a set
+	eq Tsk Tsk = Tsk .
+
+	*** Substitution for conditions (partially)
+	eq trueC · Sb = trueC .
+
+	*** Derived strategy constructors
+	eq E + = E ; E * .
+	eq E ! = E * ; not(E) .
+	eq E or-else F = E ? idle : F .
+	eq not(E) = E ? fail : idle .
+	eq try(E) = E ? idle : idle .
+	eq test(E) = not(not(E)) .
+
+	*** Substitution for strategies (partially)
+	eq idle · Sb = idle .
+	eq fail · Sb = fail .
+	eq all · Sb = all .
+	eq (E | F) · Sb = (E · Sb) | (F · Sb) .
+	eq (E ; F) · Sb = (E · Sb) ; (F · Sb) .
+	eq (E *) · Sb = (E · Sb) * .
+	eq (E ? F : G) · Sb = (E · Sb) ? (F · Sb) : (G · Sb) .
+	eq one(E) · Sb = one(E · Sb) .
+	eq top(E) · Sb = top(E · Sb) .
+
+	*** Substitution for strategy lists
+	eq empty · Sb = empty .
+	ceq (E, SL) · Sb = (E · Sb), (SL · Sb) if SL =/= empty .
+
+	*** Substitution for substitutions (partially)
+	eq (none).Substitution · Sb = none .
+
+	*** Helper function to instantiate matchrew patterns (partially)
+	sort SplitSubs .
+	op {_;_} : Substitution EqCondition -> SplitSubs [ctor] .
+	op extend : SplitSubs EqCondition -> SplitSubs .
+	eq extend({ Sb ; eC1 }, eC2) = { Sb ; eC1 /\ eC2 } .
+
+	op splitSubs : Substitution UsingPairSet -> SplitSubs .
+
+
+	***
+	*** Auxiliary metalevel operations
+	***
+
+	var Cons    : Constant .
+	var Var     : Variable .
+	var S       : Sort .
+	var Q       : Qid .
+	var neTL    : NeTermList .
+	var TL1 TL2 : TermList .
+	var C       : MetaCondition .
+	var N       : Nat .
+	var M       : Module .
+	var Cx      : Context .
+	var Ops     : OpDeclSet .
+
+	*** Replace a object-level context
+	*** (H is the hole, holes will be generated for each kind)
+
+	op replace : Term Term Term -> Term .
+	op replace : TermList Term Term -> TermList .
+
+	eq replace(H, R, H) = R .
+	eq replace(Q[neTL], R, H) = Q[replace(neTL, R, H)] .
+	eq replace(T, R, H) = T [owise] .
+	eq replace((T, neTL), R, H) = replace(T, R, H), replace(neTL, R, H) .
+
+	*** Replace a meta-level context
+	op metaReplace : Context Term -> Term .
+
+	eq metaReplace([], R) = R .
+	eq metaReplace(Q[TL1, Cx, TL2], R) = Q[TL1, metaReplace(Cx, R), TL2] .
+
+	*** Apply a metalvel substitution to a term
+	op apply : Term MetaSubstitution -> Term .
+	op apply : TermList MetaSubstitution -> TermList .
+
+	eq apply(Var, (Var <- T) ; mSb) = T .
+	eq apply(Q[neTL], mSb) = Q[apply(neTL, mSb)] .
+	eq apply(T, mSb) = T [owise] .
+	eq apply((T, neTL), mSb) = apply(T, mSb), apply(neTL, mSb) .
+
+	*** Convert the meta-representation of a Substitution into a MetaSubstitution
+	op o2m-Subs : Term -> MetaSubstitution .
+
+	eq o2m-Subs('none.Substitution) = none .
+	eq o2m-Subs('_;_[T1, T2]) = o2m-Subs(T1) ; o2m-Subs(T2) .
+	eq o2m-Subs('_<-_[Var, T]) = Var <- T .
+
+	*** Convert a MetaSubstitution into a Substitution
+	op m2o-Subs : MetaSubstitution -> Term .
+
+	eq m2o-Subs(none) = 'none.Substitution .
+	eq m2o-Subs(Var <- T ; mSb) = '_;_['_<-_[Var, T], m2o-Subs(mSb)] .
+
+	*** Convert a Condition into a MetaCondition
+	op o2m-Cond : Term -> MetaCondition .
+
+	eq o2m-Cond('trueC.EqCondition) = nil .
+	eq o2m-Cond('_/\_[T1, T2]) = o2m-Cond(T1) /\ o2m-Cond(T2) .
+	eq o2m-Cond('_=_[T1, T2]) = T1 = T2 .
+	eq o2m-Cond('_:=_[T1, T2]) = T1 := T2 .
+	ceq o2m-Cond(Q[T]) = T : S if substr(string(Q), 0, 2) == "_:"
+		/\ S := qid(substr(string(Q), 2, length(string(Q)))) .
+
+	*** Matching functions (results are match sets, H is the
+	*** meta-representation of the term used as context hole)
+	op getMatch  : Module Term Term MetaCondition Term Nat -> Term .
+	op getXmatch : Module Term Term MetaCondition Term Nat -> Term .
+	op getAmatch : Module Term Term MetaCondition Term Nat -> Term .
+
+	ceq getMatch(M, P, T, C, H, N) = '__['<_`,_>[m2o-Subs(mSb), H], getMatch(M, P, T, C, H, s(N))]
+		if mSb := metaMatch(M, P, T, C, N) .
+	ceq getMatch(M, P, T, C, H, N) = 'none.MatchSet if metaMatch(M, P, T, C, N) = noMatch .
+
+	ceq getXmatch(M, P, T, C, H, N) = '__['<_`,_>[m2o-Subs(mSb), metaReplace(Cx, H)], getXmatch(M, P, T, C, H, s(N))]
+		if {mSb, Cx} := metaXmatch(M, P, T, C, 0, 1, N) .
+	ceq getXmatch(M, P, T, C, H, N) = 'none.MatchSet if metaXmatch(M, P, T, C, 0, 1, N) = noMatch .
+
+	ceq getAmatch(M, P, T, C, H, N) = '__['<_`,_>[m2o-Subs(mSb), metaReplace(Cx, H)], getAmatch(M, P, T, C, H, s(N))]
+		if {mSb, Cx} := metaXmatch(M, P, T, C, 0, unbounded, N) .
+	ceq getAmatch(M, P, T, C, H, N) = 'none.MatchSet if metaXmatch(M, P, T, C, 0, unbounded, N) = noMatch .
+
+	*** Matching function for strategy calls
+	***
+	*** The functions above will be used to define it once the
+	*** input module is know. However, we will extend the module
+	*** with the strategy call operators for each defined strategy
+	*** to do matching properly.
+	op getMatch : StratCall StratCall EqCondition -> MatchSet .
+	op []    : -> StratCall [ctor] .
+	op <_,_> : Substitution StratCall -> Match [ctor] .
+
+	*** Strategy declarations set
+	op DECLS : -> OpDeclSet .
+
+	*** Adds the strategy call terms to a metamodule
+	op extendWithDecls : Module -> Module .
+
+	eq extendWithDecls(M) = mod getName(M) is
+		getImports(M)
+		sorts getSorts(M) ; 'StratCall .
+		getSubsorts(M)
+		getOps(M)
+		DECLS
+		getMbs(M)
+		getEqs(M)
+		getRls(M)
+	endm .
+endfm
+
+fmod REWRITING-SEMANTICS is
+	protecting META-LEVEL .
+	protecting CONVERSION .
+
+	var  S                      : Sort .
+	var  SS                     : SortSet .
+	var  Rl                     : Rule .
+	var  RlS                    : RuleSet .
+	var  Attrs                  : AttrSet .
+	vars K K' K1 K2 K3 K4       : Kind .
+	vars KS FKS                 : KindSet .
+	vars T Tp R P Cx Cx' X Y Tx
+	     U V U' V'              : Variable .
+	var  Lbl RApp RAppS RAppE
+	     RAppSE                 : Qid .
+	vars Lhs Rhs MCond          : Term .
+	var  C                      : Condition .
+	var  eC                     : EqCondition .
+
+	***
+	*** Operations
+	***
+
+	op genOps            : Module                   -> OpDeclSet .
+	op genOpsPerSort     : Module SortSet           -> OpDeclSet .
+	op genOpsPerRule     : RuleSet                  -> OpDeclSet .
+	op genOpsPerKind     : Kind                     -> OpDeclSet .
+	op genOpsPerKind2    : Kind Kind                -> OpDeclSet .
+	op genOpsPerKind3    : Kind Kind Kind           -> OpDeclSet .
+	op genOpsCombination : TypeList KindSet KindSet -> OpDeclSet .
+
+	eq genOps(M) = genOpsCombination(nil, getKinds(M), getKinds(M))
+		genOpsPerSort(M, getSorts(M))
+		genOpsPerRule(getRls(M)) .
+
+	*** Generates the combination of up to three kinds
+	eq genOpsCombination(TyL, none, FKS) = none .
+	eq genOpsCombination(nil, K ; KS, FKS) = genOpsPerKind(K)
+		genOpsCombination(K, FKS, FKS)
+		genOpsCombination(nil, KS, FKS) .
+	eq genOpsCombination(K1, K ; KS, FKS) = genOpsPerKind2(K1, K)
+		genOpsCombination(K1 K, FKS, FKS)
+		genOpsCombination(K1, KS, FKS) .
+	eq genOpsCombination(K1 K2, K ; KS, FKS) = genOpsPerKind3(K1, K2, K)
+		genOpsCombination(K1 K2, KS, FKS) .
+
+	eq genOpsPerSort(M, none) = none .
+	eq genOpsPerSort(M, S ; SS) =
+		*** Sort membership condition
+		(op qid("_:" + string(S)) : getKind(M, S) -> 'EqCondition [ctor] .)
+		genOpsPerSort(M, SS) .
+
+	eq genOpsPerKind(K) =
+		*** Substitutions, contexts and matches
+		(op '_<-_   : K K -> 'Substitution [ctor] .)
+		(op '_·_    : K 'Substitution -> K [none] .)
+		(op '`[`]   : nil -> K [none] .)
+		(op '<_`,_> : 'Substitution K -> 'Match [ctor] .)
+		*** Matching operations
+		(op 'getMatch  : K K 'EqCondition -> 'MatchSet [none] .)
+		(op 'getXmatch : K K 'EqCondition -> 'MatchSet [none] .)
+		*** Conditions
+		(op '_=_   : K K -> 'EqCondition [ctor] .)	*** this could be polymorphic
+		(op '_:=_  : K K -> 'EqCondition [ctor] .)
+		(op '_=>_  : K K -> 'Condition [ctor] .)
+		*** Execution tasks
+		(op '<_@_> : 'Strat K -> 'Task [ctor] .)
+		(op 'sol   : K -> 'Task [ctor] .)
+		*** Strategy constructors
+		(op 'match_s.t._  : K 'EqCondition -> 'Strat [ctor] .)
+		(op 'xmatch_s.t._ : K 'EqCondition -> 'Strat [ctor] .)
+		(op 'amatch_s.t._ : K 'EqCondition -> 'Strat [ctor] .)
+		(op 'matchrew     : K 'Condition 'UsingPairSet -> 'Strat [ctor] .)
+		(op 'xmatchrew    : K 'Condition 'UsingPairSet -> 'Strat [ctor] .)
+		(op 'amatchrew    : K 'Condition 'UsingPairSet -> 'Strat [ctor] .)
+		(op '_using_      : K 'Strat -> 'UsingPair [ctor] .)
+		*** Continuations
+		(op 'ifc : 'Strat 'Strat K -> 'Cont [ctor] .)
+		*** Auxiliary operations
+		(op 'gen-mrew   : 'MatchSet K 'UsingPairSet -> 'Tasks [none] .)
+		(op 'gen-sols   : 'MatchSet K -> 'Tasks [none] .)
+		(op 'find-defs  : 'StratDefs 'StratCall K -> 'Tasks [none] .)
+		(op 'find-defs2 : 'MatchSet K 'Strat -> 'Tasks [none] .) .
+
+	eq genOpsPerKind2(K, K') =
+		*** Matching everywhere operator
+		(op 'getAmatch  : K K' 'EqCondition -> 'MatchSet [none] .)
+		(op 'replace    : K K' -> K [none] .)
+		*** Task generators (used in some execution rules)
+		(op 'gen-rw-tks : 'MatchSet K 'Condition 'StratList K' -> 'Tasks [none] .)
+		(op 'gen-sols2  : 'MatchSet K K' -> 'Tasks [none] .)
+		*** Continuations
+		(op 'chkrw      : 'Condition 'StratList K K' -> 'Cont [ctor] .)
+		(op 'mrew       : K K' 'Substitution 'UsingPairSet -> 'Cont [ctor] .) .
+
+	eq genOpsPerKind3(K1, K2, K3) =
+		(op 'gen-rw-tks2 : 'MatchSet K1 'Condition 'StratList K2 K3 -> 'Tasks [none] .) .
+
+	eq genOpsPerRule(none) = none .
+
+	eq genOpsPerRule(rl Lhs => Rhs [label(Lbl) Attrs] . RlS) =
+		*** Rule application expression (without rewriting conditions)
+		(op qid(string(Lbl) + "[_]") : 'Substitution -> 'RuleApp [ctor] .)
+		(op Lbl                      : nil -> 'RuleApp [none] .)
+		genOpsPerRule(RlS) .
+
+	eq genOpsPerRule(crl Lhs => Rhs if C [label(Lbl) Attrs] . RlS) =
+		if nrewc(C) == 0 then
+			(op qid(string(Lbl) + "[_]") : 'Substitution -> 'RuleApp [ctor] .)
+			(op Lbl                      : nil -> 'RuleApp [none] .)
+		else
+			*** Rule application expression (with rewriting conditions)
+			(op qid(string(Lbl) + "[_]{_}") : 'Substitution 'StratList -> 'RuleApp [ctor] .)
+			(op qid(string(Lbl) + "{_}")    : 'StratList -> 'RuleApp [ctor] .)
+		fi
+		genOpsPerRule(RlS) .
+
+	*** Unlabelled rules are ignored
+	eq genOpsPerRule(Rl RlS) = genOpsPerRule(RlS) [owise] .
+
+
+	***
+	*** Equations
+	***
+
+	op genEqs            : Module                          -> EquationSet .
+	op genOpsPerModule   : Module                          -> EquationSet .
+	op genEqsPerKind     : Module Kind                     -> EquationSet .
+	op genEqsPerKind2    : Module Kind Kind                -> EquationSet .
+	op genEqsPerKind3    : Kind Kind Kind                  -> EquationSet .
+	op genEqsPerKind4    : Kind Kind Kind Kind             -> EquationSet .
+	op genEqsPerRule     : RuleSet                         -> EquationSet .
+	op genEqsPerSort     : Module SortSet                  -> EquationSet .
+	op genEqsCombination : Module TypeList KindSet KindSet -> EquationSet .
+
+	eq genEqs(M) = genOpsPerModule(M)
+		genEqsCombination(M, nil, getKinds(M), getKinds(M))
+		genEqsPerRule(getRls(M))
+		genEqsPerSort(M, getSorts(M)) .
+
+	*** Generates the combination of up to four kinds
+	eq genEqsCombination(M, TyL, none, FKS) = none .
+	eq genEqsCombination(M, nil, K ; KS, FKS) = genEqsPerKind(M, K)
+		genEqsCombination(M, K, FKS, FKS)
+		genEqsCombination(M, nil, KS, FKS) .
+	eq genEqsCombination(M, K1, K ; KS, FKS) = genEqsPerKind2(M, K1, K)
+		genEqsCombination(M, K1 K, FKS, FKS)
+		genEqsCombination(M, K1, KS, FKS) .
+	eq genEqsCombination(M, K1 K2, K ; KS, FKS) = genEqsPerKind3(K1, K2, K)
+		genEqsCombination(M, K1 K2 K, FKS, FKS)
+		genEqsCombination(M, K1 K2, KS, FKS) .
+	eq genEqsCombination(M, K1 K2 K3, K ; KS, FKS) = genEqsPerKind4(K1, K2, K3, K)
+		genEqsCombination(M, K1 K2 K3, KS, FKS) .
+
+	eq genOpsPerModule(M) =
+		*** Matching for strategy call terms
+		(eq 'getMatch['L:StratCall, 'SC:StratCall, 'C:EqCondition] = 'downTerm[
+			'getMatch['extendWithDecls[upTerm(M)], 'upTerm['L:StratCall],
+			          'upTerm['SC:StratCall], 'o2m-Cond['upTerm['C:EqCondition]],
+		                  qid("'[].StratCall.Constant"), '0.Zero],
+			'none.MatchSet] [none] .)
+		*** Strategy declaration and definition sets
+		(eq 'DECLS.OpDeclSet = 'none.OpDeclSet [none] .)
+		(eq 'DEFS.StratDefs = 'none.StratDefs [none] .) .
+
+	eq genEqsPerSort(M, none) = none .
+	ceq genEqsPerSort(M, S ; SS) = *** Sort membership condition
+		(eq '_·_['_/\_[Q[T], 'C:Condition], 'Sb:Substitution] =
+			'_/\_[Q['_·_[T, 'Sb:Substitution]], 'C:Condition] [none] .)
+		genEqsPerSort(M, SS)
+	if T := makeVar("T", getKind(M, S)) /\ Q := qid("_:" + string(S)) .
+
+	ceq genEqsPerKind(M, K) =
+		*** Matching functions use the metalevel getMatch/getXMatch defined in REWSEM-BASE
+		(eq 'getMatch[P, T, 'C:Condition] = 'downTerm[
+			'getMatch[upTerm(M), 'upTerm[P], 'upTerm[T], 'o2m-Cond['upTerm['C:Condition]],
+			          qid("'[]." + string(K) + ".Constant"), '0.Zero],
+			'none.MatchSet] [none] .)
+		(eq 'getXmatch[P, T, 'C:Condition] = 'downTerm[
+			'getXmatch[upTerm(M), 'upTerm[P], 'upTerm[T], 'o2m-Cond['upTerm['C:Condition]],
+			           qid("'[]." + string(K) + ".Constant"), '0.Zero],
+			'none.MatchSet] [none] .)
+		*** Task generators (empty match set case)
+		(eq 'gen-sols['none.MatchSet, T] = 'none.Tasks [none] .)
+		(eq 'gen-mrew['none.MatchSet, P, 'VSL:UsingPairSet] = 'none.Tasks [none] .)
+		(eq 'find-defs['none.StratDefs, 'SC:StratCall, T] = 'none.Tasks [none] .)
+		(eq 'find-defs2['none.MatchSet, T, 'Def:Strat] = 'none.Tasks [none] .)
+		*** Task generators for strategy calls
+		(ceq 'find-defs['__['<_`,_`,_>['Lhs:StratCall, 'Def:Strat, 'C:EqCondition],
+		                    'Defs:StratDefs], 'SC:StratCall, T] =
+		     '__['find-defs2['MAT:MatchSet, T, 'Def:Strat],
+		         'find-defs['Defs:StratDefs, 'SC:StratCall, T]]
+			if 'MAT:MatchSet := 'getMatch['Lhs:StratCall, 'SC:StratCall, 'C:EqCondition] [none] .)
+		(eq 'find-defs2['__['<_`,_>['Sb:Substitution, '`[`].StratCall],
+	                            'MAT:MatchSet], T, 'Def:Strat] =
+		    '__['<_@_>['_·_['Def:Strat, 'Sb:Substitution], T],
+		        'find-defs2['MAT:MatchSet, T, 'Def:Strat]] [none] .)
+		*** Substitution applied to test strategies
+		(eq '_·_['match_s.t._[P, 'C:EqCondition], 'Sb:Substitution] =
+			'match_s.t._['_·_[P, 'Sb:Substitution],
+			             '_·_['C:EqCondition, 'Sb:Substitution]] [none] .)
+		(eq '_·_['xmatch_s.t._[P, 'C:EqCondition], 'Sb:Substitution] =
+			'match_s.t._['_·_[P, 'Sb:Substitution],
+			             '_·_['C:EqCondition, 'Sb:Substitution]] [none] .)
+		(eq '_·_['amatch_s.t._[P, 'C:EqCondition], 'Sb:Substitution] =
+			'match_s.t._['_·_[P, 'Sb:Substitution],
+			             '_·_['C:EqCondition, 'Sb:Substitution]] [none] .)
+		*** Substitution applied to matchrew strategies
+		(ceq '_·_['matchrew[P, 'C:EqCondition, 'VSL:UsingPairSet], 'Sb:Substitution] =
+			'matchrew['_·_[P, 'SSb:Substitution],
+			          '_/\_['SCond:EqCondition, '_·_['C:EqCondition, 'SSb:Substitution]],
+		                  '_·_['VSL:UsingPairSet, 'Sb:Substitution]]
+			if '`{_;_`}['SSb:Substitution, 'SCond:EqCondition] :=
+				'splitSubs['Sb:Substitution, 'VSL:UsingPairSet] [none] .)
+		(ceq '_·_['xmatchrew[P, 'C:EqCondition, 'VSL:UsingPairSet], 'Sb:Substitution] =
+			'xmatchrew['_·_[P, 'SSb:Substitution],
+			          '_/\_['SCond:EqCondition, '_·_['C:EqCondition, 'SSb:Substitution]],
+		                  '_·_['VSL:UsingPairSet, 'Sb:Substitution]]
+			if '`{_;_`}['SSb:Substitution, 'SCond:EqCondition] :=
+				'splitSubs['Sb:Substitution, 'VSL:UsingPairSet] [none] .)
+		(ceq '_·_['amatchrew[P, 'C:EqCondition, 'VSL:UsingPairSet], 'Sb:Substitution] =
+			'amatchrew['_·_[P, 'SSb:Substitution],
+			          '_/\_['SCond:EqCondition, '_·_['C:EqCondition, 'SSb:Substitution]],
+		                  '_·_['VSL:UsingPairSet, 'Sb:Substitution]]
+			if '`{_;_`}['SSb:Substitution, 'SCond:EqCondition] :=
+				'splitSubs['Sb:Substitution, 'VSL:UsingPairSet] [none] .)
+		*** splitSubs definition
+		(eq 'splitSubs['_;_['_<-_[X, T], 'Sb:Substitution], '_using_[X, 'S:Strat]] =
+			'`{_;_`}['Sb:Substitution, '_=_[X, T]] [none] .)
+		(eq 'splitSubs['Sb:Substitution, '_using_[X, 'S:Strat]] =
+			'`{_;_`}['Sb:Substitution, 'trueC.EqCondition] [owise] .)
+		(eq 'splitSubs['_;_['_<-_[X, T], 'Sb:Substitution], '_`,_['_using_[X, 'S:Strat], 'VSL:UsingPairSet]] =
+			'extend['splitSubs['Sb:Substitution, 'VSL:UsingPairSet], '_=_[X, T]] [none] .)
+		(eq 'splitSubs['Sb:Substitution, '_`,_['_using_[X, 'S:Strat], 'VSL:UsingPairSet]] =
+			'splitSubs['Sb:Substitution, 'VSL:UsingPairSet] [owise] .)
+		*** Substitution applied to condition (except sort membership tests)
+		(eq '_·_['_/\_['_=_[P, T], 'C:Condition], 'Sb:Substitution] =
+			'_/\_['_=_['_·_[P, 'Sb:Substitution], '_·_[T, 'Sb:Substitution]], 'C:Condition] [none] .)
+		(eq '_·_['_/\_['_:=_[P, T], 'C:Condition], 'Sb:Substitution] =
+			'_/\_['_:=_['_·_[P, 'Sb:Substitution], '_·_[T, 'Sb:Substitution]], 'C:Condition] [none] .)
+		(eq '_·_['_/\_['_=>_[P, T], 'C:Condition], 'Sb:Substitution] =
+			'_/\_['_=>_['_·_[P, 'Sb:Substitution], '_·_[T, 'Sb:Substitution]], 'C:Condition] [none] .)
+		*** Substitution applied to term
+		(eq '_·_[T, 'Sb:Substitution] = 'downTerm['apply['upTerm[T], 'o2m-Subs['upTerm['Sb:Substitution]]], T] [none] .)
+		*** Substitution applied to substitution
+		(ceq '_·_['_;_['_<-_[X, T], 'Rest:Substitution], 'Sb:Substitution] =
+		     '_;_['_<-_[X, '_·_[T, 'Sb:Substitution]], '_·_['Rest:Substitution, 'Sb:Substitution]]
+			if '_=/=_['Rest:Substitution, 'none.Substitution] = 'true.Bool [none] .)
+		*** Auxiliary function for UsingPairSets
+		(eq 'firstPair['VSP:UsingPair] = 'VSP:UsingPair [none] .)
+		(eq 'firstPair['_`,_['VSP:UsingPair, 'VSL:UsingPairSet]] = 'VSP:UsingPair [none] .)
+	if P := makeVar("P", K) /\ X := makeVar("X", K) /\ T := makeVar("T", K) /\ Cx := makeVar("Cx", K) .
+
+	ceq genEqsPerKind2(M, K, K') =
+		*** Matching functions use the metalevel getMatch/getXMatch defined in REWSEM-BASE
+		(eq 'getAmatch[P, T, 'C:Condition] = 'downTerm[
+			'getAmatch[upTerm(M), 'upTerm[P], 'upTerm[T], 'o2m-Cond['upTerm['C:Condition]],
+			           qid("'[]." + string(K) + ".Constant"), '0.Zero],
+			'none.MatchSet] [none] .)
+		*** Task generators
+		(eq 'gen-sols['__['<_`,_>['Sb:Substitution, Cx], 'MAT:MatchSet], T] =
+			'__['sol['replace[Cx, '_·_[T, 'Sb:Substitution]]], 'gen-sols['MAT:MatchSet, T]] [none] .)
+		(eq 'gen-sols2['none.MatchSet, T, Cx] = 'none.Tasks [none] .)
+		(eq 'gen-rw-tks['none.MatchSet, T, 'C:Condition, 'SL:StratList, P] = 'none.Tasks [none] .)
+		*** Replacement within context
+		(eq 'replace[Cx, T] = 'downTerm[
+			'replace['upTerm[Cx], 'upTerm[T], qid("'[]." + string(K) + ".Constant")], Cx] [none] .)
+	if T := makeVar("T", K) /\ Cx := makeVar("Cx", K') /\ P := makeVar("P", K') .
+
+	ceq genEqsPerKind3(K1, K2, K3) =
+		*** Tasks generators for rewriting conditions
+		(eq 'gen-rw-tks['__['<_`,_>['Sb:Substitution, Cx], 'MAT:MatchSet], T,
+		                'C:Condition, '_`,_['E:Strat, 'EL:StratList], Rhs] =
+			'__['<_;_>['<_@_>['E:Strat, T],
+			           'chkrw['_·_['C:Condition, 'Sb:Substitution], '_`,_['E:Strat, 'EL:StratList],
+			                  '_·_[Rhs, 'Sb:Substitution], Cx]],
+			    'gen-rw-tks['MAT:MatchSet, T, 'C:Condition,
+			                '_`,_['E:Strat, 'EL:StratList], Rhs]] [none] .)
+		(eq 'gen-rw-tks2['none.MatchSet, T, 'C:Condition, 'EL:StratList, Rhs, Cx] =
+			'none.Tasks [none] .)
+		*** Solutions generator for rule application with rewriting fragments
+		(eq 'gen-sols2['__['<_`,_>['Sb:Substitution, Cx'], 'MAT:MatchSet], T, Cx] =
+			'__['sol['replace[Cx, '_·_[T, 'Sb:Substitution]]],
+			    'gen-sols2['MAT:MatchSet, T, Cx]] [none] .)
+		*** Task generator for matchrew successors
+		(ceq 'gen-mrew['__['<_`,_>['Sb:Substitution, Cx], 'MAT:MatchSet], P, 'VSL:UsingPairSet] =
+			'__['<_;_>['<_@_>['_·_['E:Strat, 'Sb:Substitution], '_·_[X, 'Sb:Substitution]],
+			           'mrew[P, Cx, 'Sb:Substitution, 'VSL:UsingPairSet]],
+			    'gen-mrew['MAT:MatchSet, P, 'VSL:UsingPairSet]]
+			if '_using_[X, 'E:Strat] := 'firstPair['VSL:UsingPairSet] [none] .)
+	if Cx := makeVar("Cx", K1) /\ T := makeVar("T", K2) /\ P := makeVar("P", K2)
+	   /\ Rhs := makeVar("Rhs", K3) /\ Cx' := makeVar("Cx'", K3) /\ X := makeVar("X", K3) .
+
+	ceq genEqsPerKind4(K1, K2, K3, K4) =
+		*** Task generator for rewriting condition search
+		(eq 'gen-rw-tks2['__['<_`,_>['Sb:Substitution, Cx'], 'MAT:MatchSet], U,
+		                 'C:Condition, '_`,_['E:Strat, 'EL:StratList], Rhs, Cx] =
+			'__['<_;_>['<_@_>['E:Strat, '_·_[U, 'Sb:Substitution]],
+		                   'chkrw['_·_['C:Condition, 'Sb:Substitution],
+	                                  '_`,_['E:Strat, 'EL:StratList], '_·_[Rhs, 'Sb:Substitution], Cx]],
+	                    'gen-rw-tks2['MAT:MatchSet, U, 'C:Condition,
+		                         '_`,_['E:Strat, 'EL:StratList], Rhs, Cx]] [none] .)
+
+	if Cx' := makeVar("H", K1) /\ U := makeVar("U", K2) /\ Rhs := makeVar("Rhs", K3)
+	   /\ Cx := makeVar("Cx", K4) .
+
+	eq genEqsPerRule(none) = none .
+	ceq genEqsPerRule(rl Lhs => Rhs [label(Lbl) Attrs] . RlS) =
+		*** Rule labels are translated to rule applications with empty substitution
+		(eq RApp = RAppS['none.Substitution] [none] .)
+		*** Rule application substitution
+		(eq '_·_[RAppS['Asg:Substitution], 'Sb:Substitution] =
+		    RAppS['_·_['Asg:Substitution, 'Sb:Substitution]] [none] .)
+		genEqsPerRule(RlS)
+	if RApp := qid(string(Lbl) + ".RuleApp") /\ RAppS := qid(string(Lbl) + "[_]") .
+
+	ceq genEqsPerRule(crl Lhs => Rhs if C [label(Lbl) Attrs] . RlS) =
+		if nrewc(C) == 0 then
+			(eq RApp = RAppS['none:Substitution] [none] .)
+			(eq '_·_[RAppS['Asg:Substitution], 'Sb:Substitution] =
+		            RAppS['_·_['Asg:Substitution, 'Sb:Substitution]] [none] .)
+		else
+			(eq RAppE['SL:StratList] =
+			    RAppSE['none.Substitution, 'SL:StratList] [none] .)
+			(eq '_·_[RAppSE['Asg:Substitution, 'SL:StrategyList], 'Sb:Substitution] =
+		            RAppSE['_·_['Asg:Substitution, 'Sb:Substitution],
+			           '_·_['SL:StrategyList, 'Sb:Substitution]] [none] .)
+		fi
+		genEqsPerRule(RlS)
+	if RApp := qid(string(Lbl) + ".RuleApp") /\ RAppS := qid(string(Lbl) + "[_]")
+	   /\ RAppE := qid(string(Lbl) + "{_}") /\ RAppSE := qid(string(Lbl) + "[_]{_}") .
+
+	*** Unlabelled rules are ignored
+	eq genEqsPerRule(Rl RlS) = genEqsPerRule(RlS) [owise] .
+
+
+	***
+	*** Rules
+	***
+
+	op genRules            : Module                   -> RuleSet .
+	op genRulesPerKind     : Kind                     -> RuleSet .
+	op genRulesPerKind2    : Kind Kind                -> RuleSet .
+	op genRulesPerKind3    : Kind Kind Kind           -> RuleSet .
+	op genRulesPerKind4    : Kind Kind Kind Kind      -> RuleSet .
+	op genRulesPerRule     : Module RuleSet           -> RuleSet .
+	op genRulesCombination : TypeList KindSet KindSet -> RuleSet .
+
+	eq genRules(M) = genRulesCombination(nil, getKinds(M), getKinds(M))
+		genRulesPerRule(M, getRls(M)) .
+
+	eq genRulesCombination(TyL, none, FKS) = none .
+	eq genRulesCombination(nil, K ; KS, FKS) = genRulesPerKind(K)
+		genRulesCombination(K, FKS, FKS)
+		genRulesCombination(nil, KS, FKS) .
+	eq genRulesCombination(K1, K ; KS, FKS) = genRulesPerKind2(K1, K)
+		genRulesCombination(K1 K, FKS, FKS)
+		genRulesCombination(K1, KS, FKS) .
+	eq genRulesCombination(K1 K2, K ; KS, FKS) = genRulesPerKind3(K1, K2, K)
+		genRulesCombination(K1 K2 K, FKS, FKS)
+		genRulesCombination(K1 K2, KS, FKS) .
+	eq genRulesCombination(K1 K2 K3, K ; KS, FKS) = genRulesPerKind4(K1, K2, K3, K)
+		genRulesCombination(K1 K2 K3, KS, FKS) .
+
+	ceq genRulesPerKind(K) =
+		*** Constants
+		(rl '<_@_>['idle.Strat, T] => 'sol[T] [none] .)
+		(rl '<_@_>['fail.Strat, T] => 'none.Tasks [none] .)
+		*** Regular expressions
+		(rl '<_@_>['_|_['E:Strat, 'E':Strat], T] =>
+		    '__['<_@_>['E:Strat, T], '<_@_>['E':Strat, T]] [none] .)
+		(rl '<_@_>['_;_['E:Strat, 'E':Strat], T] =>
+		    '<_;_>['<_@_>['E:Strat, T], 'seq['E':Strat]] [none] .)
+		(rl '<_;_>['__['sol[T], 'TS:Tasks], 'seq['E':Strat]] =>
+		    '__['<_@_>['E':Strat, T], '<_;_>['TS:Tasks, 'seq['E':Strat]]] [none] .)
+		(rl '<_;_>['none.Tasks, 'seq['E':Strat]] => 'none.Tasks [none] .)
+		(rl '<_@_>['_*['E:Strat], T] =>
+		    '__['sol[T], '<_@_>['_;_['E:Strat, '_*['E:Strat]], T]] [none] .)
+		*** Conditional
+		(rl '<_@_>['_?_:_['E:Strat, 'E':Strat, 'E'':Strat], T] =>
+		    '<_;_>['<_@_>['E:Strat, T], 'ifc['E':Strat, 'E'':Strat, T]] [none] .)
+		(rl '<_;_>['__['sol[T], 'TS:Tasks], 'ifc['E':Strat, 'E'':Strat, U]] =>
+		    '__['<_@_>['E':Strat, T], '<_;_>['TS:Tasks, 'seq['E':Strat]]] [none] .)
+		(rl '<_;_>['none.Tasks, 'ifc['E':Strat, 'E'':Strat, T]] =>
+		    '<_@_>['E'':Strat, T] [none] .)
+		*** One strategy
+		(rl '<_@_>['one['E:Strat], T] =>
+		    '<_;_>['<_@_>['E:Strat, T], 'onec.Cont] [none] .)
+		(rl '<_;_>['__['sol[T], 'TS:Tasks], 'onec.Cont] => 'sol[T] [none] .)
+		(rl '<_;_>['none.Tasks, 'onec.Cont] => 'none.Tasks [none] .)
+		*** Test strategies
+		(crl '<_@_>['match_s.t._[P, 'C:EqCondition], T] => 'sol[T]
+			if '<_`,_>['Sb:Substitution, Cx] := 'getMatch[P, T, 'C:EqCondition] [none] .)
+		(crl '<_@_>['match_s.t._[P, 'C:EqCondition], T] => 'none.Tasks
+			if 'getMatch[P, T, 'C:EqCondition] = 'none.MatchSet [none] .)
+		(crl '<_@_>['xmatch_s.t._[P, 'C:EqCondition], T] => 'sol[T]
+			if '<_`,_>['Sb:Substitution, Cx] := 'getXmatch[P, T, 'C:EqCondition] [none] .)
+		(crl '<_@_>['xmatch_s.t._[P, 'C:EqCondition], T] => 'none.Tasks
+			if 'getXmatch[P, T, 'C:EqCondition] = 'none.MatchSet [none] .)
+		*** Strategy call
+		(rl '<_@_>['SC:StratCall, T] => 'find-defs['DEFS.StratDefs, 'SC:StratCall, T] [none] .)
+	if T := makeVar("T", K) /\ U := makeVar("U", K) /\ P := makeVar("P", K) /\ Cx := makeVar("Cx", K) .
+
+	ceq genRulesPerKind2(K,  K') =
+		*** Test strategies (amatch)
+		(crl '<_@_>['amatch_s.t._[P, 'C:EqCondition], T] => 'sol[T]
+			if '<_`,_>['Sb:Substitution, Cx] := 'getAmatch[P, T, 'C:EqCondition] [none] .)
+		(crl '<_@_>['amatch_s.t._[P, 'C:EqCondition], T] => 'none.Tasks
+			if 'getAmatch[P, T, 'C:EqCondition] = 'none.MatchSet [none] .)
+		*** Rewriting of subterms
+		(crl '<_@_>['matchrew[P, 'C:EqCondition, 'TSL:UsingPairSet], Tp] =>
+		     'gen-mrew['MAT:MatchSet, P, 'TSL:UsingPairSet]
+			if 'MAT:MatchSet := 'getMatch[P, Tp, 'C:EqCondition] [none] .)
+		(crl '<_@_>['xmatchrew[P, 'C:EqCondition, 'TSL:UsingPairSet], Tp] =>
+		     'gen-mrew['MAT:MatchSet, P, 'TSL:UsingPairSet]
+			if 'MAT:MatchSet := 'getXmatch[P, Tp, 'C:EqCondition] [none] .)
+		(crl '<_@_>['amatchrew[P, 'C:EqCondition, 'TSL:UsingPairSet], T] =>
+		     'gen-mrew['MAT:MatchSet, P, 'TSL:UsingPairSet]
+			if 'MAT:MatchSet := 'getAmatch[P, T, 'C:EqCondition] [none] .)
+		(rl '<_;_>['none.Tasks, 'mrew[P, Cx, 'Sb:Substitution, 'TSL:UsingPairSet]] =>
+		    'none.Tasks [none] .)
+		(rl '<_;_>['none.Tasks, 'chkrw['C:Condition, 'EL:StratList, Rhs, Cx]] =>
+		    'none.Tasks [none] .)
+	if P := makeVar("P", K) /\ T := makeVar("T", K') /\ Tp := makeVar("T", K)
+	   /\ Cx := makeVar("Cx", K') /\ Rhs := makeVar("Rhs", K) .
+
+
+	ceq genRulesPerKind3(K1, K2, K3) =
+		*** Rewriting of subterms (the last subterm has produced a result)
+		(rl '<_;_>['__['sol[T], 'TS:Tasks],
+		           'mrew[P, Cx, 'Sb:Substitution, '_using_[X, 'E:Strat]]] =>
+		    '__['<_;_>['TS:Tasks, 'mrew[P, Cx, 'Sb:Substitution, '_using_[X, 'E:Strat]]],
+	 	        'sol['replace[Cx, '_·_['_·_[P, '_<-_[X, T]], 'Sb:Substitution]]]] [none] .)
+		*** Rule application with rewriting fragments (last fragment)
+		(crl '<_;_>['__['sol[T], 'TS:Tasks],
+		            'chkrw['_/\_['_=>_[U, V], 'C:EqCondition], 'E:Strat, Rhs, Cx]] =>
+		     '__['<_;_>['TS:Tasks,
+		                'chkrw['_/\_['_=>_[U, V], 'C:EqCondition], 'E:Strat, Rhs, Cx]],
+		         'gen-sols2['MAT:MatchSet, Rhs, Cx]]
+			if 'MAT:MatchSet := 'getMatch[V, T, 'C:EqCondition] [none] .)
+	if Cx := makeVar("Cx", K1) /\ P := makeVar("P", K2) /\ T := makeVar("T", K3) /\ X := makeVar("X", K3)
+	   /\ U := makeVar("U", K3) /\ V := makeVar("V", K3) /\ Rhs := makeVar("Rhs", K2) .
+
+	ceq genRulesPerKind4(K1, K2, K3, K4) =
+		*** Rewriting of subterms (a subterm has produced a result, but there are more subterms)
+		(crl '<_;_>['__['sol[T], 'TS:Tasks],
+	 	           'mrew[P, Cx, 'Sb:Substitution,
+		                 '_`,_['_using_[X, 'E0:Strat], 'VSL:UsingPairSet]]] =>
+		    '__['<_;_>['TS:Tasks, 'mrew[P, Cx, 'Sb:Substitution,
+		                                '_`,_['_using_[X, 'E0:Strat], 'VSL:UsingPairSet]]],
+		        '<_;_>['<_@_>['_·_['E:Strat, 'Sb:Substitution], '_·_[Y, 'Sb:Substitution]],
+                                      'mrew['_·_[P, '_<-_[X, T]], Cx, 'Sb:Substitution,
+			                    'VSL:UsingPairSet]]]
+			if '_using_[Y, 'E:Strat] := 'firstPair['VSL:UsingPairSet] [none] .)
+		*** Rewriting conditions (a fragment has produced a solution, but there are more fragments)
+		(crl '<_;_>['__['sol[T], 'TS:Tasks],
+		            'chkrw['_/\_['_=>_[U, V], 'C:EqCondition, '_=>_[U', V'], 'RC:Condition],
+		                   '_`,_['E:Strat, 'E':Strat, 'EL:StratList], Rhs, Cx]] =>
+		     '__['<_;_>['TS:Tasks, 'chkrw['_/\_['_=>_[U, V], 'C:EqCondition, '_=>_[U', V'], 'RC:Condition],
+		                                 '_`,_['E:Strat, 'E':Strat, 'EL:StratList], Rhs, Cx]],
+		         'gen-rw-tks2['MAT:MatchSet, U', '_/\_['_=>_[U', V'], 'RC:Condition],
+		                      '_`,_['E':Strat, 'EL:StratList], Rhs, Cx]]
+			if 'MAT:MatchSet := 'getMatch[V, T, 'C:EqCondition] [none] .)
+	if Cx := makeVar("Cx", K1) /\ P := makeVar("P", K2) /\ Rhs := makeVar("Rhs", K2)
+	   /\ X := makeVar("X", K3) /\ T := makeVar("T", K3) /\ U := makeVar("U", K3)
+	   /\ V := makeVar("U", K3) /\ Y := makeVar("Y", K4) /\ U' := makeVar("U'", K4)
+	   /\ V' := makeVar("V'", K4) .
+
+	eq genRulesPerRule(M, none) = none .
+
+	ceq genRulesPerRule(M, rl Lhs => Rhs [label(Lbl) Attrs] . RlS) =
+		*** Rule application
+		(crl '<_@_>[qid(string(Lbl) + "[_]") ['Sb:Substitution], T] =>
+		     'gen-sols['MAT:MatchSet, '_·_[Rhs, 'Sb:Substitution]]
+			if 'MAT:MatchSet := 'getAmatch['_·_[Lhs, 'Sb:Substitution], T, 'trueC.EqCondition] [none] .)
+		*** Rule application on top
+		(crl '<_@_>['top[qid(string(Lbl) + "[_]") ['Sb:Substitution]], T] =>
+		     'gen-sols['MAT:MatchSet, '_·_[Rhs, 'Sb:Substitution]]
+			if 'MAT:MatchSet := 'getXmatch['_·_[Lhs, 'Sb:Substitution], T, 'trueC.EqCondition] [none] .)
+		genRulesPerRule(M, RlS)
+	if T := makeVar("T", getKind(M, leastSort(M, Lhs))) .
+
+	ceq genRulesPerRule(M, crl Lhs => Rhs if eC [label(Lbl) Attrs] . RlS) =
+		*** Exactly the same because the condition has no rewriting fragments
+		(crl '<_@_>[qid(string(Lbl) + "[_]") ['Sb:Substitution], T] =>
+		     'gen-sols['MAT:MatchSet, '_·_[Rhs, 'Sb:Substitution]]
+			if 'MAT:MatchSet := 'getAmatch['_·_[Lhs, 'Sb:Substitution], T, m2o-Cond(eC)] [none] .)
+		(crl '<_@_>['top[qid(string(Lbl) + "[_]") ['Sb:Substitution]], T] =>
+		     'gen-sols['MAT:MatchSet, '_·_[Rhs, 'Sb:Substitution]]
+			if 'MAT:MatchSet := 'getXmatch['_·_[Lhs, 'Sb:Substitution], T, m2o-Cond(eC)] [none] .)
+		genRulesPerRule(M, RlS)
+	if T := makeVar("T", getKind(M, leastSort(M, Lhs))) .
+
+	ceq genRulesPerRule(M, crl Lhs => Rhs if eC /\ Lhs => Rhs /\ C [label(Lbl) Attrs] . RlS) =
+		*** Rule application with rewriting conditions
+		(crl '<_@_>[qid(string(Lbl) + "[_]{_}") ['Sb:Substitution, 'SL:StratList], T] =>
+		     'gen-rw-tks['MAT:MatchSet, '_·_[Lhs, 'Sb:Substitution],
+		                 '_·_[m2o-Cond(Lhs => Rhs /\ C), 'Sb:Substitution],
+		                 'SL:StratList, '_·_[Lhs, 'Sb:Substitution]]
+			if 'MAT:MatchSet := 'getAmatch['_·_[Lhs, 'Sb:Substitution], T, m2o-Cond(eC)] [none] .)
+		(crl '<_@_>['top[qid(string(Lbl) + "[_]{_}") ['Sb:Substitution, 'SL:StratList]], T] =>
+		     'gen-rw-tks['MAT:MatchSet, '_·_[Lhs, 'Sb:Substitution],
+		                 '_·_[m2o-Cond(Lhs => Rhs /\ C), 'Sb:Substitution],
+		                      'SL:StratList, '_·_[Lhs, 'Sb:Substitution]]
+			if 'MAT:MatchSet := 'getXmatch['_·_[Lhs, 'Sb:Substitution], T, m2o-Cond(eC)] [none] .)
+		genRulesPerRule(M, RlS)
+	if T := makeVar("T", getKind(M, leastSort(M, Lhs))) .
+
+	*** Conditional or unconditional rules without label (are ignored)
+	eq genRulesPerRule(M, Rl RlS) = genRulesPerRule(M, RlS) [owise] .
+
+
+	***
+	*** Module transformation function (this is what an user should use)
+	***
+
+	op transform : Module -> Module [ctor] .
+	op transform : Qid -> Module [ctor] .
+
+	var  M RSB      : Module .
+	var  Q          : Qid .
+	var  TyL        : TypeList .
+	var  Eqs        : EquationSet .
+	vars Decls Defs : Term .
+	var  Name       : String .
+	var  Type       : Type .
+	var  N          : Nat .
+
+	***
+	*** The input metamodule is assumed to be plain (do not contain
+	*** any import, but its contents)
+	***
+	*** The reason for this is that the rules from the original
+	*** module must be removed (or at least marked nonexec) because
+	*** otherwise they will be executed uncontrolled.
+	***
+
+	ceq transform(M) = mod qid(string(getName(M)) + "-STRAT") is
+		nil
+		sorts getSorts(M) ; getSorts(RSB) .
+		*** Subsorts
+		getSubsorts(M)
+		getSubsorts(RSB)
+		*** Operators
+		getOps(M)
+		getOps(RSB)
+		genOps(M)
+		*** Membership axioms
+		getMbs(M)
+		getMbs(RSB)
+		*** Equations
+		getEqs(M)
+		getEqs(RSB)
+		genEqs(M)
+		*** Rules
+		genRules(M)
+	endm if RSB := upModule('REWSEM-BASE, true) .
+
+	eq transform(Q) = transform(upModule(Q, true)) .
+
+	***
+	*** Declare a strategy in the transformed module.
+	***
+
+	op declareStrat : Module Qid TypeList Type -> Module .
+
+	ceq declareStrat(M, Q, TyL, Type) = mod getName(M) is
+		getImports(M)
+		sorts getSorts(M) .
+		getSubsorts(M)
+		getOps(M)
+		*** The strategy expression constructor
+		(op Q : TyL -> 'StratCall [ctor] .)
+		getMbs(M)
+		Eqs
+		*** This will be used for strategy call matching
+		(eq 'DECLS.OpDeclSet = '__[upTerm(op Q : TyL -> 'StratCall [ctor] .),
+		                           Decls] [none] .)
+		*** Handle subsitutions for this strategy
+		if TyL == nil then
+			(eq '_·_[qid(string(Q) + ".StratCall"), 'Sb:Substitution] = qid(string(Q) + ".StratCall") [none] .)
+		else
+			(eq '_·_[Q[makeVarList("X", 1, TyL)], 'Sb:Substitution] = Q[makeSubsList("X", 1, TyL)] [none] .)
+		fi
+		getRls(M)
+	endm if (eq 'DECLS.OpDeclSet = Decls [none] .) Eqs := getEqs(M) .
+
+	***
+	*** Add a strategy definition to the transformed module.
+	***
+
+	op defineStrat : Module Term Term Term -> Module .
+
+	ceq defineStrat(M, Lhs, Rhs, MCond) = mod getName(M) is
+		getImports(M)
+		sorts getSorts(M) .
+		getSubsorts(M)
+		getOps(M)
+		getMbs(M)
+		Eqs
+		(eq 'DEFS.StratDefs = '__['<_`,_`,_>[Lhs, Rhs, MCond], Defs] [none] .)
+		getRls(M)
+	endm if (eq 'DEFS.StratDefs = Defs [none] .) Eqs := getEqs(M) .
+
+
+	***
+	*** Auxiliary operations
+	***
+
+	*** Variable generator
+	op makeVar : String Type -> Variable [memo] .
+
+	eq makeVar(Name, Type) = qid(Name + ":" + string(Type)) .
+
+	*** Variable list generator
+	op makeVarList : String Nat TypeList -> TermList .
+
+	eq makeVarList(Name, N, nil) = empty .
+	eq makeVarList(Name, N, Type TyL) = makeVar(Name + string(N, 10), Type), makeVarList(Name, s(N), TyL) .
+
+	*** List of substitution applications to variables
+	op makeSubsList : String Nat TypeList -> TermList .
+
+	eq makeSubsList(Name, N, nil) = empty .
+	eq makeSubsList(Name, N, Type TyL) = '_·_[makeVar(Name + string(N, 10), Type), 'Sb:Substitution], makeSubsList(Name, s(N), TyL) .
+
+	*** Auxiliary metalevel ops
+	op nrewc : Condition -> Nat .
+
+	eq nrewc(nil) = 0 .
+	eq nrewc(Lhs => Rhs /\ C) = s(nrewc(C)) .
+	eq nrewc(Lhs = Rhs /\ C) = nrewc(C) .
+	eq nrewc(Lhs := Rhs /\ C) = nrewc(C) .
+	eq nrewc(Lhs : S /\ C) = nrewc(C) .
+
+	*** Convert a metalevel condition into the meta-representation of an
+	*** object-level condition
+	op m2o-Cond : Condition -> Term .
+
+	eq m2o-Cond(nil) = 'none.EqCondition .
+	eq m2o-Cond(Lhs = Rhs /\ C) = '_/\_['_=_[Lhs, Rhs], m2o-Cond(C)] .
+	eq m2o-Cond(Lhs := Rhs /\ C) = '_/\_['_:=_[Lhs, Rhs], m2o-Cond(C)] .
+	eq m2o-Cond(Lhs => Rhs /\ C) = '_/\_['_=>_[Lhs, Rhs], m2o-Cond(C)] .
+	eq m2o-Cond(Lhs : S /\ C) = '_/\_[qid("'_:" + string(S))[Lhs], m2o-Cond(C)] .
+endfm

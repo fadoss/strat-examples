@@ -1,0 +1,6 @@
+protocols/ATMNetwork
+
+srew < N : Mediator | Config : iniConf > ChDemand(O1, N, N1, N4, << SS1 ; 4 >>) using Smediator .
+srew < N : Mediator | Config : iniConf > ChDemand(O1, N, N1, N4, << SS2 ; 12 >>) using Smediator .
+srew < N : Mediator | Config : iniConf > ChDemand(O1, N, N1, N4, << SS3 ; 4 >>) using Smediator .
+srew < N : Mediator | Config : iniConf > ChDemand(O1, N, N4, N7, << SS3 ; 4 >>) using Smediator .

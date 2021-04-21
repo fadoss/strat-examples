@@ -1,0 +1,135 @@
+***
+***	Experimental until and intersection strategy combinators based on
+*** 	the strategy language of The Temporal Logic of Rewriting (TLR*).
+***
+
+sload opsem
+
+fmod META-STRATEGY-TLR is
+	extending META-STRATEGY .
+
+	*** The intersection strategy
+	*** (although it is semantically commutative and has idle as identity,
+	*** it is not defined like that for efficiency)
+	op _/\_  : Strategy Strategy -> Strategy [ctor assoc] .
+
+	*** The until strategy
+	op _U_  : Strategy Strategy -> Strategy [ctor] .
+endfm
+
+view ExState from TRIV to EX-STATE is
+	sort Elt to ExState .
+endv
+
+mod NOP-TLR-RULES{X :: MODULE} is
+	protecting META-STRATEGY-TLR .
+	protecting LIST{ExState} .
+	extending NOP-RULES{X} .
+
+	*** New execution states for the new combinators
+	op until : Strategy Strategy NeList{ExState} -> ExStatePart [ctor frozen (3)] .
+	op sync  : NeList{ExState} -> ExStatePart [ctor frozen (1)] .
+
+	vars X Y X' Y' : ExState .
+	vars L R M     : List{ExState} .
+	var  XP        : ExStatePart .
+	vars NeL NeR   : NeList{ExState} .
+	vars C S       : CtxStack .
+	vars A B       : Strategy .
+	var  T         : Term .
+
+	*** Generate a list of execution states from an intersection strategy
+	op generateSync : Term CtxStack Strategy -> NeList{ExState} .
+
+	eq generateSync(T, S, A /\ B) = generateSync(T, S, A) generateSync(T, S, B) .
+	eq generateSync(T, S, A) = T @ A S [owise] .
+
+	*** The underlying term can be read in any of the states (it is the same)
+	op cterm : NeList{ExState} -> Term .
+	eq cterm(X NeL) = cterm(X) .
+
+	eq cterm(sync(L) @ C) = cterm(L) .
+	eq cterm(until(A, B, L) @ C) = cterm(L) .
+
+	*** Creates the synchronized and until contexts
+	rl [ctl] : T @ (A /\ B) S => sync(generateSync(T, vctx(S), A /\ B)) @ S .
+	rl [ctl] : T @ (A U B) S  => T @ B S .
+	rl [ctl] : T @ (A U B) S  => until(A, B, T @ A vctx(S)) @ S .
+
+	*** Cleanup of solutions and repeated states
+	*** (perhaps they should be rules, but this reduce the state space)
+	eq sync(L (T @ eps) NeR) = sync(L NeR) .
+	eq sync(NeL (T @ eps) R) = sync(NeL R) .
+	eq until(A, B, L (T @ eps) NeR) = until(A, B, L NeR) .
+	eq until(A, B, NeL (T @ eps) R) = until(A, B, NeL R) .
+	eq sync(L X M X R) = sync(L X M R) .
+	eq until(A, B, L X M X R) = until(A, B, L X M R) .
+
+	*** Asynchronous control step
+	crl [sync-c] : sync(L X R) => sync(L X' R) if X => X' .
+	crl [until-c] : until(A, B, L X R) => until(A, B, L X' R) if X => X' .
+
+	*** Synchronous rewrite of the list of execution states
+	crl [sstep] : X NeL => X' NeR if  NeL => NeR /\ X => X' /\ cterm(X') = cterm(NeR) .
+
+	*** Synchronous system step
+	crl [sync-s]  : sync(L) => sync(R) if L => R .
+	crl [until-s] : until(A, B, L) @ S => sync((cterm(R) @ B vctx(S)) R) @ S        if L => R .
+	crl [until-s] : until(A, B, L) @ S => until(A, B, (cterm(R) @ A vctx(S)) R) @ S if L => R .
+
+	*** Sync can be removed where there is only one state
+	eq sync(XP @ C) @ S = XP @ C S .
+endm
+
+smod NOP-TLR-SEMANTICS{X :: MODULE} is
+	protecting NOP-TLR-RULES{X} .
+	extending NOP-SEMANTICS{X} .
+
+	*** Synchronous rewrite of the execution state list
+	strat syncrew @ List{ExState} .
+
+	sd syncrew := match X:ExState ? ->s : sstep{->s, syncrew} .
+
+	*** Adds the sync steps to the control and system transitions
+	sd ->c := sync-c{->c} | until-c{->c} .
+	sd ->s := sync-s{syncrew} | until-s{syncrew} .
+endsm
+
+*** Example
+
+mod NOP-TLR-EXAMPLE is
+	sort Foo .
+
+	ops x y z : -> Foo [ctor] .
+	ops b w : Foo -> Foo [ctor] .
+
+	var F : Foo .
+
+	rl [unbox] : b(F) => F .
+	rl [wrap]  : F => w(F) .
+endm
+
+view NopTLRExample from MODULE to META-LEVEL is
+	op M to term upModule('NOP-TLR-EXAMPLE, true) .
+endv
+
+smod MAIN-UNTIL is
+	protecting NOP-TLR-SEMANTICS{NopTLRExample} .	*** Or RiverModule
+	protecting NOP-PREDS{NopTLRExample} .
+	including MODEL-CHECKER .
+	including STRATEGY-MODEL-CHECKER .
+endsm
+
+eof
+
+*** With the example here
+srew 'b['b['b['b['x.Foo]]]] @ ('unbox[none]{empty} U 'unbox[none]{empty}) using opsem .
+srew 'b['b['b['b['x.Foo]]]] @ ('unbox[none]{empty} U top('wrap[none]{empty})) using opsem .
+srew 'b['b['b['x.Foo]]] @ (('unbox[none]{empty} ; 'unbox[none]{empty} ; 'unbox[none]{empty}) U 'unbox[none]{empty}) using opsem .
+srew 'b['b['x.Foo]] @ (('unbox[none]{empty} ; 'unbox[none]{empty}) U top('wrap[none]{empty})) using opsem .
+
+*** With the rivercrossing puzzle
+red modelCheck('initial.River @ ('solution[[empty]] /\ 'solution[[empty]]), <> prop('goal.Prop), 'opsem, '->>) .
+red modelCheck('initial.River @ ('solution[[empty]] /\ 'eagerEating[[empty]]), <> prop('goal.Prop), 'opsem, '->>) .
+red modelCheck('initial.River @ ('solution[[empty]] /\ 'safe[[empty]]), <> prop('goal.Prop), 'opsem, '->>) .
+red modelCheck('initial.River @ ('eagerEating[[empty]] /\ 'safe[[empty]]), [] ~ prop('bad.Prop), 'opsem, '->>) .

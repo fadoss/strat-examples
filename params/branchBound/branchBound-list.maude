@@ -1,0 +1,155 @@
+***
+*** Parametric Branch and bound algorithm.
+***
+*** In this version, the expand strategy is required to return a list of
+*** successors.
+***
+
+fth BB-PROBLEM-BASE is
+	protecting BOOL .
+	including STRICT-TOTAL-ORDER * (sort Elt to Value) .
+
+	*** Partial results
+	sort PartialResult .
+
+	*** Fixed data
+	sort FixData PRList .
+	subsort PartialResult < PRList .
+
+	op none : -> PRList .
+	op __ : PRList PRList -> PRList [assoc ctor id: none] .
+
+
+	*** Estimate the expected cost
+	op getBound : PartialResult FixData -> Value .
+
+	*** Get value or cost for a complete Result
+	op getValue : PartialResult FixData -> Value .
+
+	*** Is it a solution?
+	op result? : PartialResult FixData -> Bool .
+
+	*** A infinity (or initial bound for the problem)
+	op infinity : FixData -> Value .
+endfth
+
+view PartialResult from TRIV to BB-PROBLEM-BASE is
+	sort Elt to PartialResult .
+endv
+
+sth BB-PROBLEM is
+	including BB-PROBLEM-BASE .
+
+	*** Generates the successors of a partial Result
+	strat expand : FixData Value @ PRList .
+endsth
+
+
+***
+***	Ejecución
+***
+
+fmod PQUEUE{ P :: BB-PROBLEM-BASE } is
+	vars PQ         : PQueue .
+	vars V V'       : P$Value .
+	var  PL         : P$PRList .
+	vars PR PR1 PR2 : P$PartialResult .
+	var  FD         : P$FixData .
+	var  P          : QPair .
+
+	sort PQueue QPair .
+	subsort QPair < PQueue .
+
+	op pair : P$PartialResult P$Value -> QPair .
+
+	op mtPQueue : -> PQueue .
+	op _._ : PQueue PQueue -> PQueue [assoc id: mtPQueue] .
+
+	op insert : P$PRList PQueue P$FixData -> PQueue .
+	op insert* : QPair PQueue -> PQueue .
+
+	eq insert(none, PQ, FD) = PQ .
+	eq insert(PR PL, PQ, FD) =
+		insert*(pair(PR, getBound(PR, FD)), insert(PL, PQ, FD)) .
+
+	eq insert*(P, mtPQueue) = P .
+	eq insert*(pair(PR1, V), pair(PR2, V') . PQ) =
+		if (V < V') then pair(PR1, V) . pair(PR2, V') . PQ
+		else pair(PR2, V') . insert*(pair(PR1, V), PQ)
+		fi .
+endfm
+
+view Problem from BB-PROBLEM-BASE to BB-PROBLEM is
+	*** identity
+endv
+
+mod BB-BASE{X :: BB-PROBLEM-BASE} is
+	protecting PQUEUE{X} .
+
+	sort BBState .
+
+	var  F      : X$FixData .
+	var  Q      : PQueue .
+	var  P      : X$PartialResult .
+	vars R R'   : X$PartialResult .
+	var  PL     : X$PRList .
+	vars V E BK : X$Value .
+
+	op initial : X$PartialResult X$FixData -> BBState [ctor] .
+	op solution : X$PartialResult X$Value -> BBState [ctor] .
+	op < fixData: _, queue: _, solution: _, itsValue: _ > : X$FixData PQueue X$PartialResult X$Value -> BBState [ctor] .
+	op < fixData: _, queue: _ > : X$FixData PQueue -> BBState [ctor] .
+
+	***
+	*** Accesors
+	***
+
+	op fixData : BBState -> X$FixData .
+	eq fixData(initial(P, F)) = F .
+	eq fixData(< fixData: F, queue: Q >) = F .
+	eq fixData(< fixData: F, queue: Q, solution: R, itsValue: BK >) = F .
+
+	op upperBound : BBState -> X$Value .
+	eq upperBound(< fixData: F, queue: Q, solution: R, itsValue: BK >) = BK .
+	eq upperBound(S:BBState) = infinity(fixData(S:BBState)) [owise] .
+
+
+	***
+	*** Rules
+	***
+
+	rl [initial] : initial(P, F) =>
+		< fixData: F, queue: insert(P, mtPQueue, F) > .
+
+	crl [border] : < fixData: F, queue: pair(P, V) . Q > =>
+		< fixData: F, queue: insert(PL, Q, F) >
+			if P => PL .
+	crl [border] : < fixData: F, queue: pair(P, V) . Q, solution: R, itsValue: BK > =>
+		< fixData: F, queue: insert(PL, Q, F), solution: R, itsValue: BK >
+			if P => PL /\ V < BK .
+
+	crl [finish] : < fixData: F, queue: pair(P, V) . Q, solution: R, itsValue: BK > =>
+		solution(R, BK) if not(V < BK) .
+	rl [finish] : < fixData: F, queue: mtPQueue, solution: R, itsValue: BK > =>
+		solution(R, BK) .
+
+	crl [solution] : < fixData: F, queue: pair(R, V) . Q > =>
+		< fixData: F, queue: Q, solution: R, itsValue: getValue(R, F) >
+			if result?(R, F) .
+	crl [solution] : < fixData: F, queue: pair(R', V) . Q, solution: R, itsValue: BK > =>
+		 < fixData: F, queue: Q, solution: R', itsValue: V >
+			if result?(R', F) /\ getValue(R', F) < BK .
+	crl [solution] : < fixData: F, queue: pair(R', V) . Q, solution: R, itsValue: BK > =>
+		< fixData: F, queue: Q, solution: R, itsValue: BK >
+			if result?(R', F) /\ not(getValue(R', F) < BK) .
+endm
+
+smod BB-STRAT{X :: BB-PROBLEM} is
+	protecting BB-BASE{Problem}{X} .
+
+	var S : BBState .
+
+	strat solve @ BBState .
+
+	sd solve := initial ; (solution or-else matchrew S by S using border{expand(fixData(S), upperBound(S))}) * ; finish .
+endsm

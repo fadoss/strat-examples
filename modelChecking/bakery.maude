@@ -1,0 +1,189 @@
+***
+*** Lamport's Bakery algorithm for 2 processes
+***
+*** Adapted from the SPIN distrubution examples (bakery.pml)
+***
+
+sload model-checker
+
+mod BAKERY is
+	protecting NAT .
+	protecting INT .
+	extending CONFIGURATION .
+
+	*** Process objects and their attributes
+	op Process : -> Cid [ctor] .
+	op proc : Nat -> Oid [ctor] .
+	op mutex : -> Oid [ctor] .
+
+	op inCS:_ : Bool -> Attribute [ctor gather (&)] .
+	op turn:_ : Nat -> Attribute [ctor gather (&)] .
+
+	*** Counter size
+	op counterSize : -> Nat .
+	eq counterSize = 256 .
+
+	*** Mutex object and its attribute
+	op Mutex : -> Cid [ctor] .
+	op mutex : -> Oid [ctor] .
+
+	op value:_ : Int -> Attribute [ctor gather (&)] .
+
+	vars P P1 P2      : Oid .
+	vars T T1 T2 M    : Nat .
+	var  Attrs OAttrs : AttributeSet .
+	var  B            : Bool .
+
+	rl [resetTurn] : < P : Process | turn: T, Attrs >
+	              => < P : Process | turn: 0, Attrs > .
+	rl [setTurn] : < P : Process | turn: T, Attrs >
+                    => < P : Process | turn: 1, Attrs > .
+	rl [nextTurn] : < P1 : Process | turn: T1, Attrs > < P2 : Process | turn: T2, OAttrs >
+	             => < P1 : Process | turn: s(T2) rem counterSize, Attrs > < P2 : Process | turn: T2, OAttrs > .
+
+	rl [enterCrit] : < P : Process | inCS: B, Attrs > < mutex : Mutex | value: M >
+	              => < P : Process | inCS: true, Attrs > < mutex : Mutex | value: M + 1 > .
+	rl [exitCrit] : < P : Process | inCS: B, Attrs > < mutex : Mutex | value: M >
+	             => < P : Process | inCS: false, Attrs > < mutex : Mutex | value: M - 1 > .
+
+	op initial : -> Configuration .
+	eq initial = < proc(1) : Process | inCS: false, turn: 0 >
+	             < proc(2) : Process | inCS: false, turn: 0 >
+	             < mutex : Mutex | value: 0 > .
+endm
+
+mod BAKERY-PREDS is
+	protecting BAKERY .
+	including SATISFACTION .
+
+	subsort Configuration < State .
+
+	op inCS : Oid -> Prop [ctor] .
+	op mutexOn : -> Prop [ctor] .
+
+	var C : Configuration .
+	var P : Oid .
+	var Attrs : AttributeSet .
+
+	eq C < P : Process | inCS: true, Attrs > |= inCS(P) = true .
+	eq C |= inCS(P) = false [owise] .
+
+	eq C < mutex : Mutex | value: 1 > |= mutexOn = true .
+	eq C |= mutexOn = false [owise] .
+endm
+
+***
+*** First approach to represent the example using strategies
+*** (somehow too artificial)
+***
+
+mod BAKERY-PC is
+	protecting CONFIGURATION .
+	protecting NAT .
+
+	sort CounterSet .
+
+	op none  : -> CounterSet [ctor] .
+	op {_,_} : Oid Nat -> CounterSet [ctor] .
+	op __ : CounterSet CounterSet -> CounterSet [assoc comm id: none] .
+endm
+
+smod BAKERY-STRAT is
+	protecting BAKERY .
+	protecting BAKERY-PC .
+
+	strat bakery : Oid Nat @ Configuration .
+	strat bakery : CounterSet @ Configuration .
+
+	vars P OP P1      : Oid .
+	vars T OT PC      : Nat .
+	var  C RC         : Configuration .
+	var  CS RCS       : CounterSet .
+	vars Attrs OAttrs : AttributeSet .
+
+	*** The program code for each process P
+
+	sd bakery(P, 0) := setTurn[P <- P] .
+	sd bakery(P, 1) := nextTurn[P1 <- P] .
+	sd bakery(P, 2) := (xmatch < P : Process  | turn:  T, Attrs >
+		< OP : Process | turn: OT, OAttrs >  s.t. OT == 0 or T < OT) ;
+		enterCrit[P <- P] .
+	sd bakery(P, 3) := exitCrit[P <- P] .
+	sd bakery(P, 4) := resetTurn[P <- P] .
+
+	*** The main strategy keeps the process counter of each process
+	*** and makes them execute concurrently.
+
+	*** sd bakery(CS) := try(matchrew C s.t. < P : Process | Attrs > RC := C
+	***	/\ {P, PC} RCS := CS
+	***	by C using (bakery(P, PC) ;
+	***	            bakery({P, s(PC) rem 5} RCS))) .
+
+	sd bakery({P, PC} RCS) := bakery(P, PC) ; bakery({P, s(PC) rem 5} RCS) .
+endsm
+
+smod BAKERY-CHECK is
+	protecting BAKERY-PREDS .
+	protecting BAKERY-STRAT .
+	including STRATEGY-MODEL-CHECKER .
+
+	strat bakery @ Configuration .
+	sd bakery := bakery({proc(1), 0} {proc(2), 0}) .
+endsm
+
+
+***
+*** Second approach
+***
+
+sload ../metalevel/multistrategies/multistrat
+
+view Configuration from TRIV to CONFIGURATION is
+	sort Elt to Configuration .
+endv
+
+smod BAKERY2-STRAT is
+	protecting BAKERY .
+
+	strat bakery : Oid @ Configuration .
+
+	sd bakery(P) := setTurn[P <- P] ;
+	                nextTurn[P1 <- P] ;
+			(xmatch < P : Process | turn: T, Attrs >
+	                        < OP : Process | turn: OT, OAttrs >
+	                        s.t. OT == 0 or T < OT) ;
+			enterCrit[P <- P] ;
+	                exitCrit[P <- P] ;
+	                resetTurn[P <- P] ;
+			bakery(P) .
+
+	vars P OP P1      : Oid .
+	vars T OT         : Nat .
+	vars Attrs OAttrs : AttributeSet .
+endsm
+
+smod BAKERY2-CHECK is
+	protecting BAKERY2-STRAT .
+	protecting BAKERY-PREDS .
+	protecting MULTISTRAT-MODEL-CHECKER .
+
+	vars P OP P1      : Oid .
+	vars T OT         : Nat .
+	vars Attrs OAttrs : AttributeSet .
+endsm
+
+eof
+
+set verbose on .
+
+*** For the first approach
+
+red in BAKERY-CHECK : modelCheck(initial, [] (inCS(proc(1)) -> mutexOn), 'bakery) .
+
+*** For the second approach
+***
+*** With modelCheckConcurrent the condition is satisfied
+*** even if tests are atomic.
+
+red in BAKERY2-CHECK : modelCheckConcurrent('BAKERY2-CHECK, initial, [] (inCS(proc(1)) -> mutexOn), ('bakery[['proc['s_['0.Zero]]]], 'bakery[['proc['s_^2['0.Zero]]]])) .
+red in BAKERY2-CHECK : modelCheckConcurrentAT('BAKERY2-CHECK, initial, [] (inCS(proc(1)) -> mutexOn), ('bakery[['proc['s_['0.Zero]]]], 'bakery[['proc['s_^2['0.Zero]]]])) .

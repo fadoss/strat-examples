@@ -1,0 +1,9 @@
+semantics/recfns
+
+srew 'f(10) using redValue(factorial) .
+srew 'f(10) using redName(factorial) .
+srew 'A(1, 3) using redName(ackermann) .
+srew 's(2) using redValue(sign) .
+srew 's(-2) using redValue(sign) .
+srew 'g('f(3)) using redName(nameonly) .
+

@@ -1,0 +1,172 @@
+***
+*** Roundabout model-checking example
+***
+
+sload model-checker
+
+fmod CAR is 
+	protecting NAT .
+	sort Car .
+	subsort Nat < Car .
+endfm
+
+view Car from TRIV to CAR is
+	sort Elt to Car .
+endv
+
+fmod MAYBE{X :: TRIV} is
+	sort Maybe{X} .
+	subsort X$Elt < Maybe{X} .
+
+	op nothing : -> Maybe{X} [ctor] .
+endfm
+
+fmod DIRECTION is
+	protecting LIST{Car} .
+	protecting MAYBE{Car} .
+
+	sort Component ComponentType .
+
+	ops in out : List{Car} -> ComponentType [ctor] .
+	op space : -> ComponentType [ctor] .
+
+	op { _ # _ } : Maybe{Car} ComponentType -> Component [ctor] .
+endfm
+
+view Component from TRIV to DIRECTION is
+	sort Elt to Component .
+endv
+
+fmod ROUNDABOUT is
+	protecting LIST{Component} .
+
+	sort Roundabout .
+
+	op <_> : List{Component} -> Roundabout [ctor] .
+
+	*** Auxiliary functions
+	op size : Roundabout -> Nat .
+
+	var Cs : List{Component} .
+
+	eq size(< Cs >) = size(Cs) .
+endfm
+
+mod ROUNDABOUT-RULES is
+	protecting ROUNDABOUT .
+
+	var C : Car .
+	var W : List{Car} .
+	var R : List{Component} .
+	var T1 T2 : ComponentType .
+
+	rl [in] : { nothing # in(W C) } => { C # in(W) } .
+	rl [out] : { C # out(W) } => { nothing # out(C W) } .
+	rl [round] : { C # T1 } { nothing # T2 } => { nothing # T1 } { C # T2 } .
+	rl [round] : < { nothing # T2 } R { C # T1 } >  => < { C # T2 } R { nothing # T1 } > .
+endm
+
+fmod ROUNDABOUT-PREDS is
+	protecting ROUNDABOUT .
+	including SATISFACTION .
+
+	subsort Roundabout < State .
+
+	*** Certain car is inside the roundabout
+	op inside : Car -> Prop [ctor] .
+	*** Certain car is waiting to enter the roundabout
+	op pending : Car -> Prop [ctor] .
+	*** A car is waiting to enter the roundabout
+	op pending : -> Prop [ctor] .
+	*** Certain car has finished the roundabout transversal
+	op finished : Car -> Prop [ctor] .
+	*** All cars has finished the roundabout transversal
+	op allFinished : -> Prop [ctor] .
+	*** The roundabout is underused (free places and cars waiting)
+	op underused : -> Prop [ctor] .
+
+	var C : Car .
+	var Wl Wr : List{Car} .
+	var Rl Rr : List{Component} .
+	var R : Roundabout .
+	var T : ComponentType .
+	var M : Maybe{Car} .
+
+	eq < Rl { C # T } Rr > |= inside(C) = true .
+	eq R |= inside(C) = false [owise] .
+
+	eq < Rl { M # in(Wl C Wr) } Rr > |= pending(C) = true .
+	eq R |= pending(C) = false [owise] .
+
+	eq < Rl { M # in(Wl C) } Rr > |= pending = true .
+	eq R |= pending = false [owise] .
+
+	eq < Rl { M # out(Wl C Wr) } Rr > |= finished(C) = true .
+	eq R |= finished(C) = false [owise] .
+
+	eq < Rl { C # T } Rr > |= allFinished = false .
+	eq < Rl { M # in(Wl C) } Rr > |= allFinished = false .
+	eq R |= allFinished = true [owise] .
+
+	eq < Rl { nothing # in(Wl C) } Rr > |= underused = true .
+	eq R |= underused = false [owise] .
+endfm
+
+mod ROUNDABOUT-EXAMPLES is
+	protecting ROUNDABOUT-RULES .
+
+	op initial : -> Roundabout .
+
+	eq initial = < 	{ nothing # out(nil) }
+			{ nothing # in(1) }
+			{ nothing # out(nil) }
+			{ nothing # in(2) }
+			{ nothing # out(nil) }
+			{ nothing # in(3) }
+			{ nothing # out(nil) }
+			{ nothing # in(4) } > .
+endm
+
+smod ROUNDBOUT-MC is
+	protecting ROUNDABOUT-PREDS .
+	protecting ROUNDABOUT-EXAMPLES .
+	protecting MODEL-CHECKER .
+	protecting STRATEGY-MODEL-CHECKER .
+
+	strat any exclusive exclusive-bounded bounded4 @ Roundabout .
+	strat round-bounded : Nat @ Roundabout .
+	strat bounded4 : Nat Nat Nat Nat @ Roundabout .
+
+	var C N N1 N2 N3 N4 : Nat .
+	var R : Roundabout .
+
+	sd any := all ? any : idle .
+	*** Only a car in the circle at the same time
+	sd exclusive := (round | out) ? exclusive : (in ? exclusive : idle) .
+	*** Exclusive but only up to the size of the list rounds are allowed
+	sd exclusive-bounded := matchrew R by R using (
+		(in ; round-bounded(size(R)) ; out) ? exclusive-bounded : idle
+	) .
+
+	*** Strategy to round a bounded number of times
+	sd round-bounded(s(N)) := round ; round-bounded(N) | idle .
+	sd round-bounded(0) := idle .
+
+	sd bounded4 := matchrew R s.t. N := size(R) by R using bounded4(N, N, N, N) .
+
+	sd bounded4(N1, N2, N3, N4) := (out | in) ? bounded4(N1, N2, N3, N4) : not(round) .
+	sd bounded4(s(N1), N2, N3, N4) := round[C <- 1] ; bounded4(N1, N2, N3, N4) .
+	sd bounded4(N1, s(N2), N3, N4) := round[C <- 2] ; bounded4(N1, N2, N3, N4) .
+	sd bounded4(N1, N2, s(N3), N4) := round[C <- 3] ; bounded4(N1, N2, N3, N4) .
+	sd bounded4(N1, N2, N3, s(N4)) := round[C <- 4] ; bounded4(N1, N2, N3, N4) .
+endsm
+
+eof
+
+set verbose on .
+
+red modelCheck(initial, <> allFinished) .
+red modelCheck(initial, <> allFinished, 'any) .
+red modelCheck(initial, <> allFinished, 'exclusive) .
+red modelCheck(initial, <> allFinished, 'exclusive-bounded) .
+*** red modelCheck(initial, <> allFinished, 'bounded4) .

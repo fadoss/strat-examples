@@ -1,0 +1,25 @@
+params/backtracking
+
+sload bt-labyrinth
+srew [1] [7,7] using solve .
+continue 1 .
+
+sload bt-queens
+srew [1] nil using solve .
+continue 1 .
+continue 2 .
+
+sload bt-graphs
+srew graph(5, p(0, 1) p(0, 2) p(0, 3) p(0, 4)
+	p(1, 2) p(3, 4), 1) using solve .
+srew graph(3, p(0, 1) p(1, 2) p(2, 0), 0) using solve .
+
+select COLORING-BT-STRAT .
+srew graph(10, 2, p(0, 1) p(0, 4) p(0, 5) p(1, 2) p(1, 6)
+	p(2, 3) p(2, 7) p(3, 4) p(3, 8) p(4, 9)
+	p(5, 7) p(5, 8) p(6, 8) p(6, 9) p(7, 9), nil) using solve .
+srew [2] graph(10, 3, p(0, 1) p(0, 4) p(0, 5) p(1, 2) p(1, 6)
+	p(2, 3) p(2, 7) p(3, 4) p(3, 8) p(4, 9)
+	p(5, 7) p(5, 8) p(6, 8) p(6, 9) p(7, 9), nil) using solve .
+continue 1 .
+

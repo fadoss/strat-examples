@@ -1,0 +1,57 @@
+***
+*** REC language from Chapter 9 of Glynn Winskel's The Formal Semantics of Programming Languages: An Introduction
+***
+*** Model checking properties on REC programs.
+***
+
+sload recfns
+sload model-checker
+
+mod REC-PREDS is
+	protecting REC-RULE .
+	protecting EXT-BOOL .
+	including SATISFACTION .
+
+	subsort RecExpr < State .
+
+	*** The expression contains a conditional whose condition is a literal
+	op literalCond : -> Prop [ctor] .
+	*** The expression is a literal
+	op isLiteral : -> Prop [ctor] .
+
+	var  Q     : Qid .
+	vars E F G : RecExpr .
+	var  N     : Nat .
+	var  Args  : Arguments .
+
+	eq if E then F else G |= literalCond = E :: Nat .
+	eq E |= isLiteral = E :: Nat .
+
+	*** Find conditional expression down the structure
+	eq  N       |= literalCond = false .
+	eq  none    |= literalCond = false .
+	eq  E + F   |= literalCond = (E |= literalCond) or-else (F |= literalCond) .
+	eq  E * F   |= literalCond = (E |= literalCond) or-else (F |= literalCond) .
+	eq  E - F   |= literalCond = (E |= literalCond) or-else (F |= literalCond) .
+	eq  Q(Args) |= literalCond = Args |= literalCond .
+	ceq E, Args |= literalCond = (E |= literalCond) or-else (Args |= literalCond) if Args =/= none .
+endm
+
+smod REC-CHECK is
+	protecting REC-PREDS .
+	protecting MAIN .
+	including STRATEGY-MODEL-CHECKER * (op __ : QidList QidList -> QidList to _++_) .
+endsm
+
+eof
+
+*** A literal is eventually reached ...
+umaudemc check recfns-mc "'f(0)" '<> isLiteral' 'redValue(factorial)'
+umaudemc check recfns-mc "'f('f(0))" '<> isLiteral' 'redValue(factorial)'
+umaudemc check recfns-mc "'g('f(0))" '<> isLiteral' 'redName(nameonly)'
+*** ... but not always (the model checker does not finish, the state space is infinite)
+umaudemc check recfns-mc "'g('f(0))" '<> isLiteral' 'redName(nameonly)'
+
+*** If any state where there is a literal condition, apply cannot be executed and cond can be applied
+umaudemc check recfns-mc "1 + 'A(2, 3)" 'nu Z . (literalCond -> ([ apply ] False /\ < cond > True)) /\ [.] Z' 'redName(ackermann)'
+umaudemc check recfns-mc "1 + 'A(2, 3)" 'nu Z . (literalCond -> ([ apply ] False /\ < cond > True)) /\ [.] Z' 'redValue(ackermann)'

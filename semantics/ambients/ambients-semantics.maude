@@ -1,0 +1,477 @@
+***
+*** Ambient calculus (semantics)
+***
+*** Source: Typed Mobile Ambients in Maude
+***	    Fernando Rosa-Velardo, Clara Segura, and Alberto Verdejo
+***	    http://maude.ucm.es/ambients/
+***
+
+fmod ATYPES is
+	sort AType .
+endfm 
+
+  ***************************************
+  ***  Identifiers and operations on them
+  ***************************************
+
+fmod ACID is 
+
+	protecting QID .
+
+
+	***********************************
+	**** Bound names and variables ****
+	***********************************
+
+	sorts Qidn Qidx .
+	subsorts Qidn Qidx < Qid .
+
+	var q : Qid .
+	op first-char : Qid -> String .
+	eq first-char(q) = substr(string(q), 0, 1) .
+
+	cmb q : Qidn if first-char(q) < "u" .
+	cmb q : Qidx if first-char(q) >= "u" .
+
+
+	************************************
+	****Free names and variables *******
+	************************************
+
+	sorts Name Var Acid .  
+	subsorts Name Var < Acid .
+
+	op _`{_`}  :  Qidx Nat -> Var [prec 1] .
+	op _`{_`}  :  Qidn Nat -> Name [prec 1] .
+
+	subsorts Qidn Qidx < Acid . 
+
+endfm
+
+
+fmod MESSAGES is
+
+	protecting ACID .
+	protecting INT .
+
+	************************
+	*******Messages*********
+	************************
+
+	sorts Message Capability Path .
+
+	subsorts Int Acid Capability Path < Message .
+
+	op in`[_`] : Message -> Capability .
+	op out`[_`] : Message -> Capability .
+	op open`[_`] : Message -> Capability .
+
+	op eps : -> Path .
+	op _._ : Message Message -> Path [assoc] .
+endfm
+
+fmod IOSEQS is
+
+	including MESSAGES .
+	including ATYPES .
+
+	**************************
+	*** Input sequences ******
+	**************************
+
+	sort InputSeq .
+
+	op _:_ : Qidx AType -> InputSeq [prec 15].
+	op _`,_ : InputSeq InputSeq ~> InputSeq [assoc prec 20] .
+
+	vars x y : Qidx .
+	var T : AType .
+	vars I1 I2 : InputSeq .
+	var IS : InputSeq .
+
+	op bel : Qidx InputSeq -> Bool .
+	eq bel(x,y : T) = x == y .
+	eq bel(x,( I1 , I2 )) = bel(x,I1) or bel(x,I2) .
+
+	cmb ( ( x : T ) , IS ) : InputSeq if not bel(x,IS) . 
+
+
+	*****************************
+	*** Outputs sequences *******
+	*****************************
+
+	sort OutputSeq .
+	subsorts Message < OutputSeq .
+	op _`,_ : OutputSeq OutputSeq -> OutputSeq [assoc prec 20] .
+
+endfm
+  
+fmod CINNI is
+	********************************************
+	*** Calculus independent equations of CINNI
+	********************************************
+
+	including IOSEQS .
+
+	sorts Subst .
+
+	op `[_:=_`] : Qid Message  -> Subst .
+
+	op `[shiftup_`] : Qid -> Subst .
+	op `[lift__`] : Qid Subst -> Subst .
+
+	op __ : Subst Message -> Message .
+
+	var  n : Nat .
+	vars a b : Qid .
+	var  S : Subst .
+	vars  M M' : Message .
+	var  N : Message .
+	vars S1 S2 : Subst .
+	var x : Qidx .
+	var O1  O2 : OutputSeq .
+
+	eq  [ a := M ] a{0} = M .
+	ceq [ a := M ] b{n} = b{n}  if a =/= b .
+
+	eq  [ shiftup a ] a{n} = a{s(n)} .
+	ceq [ shiftup a ] b{n} = b{n}  if a =/= b .
+
+	eq  [ lift a S ] a{0} = a{0} .
+	eq  [ lift a S ] a{s(n)} = [ shiftup a ] S a{n} .
+	ceq [ lift a S ] b{n} = [ shiftup a ] S b{n} if a =/= b .
+
+	*** Substitution application on messages
+
+	eq S in[M]  = in[ S M ] .
+	eq S out[M]  = out[ S M ] .
+	eq S open[M]  = open[ S M ] .
+
+	eq S eps  = eps . 
+	eq S ( M . N )  =  ( ( S M ) . ( S N ) ) .
+
+	*** Substitution application on OutputSeqs
+
+	eq S   ( O1 , O2 )   = ( ( S O1 ) , ( S O2 ) )  .
+
+
+	*********************************
+	**** Simultaneous substitutions**
+	*********************************
+
+	sort Pair .
+
+	op <_:=_> : Qid Message -> Pair .
+
+	sort MSubst .
+	subsorts Pair < MSubst .
+	op _;_ : MSubst MSubst -> MSubst [assoc] .
+
+	vars MS MS' : MSubst .
+	var ac : Acid .
+
+	op belongs : Qid MSubst -> Bool .
+	eq belongs(a,< b := M >)  = ( a == b ) .
+	eq belongs(a,( MS ; MS' )) = belongs(a,MS) or belongs(a,MS') .
+
+	op get : Qid MSubst -> Message .
+	eq get(a,< a := M >)  = M .
+	eq get(a,( < a := M > ; MS' )) = M .
+	ceq get(a,( < b := M > ; MS' )) = get(a,MS') if a =/= b .
+
+	ceq MS a{0} = get(a,MS) if belongs(a,MS) .
+	ceq MS a{s(n)} = a{n} if belongs(a,MS) .
+	eq MS b{n} = b{n} [owise] .
+
+	subsort MSubst < Subst .
+
+	var I : InputSeq .
+	var T : AType .
+
+	*** multiple lift
+
+	op mlift : InputSeq Subst -> Subst .
+	eq mlift(( x : T ),S) = [ lift x S ] .
+	eq mlift(( ( x : T ) , I ),S) =  mlift(I,[ lift x S ] ) .
+endfm
+
+
+fmod AC-TYPED-SYNTAX is
+
+	protecting CINNI .
+
+	****************
+	**** Syntax ****
+	****************
+
+	**** Processes
+
+	sorts NSProcess Process .
+	subsort NSProcess < Process .
+
+	op stop : -> Process .  *** 0 process
+	op _._ : Message Process -> NSProcess [prec 15] .
+	op _|_ : Process Process -> Process [assoc comm id: stop prec 30] .
+	op _|_ : NSProcess NSProcess -> NSProcess [assoc comm id: stop prec 30] .
+	op !_ : Process -> Process [prec 25] .
+	op !_ : NSProcess -> NSProcess [prec 25] .
+	op _`[_`] : Message Process -> NSProcess [prec 27] .
+	op <_> : OutputSeq -> NSProcess .
+	op `(_`)_ : InputSeq Process -> NSProcess [prec 25] .
+	op new`[_:_`]_ : Qidn AType Process -> Process [prec 20] .
+	op new`[_:_`]_ : Qidn AType NSProcess -> NSProcess [prec 20] .
+
+
+	vars P Q : Process .
+	vars NSP NSQ : NSProcess .
+	vars n m k l : Qidn .
+	var x : Qidx .
+	var a : Qid .
+	vars M M' N : Message .
+	var S : Subst .
+	var O O' : OutputSeq .
+	vars T T1 T2 : AType .
+
+
+
+	*** Process predecoration
+
+	op dec : Process -> Process .
+	eq dec( stop ) = stop .
+	eq dec(M . P) = decm(M) . dec(P) .
+	***  ceq dec(P | Q) = dec(P) | dec(Q) if P =/= stop and Q =/= stop .
+	eq dec(NSP | NSQ) = dec(NSP) | dec(NSQ)  .
+	eq dec(M[P]) = decm(M)[ dec(P) ] .
+	eq dec(< O >) = < deco(O) > .
+	eq dec((I) P) = (I) dec(P) .
+	eq dec(new[n : T] P) = new[n : T] dec(P) .
+	eq dec(! P) = ! dec(P) .
+
+	op decm : Message -> Message .
+	eq decm(S M) = S decm(M) .
+	eq decm(a) = a{0} .
+	eq decm(in[M]) = in[ decm(M) ] .
+	eq decm(out[M]) = out[ decm(M) ] .
+	eq decm(open[M]) = open[ decm(M) ] .
+	eq decm(M . M') = decm(M) . decm(M') .
+	eq decm(M) = M [owise] .
+
+	op deco : OutputSeq -> OutputSeq .
+	eq deco(M) = decm(M) .
+	eq deco(O,O') = deco(O) , deco(O') .
+
+	op __ : Subst Process -> Process [prec 50] .
+	op __ : Subst OutputSeq -> OutputSeq .
+
+	*** Substitution application on processes
+
+	var I : InputSeq .
+
+	eq (S stop) = stop .
+	eq S (M[ P ]) = (S M)[ S P ] .
+	***  ceq S (P | Q) = (S P) | (S Q) if P =/= stop and Q =/= stop .
+	eq S (NSP | NSQ) = (S NSP) | (S NSQ) .
+	eq S (M . P) = ( (S M) . (S P) ) .
+	eq S (! P) = ! (S P) .
+	eq S < O > = < S O > .
+	eq S (new[n : T]P) = new[n : T]([lift n S] P) .
+	eq S ( I )P  = ( I ) (mlift(I,S) P) .
+
+
+	***************************
+	**** Structural equivalence
+	***************************
+
+	eq eps . P = P .
+	eq ( M . N ) . P = ( M . ( N . P ) ) .
+
+	eq ! stop = stop .
+	eq new[n : T] stop = stop .
+
+
+	*** Extrusion rules
+
+	ceq new[k : T1] new[l : T2] P = new[l : T2] new[k : T1] P if string(l) < string(k) .
+	***  ceq ((new[n : T]P) | Q) = new[n : T](P | ([shiftup n] Q)) if P =/= stop and Q =/= stop .
+	eq ((new[n : T] NSP) | NSQ) = new[n : T](NSP | ([shiftup n] NSQ)) .
+	eq M [ new[n : T] P] = new[n : T](( [shiftup n] M ) [ P ]) .
+
+	*** unrolling operation
+
+	op rep : Process -> Process .
+	eq rep(! P) = P | P | ! P .
+	eq rep(M[P]) = M[ rep(P) ] .
+	***  ceq rep(P | Q) = rep(P) | rep(Q) if P =/= stop and Q =/= stop .
+	eq rep(NSP | NSQ) = rep(NSP) | rep(NSQ) . 
+	eq rep(new[n : T] P) = new[n : T] rep(P) .
+	eq rep(P) = P [owise] .
+
+endfm
+
+mod ACSEMANTICS is
+
+	************************
+	**** Reduction rules ***
+	************************
+
+	protecting AC-TYPED-SYNTAX .
+
+	var x : Qidx .
+	vars P Q R : Process .
+	vars NSP NSQ NSR : NSProcess .
+	vars M N : Message .
+	vars n m : Name  .
+	var I : InputSeq .
+	var O : OutputSeq .
+	var T : AType .
+	var  k : Qidn .
+
+	op bound : InputSeq OutputSeq -> MSubst .
+	eq bound( ( x : T ),M) = < x := M > .
+	eq bound (( ( x : T ) , I ),( M , O )) = < x := M > ; bound(I,O) .
+
+	rl [RedIn] : n[ in[m] . P | Q ] | m[ R ] => m[ n[ P | Q ] | R ] .
+
+	rl [RedOut] : m[ n[ out[m] . P | Q ] | R ] => n[ P | Q ] | m[ R ] .
+
+	rl [RedOpen] : open[n] . P | n[ Q ] => P | Q .
+
+	rl [RedComm] : (( I )P) | < O > => bound(I,O) P .
+
+	crl [RedRes] : new[k : T] P => new[k : T] Q if P => Q .
+
+	crl [RedAmb] : n[ P ] => n[ Q ] if P => Q .
+
+	***  crl [RedPar] : ( P | R ) => ( Q | R ) if   P =/= stop /\ R =/= stop /\ P => Q .
+	crl [RedPar] : NSP | NSR => Q | NSR if  NSP => Q .
+
+	rl [Rep] : ! P => P | ! P .
+
+	rl [UnRep] : P | ! P => ! P .
+
+	rl [Rep2] : P => rep(P) .
+
+	rl [Deco] : P => dec(P) .
+
+
+	************************
+	**** Error rules *******
+	************************
+
+	var z : Acid .
+	var y : Var .
+
+	op isCap : Message -> Bool .
+
+	eq isCap( in [ z ] ) = true .
+	eq isCap( out [ z ] ) = true .
+	eq isCap( open [ z ] ) = true .
+	eq isCap( y ) = true .
+	eq isCap(eps) = true .
+	eq isCap( M . N ) = isCap(M) and isCap(N) .
+	eq isCap( M ) = false [ owise ] .
+
+
+	op isAmb : Message -> Bool .
+
+	eq isAmb ( z ) = true .
+	eq isAmb ( M ) = false [ owise ] .
+
+
+	op isMsg : OutputSeq -> Bool .
+
+	eq isMsg ( M ) = isAmb ( M ) or isCap ( M ) .
+	eq isMsg ( M , O ) = isMsg ( M ) and isMsg ( O ) .
+
+
+	op err1 : -> Process .
+
+	crl [errPref] : M . P => err1 if not isCap ( M ) .
+	crl [errAmb] : M [ P ] => err1 if not isAmb ( M ) .
+	crl [errMsg] : < O > => err1 if not isMsg ( O ) .
+
+
+	eq M [ err1 ] = err1 .
+	***  ceq err1 | P = err1 if P =/= stop .
+	eq err1 | NSP = err1 .
+	eq M . err1 = err1 .
+	eq ! err1 = err1 .
+	eq ( I ) err1 = err1 .
+	eq new[ n : T ] err1 = err1 .
+
+endm
+
+smod NOMAT is
+
+	protecting ACSEMANTICS .
+
+	strat norep @ Process .
+
+	*** This strategy contained DFS modifiers, which are not supported in
+	*** the current version of the strategy language
+	sd norep := top(RedIn) | top(RedOut) | top(RedOpen) | top(RedComm) |
+			top(RedAmb{norep})  | top(RedPar{norep}) |
+			top(RedRes{norep}) .
+
+	strat unroll-rep @ Process .
+	sd unroll-rep := top(Rep2) .  *** unfolds twice every replicator
+
+	strat cardelli : Nat @ Process .
+	sd cardelli(0) := UnRep ! .
+	sd cardelli(s(n:Nat)) := (unroll-rep ; norep ; cardelli(n:Nat)) or-else (UnRep !) .
+
+	strat cardellideco : Nat @ Process .
+	sd cardellideco(n:Nat) := top(Deco) ; cardelli(n:Nat) .
+
+
+	strat error1 @ Process .
+	sd error1 := errPref | errAmb | errMsg .
+
+	strat errcardelli : Nat @ Process .
+	sd errcardelli(0) := error1 or-else cardelli(0) .
+	sd errcardelli(s(n:Nat)) := error1 or-else (cardelli(1) ; errcardelli(n:Nat)) .
+
+	strat ecd : Nat @ Process .
+	sd ecd(n:Nat) := top(Deco) ; errcardelli(n:Nat) .
+
+endsm
+
+mod EXAMPLES is
+	inc ACSEMANTICS .
+
+	op W : -> AType .
+
+	ops L M N R : -> Process .
+	op firewall : Process Process -> Process .
+
+	eq L = 'n{0} [ in['n{0}] . stop ]  .
+	eq M =  L | L .
+	eq N = 'm{0} [ M ] .  
+	eq R = ! M .
+
+	vars P Q : Process .
+	eq firewall(P,Q) = new ['k : W] ('n [  open['k] . P ] | 
+					 new['m : W] ('m [ 'k [ out['m] . in['n] . 
+					  in['m] . stop  ] | Q ])) .
+
+	op fail : Process Process -> Process .
+	eq fail(P,Q) = (('x : W ) ( 'x[ P ] ) ) | < 'n > | (('y : W) ('y . Q) ) | 
+			< open['n] > .
+
+endm
+
+smod MAIN is
+	protecting EXAMPLES .
+	protecting NOMAT .
+endsm
+
+eof
+
+srew M using norep .
+srew N using norep .
+srew R using norep .
+
+srew firewall(stop, stop) using cardellideco(4) .
+
+srew [1] fail(stop, stop) using ecd(3) .
+continue 1 .

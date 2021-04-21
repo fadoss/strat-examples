@@ -1,0 +1,30 @@
+==========================================
+srewrite in MAIN : initial(node(city(0), 0), generateFixData(4)) using solve .
+
+Solution 1
+rewrites: 1791
+result BBState: solution(node(city(0) city(4) city(3) city(1) city(2) city(0),
+    20), 20)
+
+No more solutions.
+rewrites: 2285
+==========================================
+srewrite in MAIN : initial(node(city(0), 0), generateFixData(3)) using solve .
+
+Solution 1
+rewrites: 1112
+result BBState: solution(node(city(0) city(3) city(1) city(2) city(0), 15), 15)
+
+No more solutions.
+rewrites: 1236
+==========================================
+srewrite in MAIN : initial(node(city(0), 0), generateFixData(5)) using solve .
+
+Solution 1
+rewrites: 15472
+result BBState: solution(node(city(0) city(4) city(3) city(1) city(2) city(5)
+    city(0), 24), 24)
+
+No more solutions.
+rewrites: 16959
+Bye.

@@ -1,0 +1,29 @@
+***
+*** Operational semantics of the Maude strategy language
+***
+*** Example with the rivercrossing puzzle
+***
+
+sload opsem
+sload ../../modelChecking/river
+
+view RiverModule from MODULE to META-LEVEL is
+	op M to term upModule('RIVER-CROSSING-SCHECK, true) .
+endv
+
+smod MAIN is
+	protecting NOP-PREDS{RiverModule} .
+	protecting NOP-SEMANTICS{RiverModule} .
+	including MODEL-CHECKER .
+	including STRATEGY-MODEL-CHECKER .
+endsm
+
+eof
+
+set verbose on .
+set show command off .
+red modelCheck(reduced('initial.River) @ 'solution[[empty]], [] ~ prop('death.Prop), 'opsem, '->>) .
+red modelCheck(reduced('initial.River) @ 'solution[[empty]], [] ~ prop('death.Prop) /\ <> prop('goal.Prop), 'opsem, '->>) .
+red modelCheck(reduced('initial.River) @ 'eagerEating[[empty]], [] ~ prop('bad.Prop), 'opsem, '->>) .
+red modelCheck(reduced('initial.River) @ 'safe[[empty]], [] ~ prop('bad.Prop), 'opsem, '->>) .
+red modelCheck(reduced('initial.River) @ 'safe[[empty]], <> prop('goal.Prop), 'opsem, '->>) .

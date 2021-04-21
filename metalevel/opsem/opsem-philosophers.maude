@@ -1,0 +1,27 @@
+***
+*** Operational semantics of the Maude strategy language
+***
+
+sload opsem-sync
+sload ../../modelChecking/philosophers
+
+view Philosophers from MODULE to META-LEVEL is
+	op M to term upModule('DINNER-MCS, true) .
+endv
+
+smod MAIN is
+	protecting NOP-PREDS{Philosophers} .
+	protecting NOP-AND-SEMANTICS{Philosophers} .
+	including MODEL-CHECKER .
+	including STRATEGY-MODEL-CHECKER .
+endsm
+
+eof
+
+red modelCheck(reduced('initial.Table) @ 'parity[[empty]], [] <> (prop('eats['0.Zero]) \/ prop('eats['s_['0.Zero]]) \/ prop('eats['s_^2['0.Zero]]) \/ prop('eats['s_^3['0.Zero]]) \/ prop('eats['s_^4['0.Zero]])), 'opsem, '->>) .
+
+srew reduced('initial.Table) @ ('left[none]{empty} & (amatchrew 'L:List s.t. '__['B1:Being, '_|_|_['O1:Obj, 's_['0.Zero], 'O2:Obj], 'B2:Being] := 'L:List by 'L:List using all)) using opsem .
+
+srew reduced('initial.Table) @ ('left[none]{empty} ; 'right[none]{empty} & (amatchrew 'L:List s.t. '__['B1:Being, '_|_|_['O1:Obj, 's_['0.Zero], 'O2:Obj], 'B2:Being] := 'L:List by 'L:List using all) ; (amatchrew 'L:List s.t. '__['B1:Being, '_|_|_['O1:Obj, 's_^2['0.Zero], 'O2:Obj], 'B2:Being] := 'L:List by 'L:List using all)) using opsem .
+
+srew reduced('initial.Table) @ 'left[none]{empty} using opsem .

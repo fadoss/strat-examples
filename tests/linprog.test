@@ -1,0 +1,22 @@
+params/linprog/linprog-examples
+
+srew opt1 using free .
+srew opt2 using solve .
+srew opt3 using one(makeTable) .
+
+smod SIMPLEX-READY is
+	protecting SIMPLEX-STRAT{Bland} .
+endsm
+
+select MAIN .
+srew rand1 using solve .
+
+sload linprog-analysis
+srew watch(other, 0) using watchor .
+
+smod WATCH-MAIN is
+	protecting WATCH-STRAT{Lexico} .
+	protecting SIMPLEX-EXAMPLES .
+endsm
+
+srew watch(opt1, 0) using watch .

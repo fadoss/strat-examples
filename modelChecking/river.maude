@@ -1,0 +1,122 @@
+***
+*** River crossing example (version 2)
+***
+*** No changes are made except a simplified term signature
+*** and more strategies
+***
+
+fmod RIVER is
+	sort River Side Group .
+	subsort Side < Group .
+
+	op  _|_ : Group Group -> River [ctor comm] .
+	ops left right : -> Side [ctor] .
+	ops shepherd wolf goat cabbage : -> Group [ctor] .
+	ops __ : Group Group -> Group [ctor assoc comm prec 40] .
+
+	op initial : -> River .
+	eq initial = left shepherd wolf goat cabbage | right .
+endfm
+
+mod RIVER-CROSSING is
+	protecting RIVER .
+
+	vars G G' : Group .
+
+	rl [wolf-eats] : wolf goat G | shepherd G' => wolf G | shepherd G' .
+	rl [goat-eats] : cabbage goat G | shepherd G' => goat G | shepherd G' .
+
+	rl [alone] : shepherd G | G' => G | shepherd G' .
+	rl [wolf] : shepherd wolf G | G' => G | shepherd wolf G' .
+	rl [goat] : shepherd goat G | G' => G | shepherd goat G' .
+	rl [cabbage] : shepherd cabbage G | G' => G | shepherd cabbage G'  .
+endm
+
+smod RIVER-CROSSING-STRAT is
+	protecting RIVER-CROSSING .
+
+	strats safe safe-nt solution eagerEating eagerEating-nt @ River .
+
+	var G : Group .
+
+	*** A well-known solution to the problem
+	sd solution := goat ; alone ; cabbage ; goat ; wolf ; alone ; goat .
+
+	*** Bad states (in which an animal can be eaten) are avoided
+	sd safe := match left | G ? idle : (oneCrossing ; not(eating) ; safe) .
+	*** Eating happens eagerly, always before moving
+	sd eagerEating := match left | G cabbage goat ? idle : ((eating or-else oneCrossing) ; eagerEating) .
+
+	*** Non-terminating versions of the safe and eagerEating strategies
+	sd safe-nt := oneCrossing ; not(eating) ; safe-nt .
+	sd eagerEating-nt := (eating or-else oneCrossing) ; eagerEating-nt .
+
+	strats oneCrossing eating @ River .
+
+	sd oneCrossing := alone | wolf | goat | cabbage .
+	sd eating := wolf-eats | goat-eats .
+	sd cross&eat := oneCrossing ; eating ! .
+
+	*** eagerEating, but it is exhaustively done after crossing
+	strat eagerEating2 cross&eat @ River .
+	sd eagerEating2 := match left | G cabbage goat ? idle : (cross&eat ; eagerEating2) .
+endsm
+
+sload model-checker
+
+mod RIVER-CROSSING-PREDS is
+	protecting RIVER-CROSSING .
+	including SATISFACTION .
+
+	subsort River < State .
+
+	ops goal death bad : -> Prop [ctor] .
+
+	var  R    : River .
+	vars G G' : Group .
+
+	eq left | right shepherd wolf goat cabbage |= goal = true .
+	eq R |= goal = false [owise] .
+
+	*** One or more characters are dead
+	eq G cabbage | G' goat |= death = false .
+	eq G cabbage goat | G' |= death = false .
+	eq R |= death = true [owise] .
+
+	*** A character (wolf or cabbage) can eat another character
+	eq G wolf goat | G' shepherd |= bad = true .
+	eq G goat cabbage | G' shepherd |= bad = true .
+	eq R |= bad = false [owise] .
+endm
+
+smod RIVER-CROSSING-SCHECK is
+	protecting RIVER-CROSSING-STRAT .
+	protecting RIVER-CROSSING-PREDS .
+	including MODEL-CHECKER .
+	including STRATEGY-MODEL-CHECKER .
+endsm
+
+eof
+
+*** Check whether the goal is reachable in the unrestricted system
+*** (the counterexample solution is not admissible)
+red modelCheck(initial, [] ~ goal) .
+*** This counterexample is an admissible solution
+red modelCheck(initial, [] ~ goal, 'eagerEating) .
+red modelCheck(initial, [] ~ goal, 'safe) .
+*** No bad state is ever visited with safe
+red modelCheck(initial, [] ~ bad, 'safe) .
+*** If cross&eat is seen as an atomic action, they are also avoided with eagerEating2
+red modelCheck(initial, [] ~ bad, 'eagerEating2, 'cross&eat) .
+red modelCheck(initial, [] ~ bad, 'eagerEating2) .
+*** Bad states are not resolved to deaths in the unrestricted system
+red modelCheck(initial, [] (bad -> <> death)) .
+red modelCheck(initial, [] (bad -> <> death), 'eagerEating) .
+red modelCheck(initial, [] (bad -> O death), 'eagerEating) .
+
+*** Branching-time properties can be checked with umaudemc
+
+*** Finding a way to the goal is always possible
+*** umaudemc check river initial 'A [] E <> goal'
+*** umaudemc check river initial 'A [] E <> goal' eagerEating
+*** umaudemc check river initial 'A [] E <> goal' safe

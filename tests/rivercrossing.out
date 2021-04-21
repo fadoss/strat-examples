@@ -1,0 +1,11 @@
+==========================================
+srewrite in RIVER-CROSSING-STRAT : init using allCE ; match s(right) w(right)
+    g(right) c(right) .
+
+Solution 1
+rewrites: 151
+result Group: s(right) w(right) g(right) c(right)
+
+No more solutions.
+rewrites: 167
+Bye.

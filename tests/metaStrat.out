@@ -1,0 +1,36 @@
+==========================================
+reduce in TEST : metaSrewrite(upModule('TEST, false), upTerm("deleveled"),
+    repeat-until('palin[none]{empty}, 'C:Char, nil), breadthFirst, 0) .
+rewrites: 4
+result ResultPair: {'"v".Char,'Char}
+==========================================
+reduce in TEST : metaSrewrite(upModule('TEST, false), upTerm("deleveled"),
+    repeat-until('palin[none]{empty}, 'C:Char, nil), breadthFirst, 1) .
+rewrites: 4
+result ResultPair?: (failure).ResultPair?
+==========================================
+reduce in TEST : metaSrewrite(addRepeat(upModule('TEST, false), 'strip, 'palin[
+    none]{empty}), upTerm("evitative"), 'strip[[upTerm(3)]], breadthFirst, 0) .
+rewrites: 5
+result ResultPair: {'"tat".String,'String}
+==========================================
+reduce in TEST : metaSrewrite(addRepeat(upModule('TEST, false), 'strip, 'palin[
+    none]{empty}), upTerm("evitative"), 'strip[[upTerm(3)]], breadthFirst, 1) .
+rewrites: 5
+result ResultPair?: (failure).ResultPair?
+==========================================
+reduce in TEST : metaSrewrite(upModule('TEST, false), upTerm(bigPalindrome(
+    100)), ('palin[none]{empty}) !, breadthFirst, 0) .
+rewrites: 204
+result ResultPair: {'"".String,'String}
+==========================================
+reduce in TEST : metaSrewrite(upModule('TEST, false), upTerm(bigPalindrome(
+    100)), toBasis(('palin[none]{empty}) !), breadthFirst, 0) .
+rewrites: 230
+result ResultPair: {'"".String,'String}
+==========================================
+reduce in TEST : metaSrewrite(upModule('TEST, false), upTerm(bigPalindrome(
+    100)), toBasis(('palin[none]{empty}) !), depthFirst, 0) .
+rewrites: 230
+result ResultPair: {'"".String,'String}
+Bye.

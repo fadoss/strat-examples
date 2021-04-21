@@ -1,0 +1,3 @@
+games/hanoi
+
+srew initial(4, 3) using moveAll(0, 2, 4) .

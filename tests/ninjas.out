@@ -1,0 +1,71 @@
+==========================================
+srewrite in NINJAS-CHECK : initial(3, 3) using sensei .
+
+Solution 1
+rewrites: 22
+result Garden: {P,N} {P,N} {P,N} {P,N} {P,N} {P,N}
+
+Solution 2
+rewrites: 25
+result Garden: {P,Y} {P,N} {P,N} {P,N} {P,N} {P,N}
+
+Solution 3
+rewrites: 28
+result Garden: {P,Y} {P,Y} {P,N} {P,N} {P,N} {P,N}
+
+Solution 4
+rewrites: 30
+result Garden: {P,Y} {P,Y} {P,Y} {P,N} {P,N} {P,N}
+
+Solution 5
+rewrites: 30
+result Garden: {P,Y} {P,Y} {P,Y} {P,Y} {P,N} {P,N}
+
+No more solutions.
+rewrites: 30
+==========================================
+srewrite in NINJAS-CHECK : initial(3, 2) using sensei .
+
+Solution 1
+rewrites: 20
+result Garden: {A,Y} {P,Y} {P,Y} {P,Y} {P,Y}
+
+No more solutions.
+rewrites: 20
+==========================================
+srewrite in NINJAS-CHECK : initial(2, 3) using sensei .
+
+Solution 1
+rewrites: 14
+result Garden: {A,N} {P,N} {P,N} {P,N} {P,N}
+
+No more solutions.
+rewrites: 18
+==========================================
+srewrite in NINJAS-CHECK : initial(3, 3) using sensei-bis .
+
+Solution 1
+rewrites: 12
+result Garden: {P,N} {P,N} {P,N} {P,N} {P,N} {P,N}
+
+No more solutions.
+rewrites: 12
+==========================================
+srewrite in NINJAS-CHECK : initial(3, 3) using senseii .
+
+Solution 1
+rewrites: 24
+result Garden: {P,N} {P,N} {P,N} {P,N} {P,N} {P,N}
+
+No more solutions.
+rewrites: 38
+==========================================
+srewrite in NINJAS-CHECK : initial(3, 3) using senseiii .
+
+Solution 1
+rewrites: 279
+result Garden: {A,T} {P,T} {P,T} {P,T} {P,T} {P,T}
+
+No more solutions.
+rewrites: 487
+Bye.

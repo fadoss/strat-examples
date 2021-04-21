@@ -1,0 +1,398 @@
+***
+*** Traditional card games using common actions
+***
+
+fmod LIST-EXTRA{X :: TRIV} is
+	protecting LIST{X} .
+	protecting NAT .
+
+	vars L L1 L2 L3 : List{X} .
+	vars E F        : X$Elt .
+	var  N M         : Nat .
+
+	*** Take the first n elements of the list
+	*** (or less if they are not enough)
+	op take : List{X} Nat -> List{X} .
+
+	eq take(L, 0) = nil .
+	eq take(nil, N) = nil .
+	eq take(E L, s(N)) = E take(L, N) .
+
+	*** Take the n-th element of the list
+	op getElem : List{X} Nat ~> List{X} .
+
+	eq getElem(E L, 0) = E .
+	eq getElem(E L, s(N)) = getElem(L, N) .
+
+	*** Swap two elements of the list
+	op swap : List{X} Nat Nat ~> List{X} .
+
+	eq swap(L, N, N) = L .
+	ceq swap(L, N, M) = L1 F L2 E L3
+	 if L1 := take(L, N)
+	 /\ L1 E L2 := take(L, M)
+	 /\ L1 E L2 F L3 := L .
+endfm
+
+fmod RANDOM-SORT{X :: TRIV} is
+	protecting LIST-EXTRA{X} .
+	protecting RANDOM .
+
+	vars E F     : X$Elt .
+	vars NeL NeL' : NeList{X} .
+	var  L M      : List{X} .
+	var  N R      : Nat .
+
+	*** Random shuffle a list of elements
+	*** (the second parameter is the random seed)
+	op randomShuffle : List{X} Nat -> List{X} .
+	op $randomShuffle : List{X} Nat -> List{X} .
+
+	eq randomShuffle(nil, N) = nil .
+	eq randomShuffle(E, N) = E .
+	ceq randomShuffle(E NeL, N) = F randomShuffle(M, s(N))
+	 if R := random(N) rem size(E NeL) /\ F M := swap(E NeL, 0, R) .
+
+endfm
+
+fmod SPANISH-CARDS is
+	sort Figure Suit Card .
+
+	ops 1 2 3 4 5 6 7 10 11 12 : -> Figure [ctor] .
+	ops clubs coins cups swords : -> Suit [ctor] .
+
+	op _of_ : Figure Suit -> Card [ctor] .
+endfm
+
+fmod FRENCH-CARDS is
+	sort Figure Suit Card .
+
+	ops 1 2 3 4 5 6 7 8 9 10 valet dame roi : -> Figure .
+	ops clovers tiles hearts pikes : -> Suit .
+
+	op _of_ : Figure Suit -> Card [ctor] .
+endfm
+
+view Card from TRIV to SPANISH-CARDS is
+	sort Elt to Card .
+endv
+
+view Figure from TRIV to SPANISH-CARDS is
+	sort Elt to Figure .
+endv
+
+view FrenchCard from TRIV to FRENCH-CARDS is
+	sort Elt to Card .
+endv
+
+fmod SPANISH-CARDS-AUX is
+	protecting LIST-EXTRA{Figure} .
+	protecting LIST{Card} .
+	protecting QID .
+
+	var  N   : Nat .
+	var  F   : Figure .
+	var  S   : Suit .
+	vars L R : List{Figure} .
+
+	op figureList : -> List{Figure} .
+	eq figureList = 1 2 3 4 5 6 7 10 11 12 .
+
+	op toFigure : Nat -> Figure .
+	op fromFigure : Figure -> Nat .
+
+	eq toFigure(N) = getElem(figureList, N rem 10) .
+	ceq fromFigure(F) = size(L) if L F R := figureList .
+
+	*** The next and previous figure
+	op nextFigure : Figure -> Figure [memo] .
+	op prevFigure : Figure -> Figure [memo] .
+
+	eq nextFigure(F) = toFigure(fromFigure(F) + 1) .
+	eq prevFigure(F) = toFigure(fromFigure(F) + 9) .
+
+	*** Convert a suit to quoted identifier
+	op qid : Suit -> Qid .
+
+	eq qid(clubs) = 'clubs .
+	eq qid(coins) = 'coins .
+	eq qid(cups) = 'cups .
+	eq qid(swords) = 'swords .
+
+	*** The full deck
+	op deck : -> List{Card} .
+	op deck : Suit -> List{Card} .
+	op deck : Suit Figure -> List{Card} .
+
+	eq deck = deck(clubs) deck(coins) deck(cups) deck(swords) .
+	eq deck(S) = deck(S, 1) .
+	eq deck(S, F) = (F of S) if F == 12 then nil else deck(S, nextFigure(F)) fi .
+endfm
+
+fmod GAME is
+	protecting QID .
+	protecting SET{Card} .
+	protecting LIST{Card} .
+
+	sort Id Player Maze Table Game .
+	subsort Maze < Table < Game .
+	subsort Player < Game .
+	subsort Qid < Id .
+
+	op {_:_} : Id List{Card} -> Maze [ctor] .
+	op <_:_> : Id Set{Card} -> Player [ctor] .
+
+	op nogame : -> Table [ctor] .
+	op __ : Game Game -> Game [ctor assoc id: nogame] .
+	op __ : Table Table -> Table [ditto] .
+	op __ : Table Game -> Game [ditto] .
+	op __ : Game Table -> Game [ditto] .
+
+	var M : Maze .
+	var P : Player .
+
+	eq M P = P M .
+endfm
+
+mod GAME-RULES is
+	protecting GAME .
+	protecting RANDOM-SORT{Card} .
+
+	vars P M M1 M2 P1 P2 : Id .
+	vars C C1 C2 E       : Card .
+	var  CS CS1 CS2      : Set{Card} .
+	var  CL CL1 CL2      : List{Card} .
+	var  G               : Game .
+	var  Seed            : Nat .
+
+	*** Common actions in which terms all games
+	*** are supposed to be expressed
+
+	*** Player P puts a card in maze M
+	rl [put] : < P : C, CS > G { M : CL } =>
+	           < P : CS > G { M : CL C } .
+
+	*** Player P puts card at the bottom of maze M
+	rl [put-bottom] : < P : C, CS > G { M : CL } =>
+	           < P : CS > G { M : C CL } .
+
+	*** Player P takes a card from the maze M
+	rl [take] : < P : CS > G { M : CL C } =>
+	            < P : C, CS > G { M : CL } .
+
+	*** All cards in maze M1 are moved to M2
+	rl [move] : { M1 : CL1 } G { M2 : CL2 } =>
+	            { M1 : nil } G { M2 : CL2 CL1 } .
+
+	*** The same in the opposite order (the table is a list)
+	rl [move] : { M2 : CL2 } G { M1 : CL1 } =>
+	            { M2 : CL2 CL1 } G { M1 : nil } .
+
+	*** Shuffle the cards in maze M
+	rl [shuffle] : { M : CL } =>
+	               { M : randomShuffle(CL, Seed) } [nonexec] .
+
+	*** Players P1 and P2 exchange cards
+	rl [exchange] : < P1 : C1, CS1 > G < P2 : C2, CS2 > =>
+	                < P1 : C2, CS1 > G < P2 : C1, CS2 > .
+endm
+
+fmod GAME-AUX is
+	protecting GAME .
+
+	vars G G1 G2    : Game .
+	vars P M P1 P2  : Id .
+	vars LL UL      : List{Card} .
+	vars C          : Card .
+	vars CS CS1 CS2 : Set{Card} .
+	var  F F1 F2    : Figure .
+	vars S S1 S2 S3
+	     S4 S5 S6   : Suit .
+	var  Ply        : Player .
+	var  T          : Table .
+
+	*** The owner of a card
+	op findOwner : Game Card -> Id .
+
+	eq findOwner(G1 < P : C, CS > G2, C) = P .
+	eq findOwner(G1 { M : LL C UL } G2, C) = M .
+
+	*** The player to the right of a given one
+	op nextPlayer : Game Id -> Id .
+
+	eq nextPlayer(G1 < P1 : CS1 > < P2 : CS2 > G2, P1) = P2 .
+	eq nextPlayer(< P2 : CS2 > G < P1 : CS1 > T, P1) = P2 .
+
+	*** The number of players in the game
+	op numPlayers : Game -> Nat .
+
+	eq numPlayers(Ply G) = s(numPlayers(G)) .
+	eq numPlayers(G) = 0 [owise] .
+endfm
+
+smod GAMES is
+	protecting GAME-RULES .
+	protecting GAME-AUX .
+	protecting SPANISH-CARDS-AUX .
+
+	vars G G1 G2             : Game .
+	vars P M Q M1 M2         : Id .
+	var  CL                  : List{Card} .
+	var  C                   : Card .
+	vars F F1 F2             : Figure .
+	var  CS                  : Set{Card} .
+	vars S S1 S2 S3 S4 S5 S6 : Suit .
+	vars N Seed              : Nat .
+
+	***
+	*** Cinquillo (also known as card dominoes, ...)
+	***
+	*** Players are dealt all the cards and they should place them in the table
+	*** next a card of the same suit and consecutive value. The initial card of
+	*** each suit must be the five. The game is won by the first player to empty
+	*** their hand.
+	***
+
+	strat cinquillo @ Game .
+	strats cinquillo cinquillo-step : Id @ Game .
+
+	*** The player with the 5 of coins starts
+	sd cinquillo := matchrew G by G using (put[C <- 5 of coins, M <- 'coins] ;
+	                  cinquillo(nextPlayer(G, findOwner(G, 5 of coins)))) .
+
+	sd cinquillo-step(P) := put[P <- P, C <- 5 of clubs, M <- 'clubs]
+	                      | put[P <- P, C <- 5 of cups, M <- 'cups]
+	                      | put[P <- P, C <- 5 of swords, M <- 'swords]
+	                      *** Place a card above one in the table
+	                      | matchrew G s.t. G1 { M : CL (F of S) } G2 := G /\ F =/= 12 by G using
+	                          put[P <- P, C <- nextFigure(F) of S, M <- qid(S)]
+	                      *** Place a card below one in the table
+			      | matchrew G s.t. G1 { M : (F of S) CL } G2 := G /\ F =/= 1 by G using
+                                  put-bottom[P <- P, C <- prevFigure(F) of S, M  <- qid(S)]
+			      .
+
+	sd cinquillo(P) := try(cinquillo-step(P)) ;
+	                   *** Run the game recursively until someone wins
+		           (amatch < P : empty > ? idle :
+	                     matchrew G by G using cinquillo(nextPlayer(G, P))) .
+
+
+	*** Another version of the strategy in which stalements are stopped
+	*** (it cannot happen if all the cards have been served)
+
+	strat cinquillo2 @ Game .
+	strat cinquillo2 : Id Id @ Game .
+
+	sd cinquillo2 := matchrew G by G using (put[C <- 5 of coins, M <- 'coins] ;
+	                  cinquillo2(nextPlayer(G, findOwner(G, 5 of coins)), 'noplayer)) .
+
+	sd cinquillo2(P, Q) := match G s.t. P = Q ? idle : (
+	                        cinquillo-step(P) ? (
+	                          amatch < P : empty > ? idle :
+	                            matchrew G by G using cinquillo2(nextPlayer(G, P), 'noplayer)
+	                        ) : matchrew G by G using cinquillo2(nextPlayer(G, P), if Q == 'noplayer then P else Q fi)
+	                      ) .
+
+	***
+	*** Solitaire taking 2 card at a time.
+	***
+	*** Cards are taken from the source maze and put in the maze for their
+	*** suite in increasing order. If this is not possible, the card is put
+	*** in the seen maze. When the source is exhausted, the seen maze is
+	*** transferred to source and shuffled, and this is iterated until all
+	*** cards are correctly placed.
+	***
+
+	strats soli2 soli2-iter soli2-loop soli2-put soli2-take @ Game .
+	strat soli2-shuffle : Nat @ Game .
+
+	*** A single iteration of the solitaire
+	sd soli2 := (soli2-iter ; move[M1 <- 'seen, M2 <- 'source]) .
+
+	*** Multiple iterations of the solitaire (shuffling in between)
+	*** (it may be nondeterminating, but the probability is zero)
+	sd soli2-shuffle(N) := (amatch { 'source : nil }) or-else (
+	                     try(soli2-iter) ;
+	                     move[M1 <- 'seen, M2 <- 'source] ;
+	                     shuffle[M <- 'source, Seed <- N] ;
+                             soli2-shuffle(2 * N + 1)) [print ">> " N] .
+
+	sd soli2-iter := *** Take two cards, except if there is only one
+			 soli2-take
+        		 *** If the cards are exhausted, we stop
+	                 ? (soli2-loop ; soli2-iter) :
+	                 *** Tries to place top most card repeteadly
+	                 idle .
+
+	*** Take two cards from the source (the first one is put on the seen maze), except
+	*** if there is only one
+	sd soli2-take :=  ((take[M <- 'source] ; put[M <- 'seen] ; take[M <- 'source])
+	                  or-else take[M <- 'source]) .
+
+	*** Place the player card and those in the seen maze in the table (if possible)
+	sd soli2-loop := (soli2-put ? (take[M <- 'seen] ? soli2-loop : idle) : put[M <- 'seen]) .
+
+	*** Put the player card into the maze for its suite or starts it with one (if possible)
+	sd soli2-put :=	  matchrew G s.t. < 'p : 1 of S > G1 { M : nil } G2 := G
+	                    /\ M = qid(S) by G using put[C <- 1 of S, M <- M]
+	                | matchrew G s.t. < 'p : F1 of S > G1 { M : CL (F2 of S) } G2 := G
+	                    /\ F2 =/= 12 /\ M = qid(S) /\ F1 = nextFigure(F2)
+	                    by G using put[M <- M, C <- F1 of S] .
+
+endsm
+
+fmod EXAMPLES is
+	protecting GAME .
+	protecting SPANISH-CARDS-AUX .
+	protecting RANDOM-SORT{Card} .
+
+	op shuffledDeck : -> List{Card} .
+	eq shuffledDeck = randomShuffle(deck, 12313) .
+
+	ops cinquillo0 soliTwo0 : -> Game .
+
+	vars P1 P2 P3 P4 : List{Card} .
+	var C : Card .
+	var L : List{Card} .
+
+	*** Initial state for the cinquillo
+	ceq cinquillo0 =  < 'p1 : toSet(P1) > < 'p2 : toSet(P2) >
+	                  < 'p3 : toSet(P3) > < 'p4 : toSet(P4) >
+	                  { 'clubs : nil } { 'coins  : nil }
+	                  { 'cups  : nil } { 'swords : nil }
+	 if P1 := take(shuffledDeck, 10)
+	    /\ P1 P2 := take(shuffledDeck, 20)
+	    /\ P1 P2 P3 := take(shuffledDeck, 30)
+	    /\ P1 P2 P3 P4 := shuffledDeck  .
+
+	*** Initial state for the solitaire
+	eq soliTwo0 = < 'p : empty >
+	           { 'source : shuffledDeck }
+	           { 'seen  : nil }
+	           { 'clubs : nil } { 'coins  : nil }
+	           { 'cups  : nil } { 'swords : nil } .
+
+	op toSet : List{Card} -> Set{Card} .
+
+	eq toSet(nil) = empty .
+	eq toSet(C L) = C, toSet(L) .
+endfm
+
+smod MAIN is
+	protecting EXAMPLES .
+	protecting GAMES .
+
+	var M M1 M2 : Id .
+endsm
+
+eof
+
+dsrew [5] cinquillo0 using cinquillo .
+dsrew [5] cinquillo0 using cinquillo2 .
+
+srew soliTwo0 using soli2 .
+srew soliTwo0 using soli2-shuffle(12) .
+
+*** Enable to see how many iterations are required to solve soli2-shuffle
+*** depending on the seed
+set print attribute on .

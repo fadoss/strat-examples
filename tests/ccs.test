@@ -1,0 +1,7 @@
+semantics/ccs2
+
+srew [1] 'Crossing using ccs .
+srew [1] 'Ven using trans ; (match ({'2p}{'big}{'collectB}AP:ActProcess)) .
+srew [2] 'Ven using trans ; (match ({'1p}{'little}AP:ActProcess)) .
+continue 2 .
+

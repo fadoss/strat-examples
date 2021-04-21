@@ -1,0 +1,223 @@
+***
+*** Strategist's Kit
+*** A collection of strategy related stuff at the metalevel
+***
+*** 1. Utilities for applying substitutions on strategies.
+*** 2. Utilities for applying strategy definitions.
+***
+
+***
+*** Substitutions applied to metalevel entities, including strategies
+***
+
+fmod STKIT-SUBSTITUTION is
+	protecting META-STRATEGY .
+
+	var  Cnt        : Constant .
+	vars C          : Condition .
+	var  Cond SCond : EqCondition .
+	var  X          : Variable .
+	vars P T L R    : Term .
+	vars Sb ISb SSb : Substitution .
+	var  Q          : Qid .
+	var  TL         : TermList .
+	var  NeTL       : NeTermList .
+	vars S S1 S2 S3 : Strategy .
+	var  SL         : StrategyList .
+	var  VSP        : UsingPair .
+	var  VSL        : UsingPairSet .
+	var  Ctx        : Context .
+	var  NeCTL      : NeCTermList .
+	var  GTL        : GTermList .
+
+	***
+	*** Substitution on terms
+
+	op applySubs : Term Substitution -> Term .
+	op applySubs : TermList Substitution -> TermList .
+
+	eq applySubs(T, none)        = T .
+	eq applySubs(Cnt, Sb)        = Cnt .
+	eq applySubs(X, X <- T ; Sb) = T .
+	eq applySubs(X, Sb) = X [owise] .
+	eq applySubs(Q[TL], Sb)      = Q[applySubs(TL, Sb)] .
+	eq applySubs((T, NeTL), Sb)  = applySubs(T, Sb), applySubs(NeTL, Sb) .
+	eq applySubs((empty).TermList, Sb) = empty .
+
+	***
+	*** Context fill
+
+	op putInContext : Term Context -> Term .
+	op putInContext : Term TermList -> TermList .
+
+	eq putInContext(T, []) = T .
+	eq putInContext(T, P) = P .
+	eq putInContext(T, Q[GTL]) = Q[putInContext(T, GTL)] .
+	eq putInContext(T, (P, NeCTL)) = P, putInContext(T, NeCTL) .
+	eq putInContext(T, (Ctx, NeTL)) = putInContext(T, Ctx), NeTL .
+
+	***
+	*** Substitution on substitutions
+
+	op applySubs : Substitution Substitution -> Substitution .
+
+	eq applySubs(none, Sb)         = none .
+	eq applySubs(X <- T ; ISb, Sb) = X <- applySubs(T, Sb) ; applySubs(ISb, Sb) .
+
+	***
+	*** Substitution on conditions
+
+	op applySubs : Condition Substitution -> Condition .
+
+	eq applySubs(nil, Sb) = nil .
+	eq applySubs(L = R /\ C, Sb)      = applySubs(L, Sb) = applySubs(R, Sb)  /\ applySubs(C, Sb) .
+	eq applySubs(L := R /\ C, Sb)     = applySubs(L, Sb) := applySubs(R, Sb) /\ applySubs(C, Sb) .
+	eq applySubs(L => R /\ C, Sb)     = applySubs(L, Sb) => applySubs(R, Sb) /\ applySubs(C, Sb) .
+	eq applySubs(T : S:Sort /\ C, Sb) = applySubs(T, Sb) : S:Sort            /\ applySubs(C, Sb) .
+
+	***
+	*** Substitution on strategies
+
+	op applySubs : Strategy Substitution -> Strategy .
+	op applySubs : StrategyList Substitution -> StrategyList .
+	op applySubs : UsingPairSet Substitution -> UsingPairSet .
+
+	eq applySubs(Q[ISb]{SL}, Sb)         = Q[applySubs(ISb, Sb)]{applySubs(SL, Sb)} .
+	eq applySubs(match P s.t. Cond, Sb)  = match applySubs(P, Sb) s.t. applySubs(Cond, Sb) .
+	eq applySubs(xmatch P s.t. Cond, Sb) = xmatch applySubs(P, Sb) s.t. applySubs(Cond, Sb) .
+	eq applySubs(amatch P s.t. Cond, Sb) = amatch applySubs(P, Sb) s.t. applySubs(Cond, Sb) .
+	ceq applySubs(S1 | S2, Sb)           = applySubs(S1, Sb) | applySubs(S2, Sb) if S1 =/= fail /\ S2 =/= fail .
+	ceq applySubs(S1 ; S2, Sb)           = applySubs(S1, Sb) ; applySubs(S2, Sb) if S1 =/= idle /\ S2 =/= idle .
+	eq applySubs(S1 ? S2 : S3, Sb)       = applySubs(S1, Sb) ? applySubs(S2, Sb) : applySubs(S3, Sb) .
+	eq applySubs(S1 or-else S2, Sb)      = applySubs(S1, Sb) or-else applySubs(S2, Sb) .
+	eq applySubs(S *, Sb)                = applySubs(S, Sb) * .
+	eq applySubs(S +, Sb)                = applySubs(S, Sb) + .
+	eq applySubs(S !, Sb)                = applySubs(S, Sb) ! .
+	eq applySubs(one(S), Sb)             = one(applySubs(S, Sb)) .
+	eq applySubs(not(S), Sb)             = not(applySubs(S, Sb)) .
+	eq applySubs(try(S), Sb)             = try(applySubs(S, Sb)) .
+	eq applySubs(top(S), Sb)             = top(applySubs(S, Sb)) .
+	eq applySubs(Q[[TL]], Sb)            = Q[[applySubs(TL, Sb)]] .
+
+	*** Applying a substitution to a matchrew operator must not be
+	*** a direct instantiation of variables, since those signaling
+	*** subterms to which strategies are applied cannot be vanished
+	*** because that reference will be lost. Instead, an equality
+	*** condition is added to the matchrew expression.
+	***
+	*** splitSubs, defined at the end the module, separates the part
+	*** of the given substitution that can be applied safely, and
+	*** builds the equational condicion for the rest of the bindings.
+
+	ceq applySubs(matchrew P s.t. Cond by VSL, Sb) = matchrew applySubs(P, SSb)
+		s.t. SCond /\ applySubs(Cond, SSb) by applySubs(VSL, Sb)
+		if { SSb ; SCond } := splitSubs(Sb, VSL) .
+	ceq applySubs(xmatchrew P s.t. Cond by VSL, Sb) = xmatchrew applySubs(P, SSb)
+		s.t. SCond /\ applySubs(Cond, SSb) by applySubs(VSL, Sb)
+		if { SSb ; SCond } := splitSubs(Sb, VSL) .
+	ceq applySubs(amatchrew P s.t. Cond by VSL, Sb) = amatchrew applySubs(P, SSb)
+		s.t. SCond /\ applySubs(Cond, SSb) by applySubs(VSL, Sb)
+		if { SSb ; SCond } := splitSubs(Sb, VSL) .
+
+
+	*** In any other case (id, fail, all), the original term is not changed
+	eq applySubs(S, Sb) = S [owise] .
+
+
+	*** Substitution on strategy lists
+	eq applySubs((empty).StrategyList, Sb) = empty .
+	ceq applySubs(S, SL, Sb)               = applySubs(S, Sb), applySubs(SL, Sb) if SL =/= empty .
+
+	*** Substitution on variable-to-strategy lists
+	eq applySubs(X using S, Sb)  = X using applySubs(S, Sb) .
+	eq applySubs((VSP, VSL), Sb) = applySubs(VSP, Sb), applySubs(VSL, Sb) .
+
+	*** splitSubs definition (a simple pair operator is required)
+
+	sort SplitSubs .
+	op {_;_} : Substitution EqCondition -> SplitSubs [ctor] .
+	op extend : SplitSubs EqCondition -> SplitSubs .
+	eq extend({ Sb ; Cond }, SCond) = { Sb ; Cond /\ SCond } .
+
+	op splitSubs : Substitution UsingPairSet -> SplitSubs .
+
+	eq splitSubs(X <- T ; Sb, X using S)        = { Sb ; X = T } .
+	eq splitSubs(Sb, X using S)                 = { Sb ; nil } [owise] .
+	eq splitSubs(X <- T ; Sb, (X using S, VSL)) = extend(splitSubs(Sb, VSL), X = T) .
+	eq splitSubs(Sb, (X using S, VSL))          = splitSubs(Sb, VSL) .
+endfm
+
+***
+*** Given a strategy call and a module, allDefs returns the set of all
+*** matching definitions bodies instantiated.
+***
+
+view Strategy from TRIV to META-STRATEGY is
+	sort Elt to Strategy .
+endv
+
+fmod STKIT-EXECUTION is
+	protecting STKIT-SUBSTITUTION .
+	protecting META-LEVEL .
+	protecting (SET * (op empty to nostrat, op _,_ to _$_)){Strategy} .
+
+	var  M      : Module .
+	var  N      : Nat .
+	var  CS     : CallStrategy .
+	vars CT Lhs : Term .
+	var  C      : EqCondition .
+	var  D      : Strategy .
+	var  Sb     : Substitution .
+	var  Sdcls  : StratDeclSet .
+	var  Sds    : StratDefSet .
+	var  TL     : TermList .
+	var  Ty	    : Type .
+	var  TyL    : TypeList .
+	var  Attrs  : AttrSet .
+	var  Q      : Qid .
+
+	*** All matching definitions
+
+	op allDefs : StratModule CallStrategy -> Set{Strategy} .
+	op allDefs : StratModule Term StratDefSet -> Set{Strategy} .
+	op allDefs : StratModule Term Term EqCondition Strategy Nat -> Set{Strategy} .
+
+	eq allDefs(M, CS) = allDefs(extendStratMod(M), callToTerm(CS), getSds(M)) .
+	eq allDefs(M, CT, none) = nostrat .
+	eq allDefs(M, CT, sd CS := D [Attrs] . Sds) =
+		allDefs(M, CT, callToTerm(CS), nil, D, 0) $ allDefs(M, CT, Sds) .
+	eq allDefs(M, CT, csd CS := D if C [Attrs] . Sds) =
+		allDefs(M, CT, callToTerm(CS), C, D, 0) $ allDefs(M, CT, Sds) .
+
+	ceq allDefs(M, CT, Lhs, C, D, N) = nostrat
+		if metaMatch(M, Lhs, CT, C, N) = noMatch .
+	ceq allDefs(M, CT, Lhs, C, D, N) = applySubs(D, Sb) $ allDefs(M, CT, Lhs, C, D, s(N))
+		if Sb := metaMatch(M, Lhs, CT, C, N) .
+
+	*** Temporary extension of a module with an operator for each strategy declaration
+	*** (useful for matching, imports will be ignored)
+
+	op extendStratMod : StratModule -> StratModule .
+	op extendStratMod : StratDeclSet -> OpDeclSet .
+
+	eq extendStratMod(M) = smod qid(string(getName(M)) + "-4STRAT") is
+		getImports(M)
+		sorts getSorts(M) ; '%Strategy .
+		getSubsorts(M)
+		getOps(M)
+		extendStratMod(getStrats(M))
+		getMbs(M)
+		getEqs(M)
+		getRls(M)
+		getStrats(M)
+		getSds(M)
+	endsm .
+
+	eq extendStratMod(none) = none .
+	eq extendStratMod(strat Q : TyL @ Ty [Attrs] . Sdcls) =
+		op Q : TyL -> '%Strategy [none] . extendStratMod(Sdcls) .
+
+	op callToTerm : CallStrategy -> Term .
+	eq callToTerm(Q[[empty]]) = qid(string(Q) + ".%Strategy") .
+	eq callToTerm(Q[[TL]]) = Q[TL] [owise] .
+endfm

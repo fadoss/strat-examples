@@ -1,0 +1,154 @@
+***
+*** Traveling salesperson instance for the generic B&B algorithm
+*** (version which asks for children by an index)
+***
+*** Source: http://maude.ucm.es/skeletons/Skeletons.html (adapted)
+***
+
+sload branchBound-index
+sload traveler
+
+fmod TRAVELER-INSTANTIATION is
+	pr GREEDY-TRAVELER .
+
+	vars P P' P''      : Path .
+	vars N N' N'' C UB : Nat .
+	var  G             : Graph .
+	vars ND ND'        : Node .
+	var  FD            : FixData .
+	var  NL            : NodeList .
+	var  CT            : City .
+
+	sort FixData .
+
+	*** Cost, Number of cities, Cheapest edge
+	op fixData : Graph Nat Nat -> FixData [ctor] .
+
+	sorts Node NodeList .
+	subsort Node < NodeList .
+
+	*** Path Current cost
+	op node : Path Nat -> Node [ctor] .
+
+	op mtNodeList : -> NodeList [ctor] .
+	op __ : NodeList NodeList -> NodeList [ctor assoc id: mtNodeList] .
+
+	*** Unfinished task
+	op getBound : Node FixData -> Nat .
+	eq getBound(node(P, N), fixData(G, N', N'')) = N + sd(s(N'), size(P)) * N''  .
+
+	op result? : Path Nat -> Bool .
+	eq result?(P, N) = size(P) == s(N) .
+
+	op result? : Node FixData -> Bool .
+	eq result?(node(P, N), fixData(G, N', N'')) = result?(P, N') .
+
+	*** We can add the new city (i.e., is admissible) if the city is not
+	*** in the path or the path is complete and we are coming back home.
+	op admissible : Path City Nat -> Bool .
+	eq admissible(P, CT, N) = not in(CT, P) or (size(P) == N and CT == city(0)) .
+
+	op infinity : FixData -> Nat [memo] .
+	eq infinity(fixData(G, N, C)) = getCost(greedyTravel(city(0), sd(N,1), G)) .
+
+	op numChildren : Node FixData -> Nat .
+	eq numChildren(ND, fixData(G, N, C)) = N .
+endfm
+
+view Traveler0 from BB-PROBLEM-BASE to TRAVELER-INSTANTIATION is
+	sort Value to Nat .
+	sort PartialResult to Node .
+
+	op none to mtNodeList .
+	op getValue to getBound .
+endv
+
+mod TRAVELER-RULE is
+	including TRAVELER-INSTANTIATION .
+
+	var  G        : Graph .
+	var  P        : Path .
+	vars City C N : Nat .
+	var  CT       : City .
+	vars Nd0 Nd   : Node .
+	var  Nodes    : NodeList .
+
+	*** Free parameters (City, Graph)
+	crl [expand-path] : node(P CT, C) => node(P CT city(City), C + (G [pair(CT, city(City))]))
+		if admissible(P CT, city(City), N) [nonexec] .
+endm
+
+smod TRAVELER-STRAT is
+	including TRAVELER-RULE .
+
+	strat expand : Nat FixData Nat @ Node .
+	strat expandByCity : FixData Nat @ Node .
+
+	var  G              : Graph .
+	vars N K UB CE City : Nat .
+	var  F              : FixData .
+	var  ND             : Node .
+
+	sd expandByCity(fixData(G, N, CE), K) :=
+		match ND s.t. K < N ; *** This condition is a precondition and may not be checked
+			expand-path[City <- K, G <- G, N <- N]
+		.
+
+	sd expand(K, F, UB) := expandByCity(F, K) ; match ND s.t. getBound(ND, F) <= UB .
+endsm
+
+view Traveler from BB-PROBLEM to TRAVELER-STRAT is
+	sort Value to Nat .
+	sort PartialResult to Node .
+
+	op none to mtNodeList .
+	op getValue to getBound .
+endv
+
+mod TRAVELER-EXAMPLE is
+	pr TRAVELER-INSTANTIATION .
+
+	pr STRING .
+	pr RANDOM .
+
+	vars N N' : Nat .
+	vars G G' : Graph .
+	vars C C' : City .
+
+	op generateCostMatrix : Nat -> Graph .
+	op generateCostMatrix : Nat Nat Graph -> Graph .
+
+	eq generateCostMatrix(s(N)) = generateCostMatrix(s(N), N, empty) .
+
+	ceq generateCostMatrix(N, s(N'), G) = generateCostMatrix(N, N', (G, G')) 
+		if N =/= s(N')
+		/\
+		G' := pair(city(N), city(s(N'))) |-> random(N * 15) rem (s(N') * 15) .
+
+	ceq generateCostMatrix(s(N), 0, G) = generateCostMatrix(N, N, (G, G')) 
+		if G' := pair(city(s(N)), city(0)) |-> random(N * 15) rem 15 .
+
+	eq generateCostMatrix(0, 0, G) = G .
+	eq generateCostMatrix(s(N), s(N), G) = generateCostMatrix(s(N), N, G) .
+
+	op cheapestEdge : Graph -> Nat .
+	eq cheapestEdge(pair(C, C') |-> N) = N .
+	ceq cheapestEdge((pair(C, C') |-> N, G)) = min(N, cheapestEdge(G))
+		if G =/= empty .
+
+	op generateFixData : Nat -> FixData .
+
+	ceq generateFixData(N) = fixData(G, s(N), cheapestEdge(G)) if G := generateCostMatrix(N) .
+endm
+
+smod MAIN is
+	protecting TRAVELER-EXAMPLE .
+	protecting BB-STRAT{Traveler} .
+
+	var S : BBState .
+endsm
+
+eof
+
+red initial(node(city(0), 0), generateFixData(1)) .
+srew initial(node(city(0), 0), generateFixData(5)) using solve .

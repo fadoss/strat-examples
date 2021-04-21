@@ -1,0 +1,558 @@
+***
+*** Command-based interface to multistrategies
+***
+*** Based on the REPL of the strategy language extensions.
+***
+
+sload multistrat
+sload file
+
+fmod MULTISTRAT-REPL-GRAMMAR is
+	protecting QID-LIST .
+	protecting NAT .
+
+	sorts @Token@ @Bubble@ @NtBubble@ @UsingBubble@ @FromBubble@ @BoundPart@ @Command@ @Policy@ .
+
+	op token : Qid -> @Token@ [special (
+		id-hook Bubble (1 1)
+		op-hook qidSymbol (<Qids> : ~> Qid))] .
+
+	op bubble : QidList -> @Bubble@ [special (
+		id-hook Bubble (1 -1)
+		op-hook qidListSymbol (__ : QidList QidList ~> QidList)
+		op-hook qidSymbol (<Qids> : ~> Qid)
+		id-hook Exclude (.))] .
+
+	op ntBubble : QidList -> @NtBubble@ [special (
+		id-hook Bubble (2 -1)
+		op-hook qidListSymbol (__ : QidList QidList ~> QidList)
+		op-hook qidSymbol (<Qids> : ~> Qid)
+		id-hook Exclude (.))] .
+
+	op usingBubble : QidList -> @UsingBubble@ [special (
+		id-hook Bubble (1 -1)
+		op-hook qidListSymbol (__ : QidList QidList ~> QidList)
+		op-hook qidSymbol (<Qids> : ~> Qid)
+		id-hook Exclude (using))] .
+
+	op fromBubble : QidList -> @FromBubble@ [special (
+		id-hook Bubble (1 -1)
+		op-hook qidListSymbol (__ : QidList QidList ~> QidList)
+		op-hook qidSymbol (<Qids> : ~> Qid)
+		id-hook Exclude (from))] .
+
+	*** Select a module by its name
+	op select_. : @Token@ -> @Command@ [ctor] .
+
+	*** Select a module by meta-representation
+	op select_. : @NtBubble@ -> @Command@ [ctor] .
+
+	*** Strategy rewrite command
+	op srew_using_. : @UsingBubble@ @Bubble@ -> @Command@ [ctor] .
+	*** Strategy rewrite command
+	op dsrew_using_. : @UsingBubble@ @Bubble@ -> @Command@ [ctor] .
+
+	*** Model checking command
+	op check_from_using_. : @FromBubble@ @UsingBubble@ @Bubble@ -> @Command@ [ctor] .
+
+	*** Optional bound of the srew command
+	op [_]_ : Nat @Bubble@ -> @BoundPart@ [ctor] .
+
+	*** Policy indications
+	ops concurrent turns :     -> @Policy@ [ctor] .
+	ops concurrent turns : Nat -> @Policy@ [ctor] .
+	op custom_ : @Bubble@ -> @Policy@ [ctor] .
+endfm
+
+mod MULTISTRAT-REPL is
+	extending CONFIGURATION .
+	protecting STD-STREAM .
+	protecting META-LEVEL .
+	protecting LEXICAL .
+	protecting CONVERSION .
+	protecting STKIT-SUBSTITUTION .
+
+	***
+	*** MultiStratREPL is in charge of reading the user commands (using the
+	*** standard stream objects) and execute them.
+	***
+	*** Typically, a single instance will exist. Its attribute is the target
+	*** module. Some functions are defined to access and modify it.
+
+	op MultiStratREPL : -> Cid [ctor] .
+	op repl           : -> Oid [ctor] .
+
+	op targetModule:_  : Module? -> Attribute [ctor gather (&)] .
+
+	sort Module? .
+	subsort Module < Module? .
+	op notLoaded : -> Module? [ctor] .
+
+	op getTargetModule : Object -> Module? .
+	eq getTargetModule(< O : MultiStratREPL | targetModule: M?, Attrs >) = M? .
+	eq getTargetModule(Obj) = notLoaded [owise] .
+
+	*** Setting the target module.
+	op setTargetModule : Object Module -> Object .
+	eq setTargetModule(< O : MultiStratREPL | targetModule: TM, Attrs >, M) =
+		< O : MultiStratREPL | targetModule: M, Attrs > .
+	eq setTargetModule(< O : MultiStratREPL | Attrs >, M) =
+		< O : MultiStratREPL | targetModule: M, Attrs > [owise] .
+
+
+	***
+	*** SRewriter executes strategy rewriting tasks, showing their results.
+	*** A task consists of the target module, the term being rewritten, and
+	*** the controlling strategy. The number of already shown and required
+	*** solutions are also part of the task.
+	***
+	*** Strategies are executed directly in the MULTISTRAT-STRAT module,
+	*** but to support additional control policies specified in separate
+	*** modules we may allow selecting other modules.
+	***
+
+	op SRewriter : -> Cid [ctor] .
+	op srewer    : -> Oid [ctor] .
+
+	sort RewriterTask .
+	op srewTask : Module Term Strategy SrewriteOption Nat Nat -> RewriterTask [ctor] .
+
+	op task:_ : RewriterTask -> Attribute [ctor gather (&)] .
+
+	op runTask : RewriterTask -> ResultPair? .
+
+	*** Rewrites and get the term out of the MSContext
+	ceq runTask(srewTask(M, T, St, SO, K, N)) =
+ 		if RP? == failure then failure else
+			metaReduce(['MULTISTRAT-STRAT], 'getTerm[getTerm(RP?)])
+		fi
+	 if RP? := metaSrewrite(['MULTISTRAT-STRAT], T, St, SO, K) .
+
+	***
+	*** Inits the REPL
+
+	op initREPL : Oid -> Msg [msg] .
+
+	var  Attrs             : AttributeSet .
+	var  Obj               : Object .
+	var  O                 : Oid .
+	var  C                 : Cid .
+	vars GM M TM           : Module .
+	var  M?                : Module? .
+	vars Q Q1 Q2           : Qid .
+	var  QL AQL QL1 QL2    : QidList .
+	var  Ty                : Type .
+	var  TyL               : TypeList .
+	var  Ops               : OpDeclSet .
+	var  OpAttrs           : AttrSet .
+	var  KQL               : [QidList] .
+	var  Input             : String .
+	vars T T1 T2 T3 T4 MT  : Term .
+	var  KT                : [Term] .
+	var  TL TL1 TL2        : TermList .
+	var  N K               : Nat .
+	var  St                : Strategy .
+	var  SL                : StrategyList .
+	vars RP? RP1? RP2?     : ResultPair? .
+	var  SO                : SrewriteOption .
+	var  MTS               : Multistrategy .
+
+
+	***
+	*** Rules for the REPL
+
+	rl [greeting] :
+		< repl : MultiStratREPL | Attrs > initREPL(repl)
+	=>
+		< repl : MultiStratREPL | Attrs >
+		write(stdout, repl, greetingText) .
+
+
+	rl [prompt] :
+		< repl : MultiStratREPL | Attrs > wrote(repl, stdout)
+	=>
+		< repl : MultiStratREPL | Attrs >
+		getLine(stdin, repl, "MStrat> ") .
+
+	rl [gotCommand] :
+		< repl : MultiStratREPL | Attrs > gotLine(repl, stdin, Input)
+	=>
+		processInput(< repl : MultiStratREPL | Attrs >, Input) .
+
+	***
+	*** Rules for SRewriter
+
+	crl [firstSolution] :
+		< O : SRewriter | task: srewTask(M, T, St, SO, 0, N) >
+	=>
+		if RP? == failure then
+			write(stdout, repl, "No solutions.\n")
+		else
+			< O : SRewriter | task: srewTask(M, T, St, SO, 1, N) >
+			write(stdout, O, "Solution 1: \t" + printTokens(KQL) + "\n")
+		fi
+	if RP? := runTask(srewTask(M, T, St, SO, 0, N))
+	/\ KQL := metaPrettyPrint(M, downTerm(getTerm(RP?), getTerm(RP?))) .
+
+	rl [noMoreRequested] :
+		< O : SRewriter | task: srewTask(M, T, St, SO, s(N), s(N)) >
+		wrote(O, stdout)
+	=>
+		write(stdout, repl, "No more solutions requested.\n") .
+
+	crl [otherSolution] :
+		< O : SRewriter | task: srewTask(M, T, St, SO, N, K) >
+		wrote(O, stdout)
+	=>
+		if RP? == failure then
+			write(stdout, repl, "No more solutions.\n")
+		else
+			< O : SRewriter | task: srewTask(M, T, St, SO, s(N), K) >
+			write(stdout, O, "Solution " + string(s(N), 10) +  ": \t" + printTokens(KQL) + "\n")
+		fi
+	if (N < K or K == 0)
+	/\ RP? := runTask(srewTask(M, T, St, SO, N, K))
+	/\ KQL := metaPrettyPrint(M, downTerm(getTerm(RP?), getTerm(RP?))) .
+
+
+	***
+	*** Input processing (defined equationally)
+
+	op processInput : Object String -> Configuration .
+	op processInput : Object QidList -> Configuration .
+
+	eq processInput(Obj, "") = clearAttrs(Obj) .	*** End of file (Ctrl+D)
+	eq processInput(Obj, "\n") = Obj wrote(repl, stdout) .
+	eq processInput(Obj, Input) = processInput(Obj, tokenize(Input)) [owise] .
+
+	eq processInput(Obj, 'quit QL) = clearAttrs(Obj) .
+	eq processInput(Obj, 'help QL) = Obj write(stdout, repl, helpText) .
+	ceq processInput(Obj, 'srew QL) = Obj write(stdout, repl, "No target module loaded.\n") 
+	 if getTargetModule(Obj) = notLoaded .
+	ceq processInput(Obj, 'check QL) = Obj write(stdout, repl, "No target module loaded.\n") 
+	 if getTargetModule(Obj) = notLoaded .
+	ceq processInput(Obj, QL) = processCommand(Obj, T)
+	 if T := getTerm(metaParse(upModule('MULTISTRAT-REPL-GRAMMAR, false), QL, '@Command@)) .
+	eq processInput(Obj, QL) = Obj write(stdout, repl, "Unknown command.\n") [owise] .
+
+	*** Process a command when its surface has already been parsed
+	op processCommand : Object Term -> Configuration .
+
+	ceq processCommand(Obj, 'select_.['token[T]]) =
+		if upModule(Q, true) :: Module then
+			setTargetModule(Obj, upModule(Q, true))
+			write(stdout, repl, moduleLoaded(Q))
+		else
+			Obj
+			write(stdout, repl, printTokens('No 'module '\r Q '\o 'is 'available. '\n))
+		fi
+	 if Q := downTerm(T, 'UNKNOWN) .
+
+	ceq processCommand(Obj, 'select_.['ntBubble[T]]) =
+		setTargetModule(Obj, downTerm(T1, upModule('NAT, false)))
+		write(stdout, repl, moduleLoaded(getName(downTerm(T1, upModule('NAT, false)))))
+	 if T1 := getTerm(metaParse(upModule('META-LEVEL, false), downTerm(T, (nil).QidList), 'Module)) .
+	eq processCommand(Obj, 'select_.['ntBubble[T]]) = Obj
+		write(stdout, repl, "This does not seem to be the meta-representation of a module.\n") .
+
+	eq processCommand(Obj, 'srew_using_.['usingBubble[T1], 'bubble[T2]]) =
+		processRewCommand(Obj, breadthFirst, downTerm(T1, (nil).QidList), downTerm(T2, (nil).QidList)) .
+	eq processCommand(Obj, 'dsrew_using_.['usingBubble[T1], 'bubble[T2]]) =
+		processRewCommand(Obj, depthFirst, downTerm(T1, (nil).QidList), downTerm(T2, (nil).QidList)) .
+
+	eq processCommand(Obj, 'check_from_using_.['fromBubble[T1], 'usingBubble[T2], 'bubble[T3]]) =
+		Obj processCheckCommand(getTargetModule(Obj), downTerm(T1, (nil).QidList),
+			downTerm(T2, (nil).QidList), downTerm(T3, (nil).QidList)) .
+
+	eq processCommand(Obj, T) = Obj write(stdout, repl, "This should not have been shown.\n") [owise] .
+
+
+	*** Process srew/dsrew commands specifically
+	op processRewCommand : Object SrewriteOption QidList QidList -> Configuration .
+
+	ceq processRewCommand(Obj, SO, QL1, QL2) =
+		processSrew(Obj, downTerm(T, 0), SO, MT, parseMultistrat(QL2, getTargetModule(Obj)))
+	 if '`[_`]_[T, 'bubble[T3]] := getTerm(metaParse(['MULTISTRAT-REPL-GRAMMAR], QL1, '@BoundPart@))
+ 	 /\ MT := getTerm(metaParse(getTargetModule(Obj), downTerm(T3, (nil).QidList), anyType)) .
+ 
+ 	ceq processRewCommand(Obj, SO, QL1, QL2) =
+		processSrew(Obj, 0, SO, MT, parseMultistrat(QL2, getTargetModule(Obj)))
+	 if MT := getTerm(metaParse(getTargetModule(Obj), QL1, anyType)) .
+
+ 	eq processRewCommand(Obj, SO, QL1, QL2) =
+		Obj write(stdout, repl, "No parse for the initial term.\n") [owise] .
+
+	*** Process check command specifically
+	op processCheckCommand  : Module QidList QidList QidList -> Configuration .
+	op processCheckCommand2 : Module Term Term StrategyList -> Configuration .
+
+	ceq processCheckCommand(M, QL1, QL2, QL) =
+		if RP1? :: ResultPair then
+			if RP2? :: ResultPair then
+				processCheckCommand2(M, getTerm(RP1?), getTerm(RP2?),
+					parseMultistrat(QL, M))
+			else
+				write(stdout, repl, "No parse for the initial term.\n")
+			fi
+		else
+			write(stdout, repl, "No parse for the LTL formula.\n")
+		fi
+	 if RP1? := metaParse(withLTL(M), QL1, 'Formula)
+	 /\ RP2? := metaParse(M, QL2, 'State) .
+
+	eq processCheckCommand(M, QL1, QL2, QL) =
+		write(stdout, repl, "Something unexpected has happened.\n") [owise] .
+
+	ceq  processCheckCommand2(M, T1, T2, (SL, St)) =
+		if RP? :: ResultPair then
+			processCheck(M, downTerm(getTerm(RP?), 'error.Error))
+		else
+			write(stdout, repl, "Error while trying to model check.\n")
+		fi
+	if RP? := metaReduce(['MULTISTRAT-MODEL-CHECKER], 'modelCheckMultistrat[
+			upTerm(M),
+			upTerm(T2),
+			upTerm(adaptFormula(T1)),
+			upTerm(SL),
+			upTerm(applySubs(St, 'N:Nat <- upTerm(length(SL))))
+		]) .
+
+	eq processCheckCommand2(M, T1, T2, SL) =
+		write(stdout, repl, "Strange error while trying to model check.\n") [owise] .
+
+	eq processCheckCommand2(M, T1, T2, parseError(QL)) =
+		write(stdout, repl, printTokens('Syntax 'error: QL '\n)) .
+
+	*** Extends the module with the LTL syntax
+	op withLTL : Module -> Module .
+
+	ceq withLTL(M) = M
+	 if 'Formula SS:SortSet := getSorts(M) .
+
+	eq withLTL(M) = smod getName(M) is
+		getImports(M)
+		sorts getSorts(M) ; 'Formula .
+		getSubsorts(M)
+		subsort 'Prop < 'Formula .
+		getOps(M)
+		filterRange(upOpDecls('LTL, false), 'Formula)
+		getMbs(M)
+		getEqs(M)
+		getRls(M)
+		getStrats(M)
+		getSds(M)
+	endsm [owise] .
+
+	*** Filter operations by their range type
+	op filterRange : OpDeclSet Type -> OpDeclSet .
+
+	eq filterRange(none, Ty) = none .
+	eq filterRange(op Q : TyL -> Ty [OpAttrs] . Ops, Ty) =
+		op Q : TyL -> Ty [OpAttrs] . filterRange(Ops, Ty) .
+	eq filterRange(op Q : TyL -> OtherTy:Type [OpAttrs] . Ops, Ty) =
+		filterRange(Ops, Ty) [owise] .
+
+	*** Convert an LTL formula to be used by MULTISTRAT-MODEL-CHECKER (the
+	*** input may not be reduced, so we handle derived operators too)
+	op adaptFormula : Term -> Term .
+
+	eq adaptFormula('True.Formula) = 'True.Formula .
+	eq adaptFormula('False.Formula) = 'False.Formula .
+	eq adaptFormula('~_[T]) = '~_[adaptFormula(T)] .
+	eq adaptFormula('O_[T]) = 'O_[adaptFormula(T)] .
+	eq adaptFormula('_/\_[T1, T2]) = '_/\_[adaptFormula(T1), adaptFormula(T2)] .
+	eq adaptFormula('_\/_[T1, T2]) = '_\/_[adaptFormula(T1), adaptFormula(T2)] .
+	eq adaptFormula('_U_[T1, T2]) = '_U_[adaptFormula(T1), adaptFormula(T2)] .
+	eq adaptFormula('_R_[T1, T2]) = '_R_[adaptFormula(T1), adaptFormula(T2)] .
+	eq adaptFormula('_->_[T1, T2]) = '_->_[adaptFormula(T1), adaptFormula(T2)] .
+	eq adaptFormula('_<->_[T1, T2]) = '_<->_[adaptFormula(T1), adaptFormula(T2)] .
+	eq adaptFormula('<>_[T]) = '<>_[adaptFormula(T)] .
+	eq adaptFormula('`[`]_[T]) = '`[`]_[adaptFormula(T)] .
+	eq adaptFormula('_W_[T1, T2]) = '_W_[adaptFormula(T1), adaptFormula(T2)] .
+	eq adaptFormula('_|->_[T1, T2]) = '_|->_[adaptFormula(T1), adaptFormula(T2)] .
+	eq adaptFormula('_=>_[T1, T2]) = '_=>_[adaptFormula(T1), adaptFormula(T2)] .
+	eq adaptFormula('_<=>_[T1, T2]) = '_<=>_[adaptFormula(T1), adaptFormula(T2)] .
+	eq adaptFormula(T) = 'prop[upTerm(T)] [owise] .
+
+	*** Continue processing the srew/dsrew commands
+	op processSrew : Object Nat SrewriteOption Term Multistrategy -> Configuration .
+
+	eq processSrew(Obj, N, SO, T, parseError(QL)) =
+		Obj write(stdout, repl, printTokens('Syntax 'error: QL '\n)) .
+	ceq processSrew(Obj, N, SO, T, (SL, St)) = Obj
+		if RP? == failure then
+			write(stdout, repl, "Cannot create multistrategies context")
+		else
+			< srewer : SRewriter | task: srewTask(
+				getTargetModule(Obj),
+				getTerm(RP?),
+				applySubs(St, 'N:Nat <- upTerm(length(SL))),
+				SO, 0, N) >
+		fi
+	if RP? := metaReduce(['MULTISTRAT-STRAT], 'makeContext[upTerm(T), upTerm(SL),
+				upTerm(getTargetModule(Obj))]) .
+
+	*** Continue processing the check command
+	op processCheck : Module Term -> Configuration .
+
+	eq processCheck(M, 'true.Bool) = write(stdout, repl, "The property is satisfied.\n") .
+	eq processCheck(M, 'false.Bool) = write(stdout, repl, "Error while trying to model check.\n") .
+	eq processCheck(M, 'counterexample[T1, T2]) =
+		write(stdout, repl, printTokens(formatCounterexample(M, T1, T2))) .
+	eq processCheck(M, KT) = write(stdout, repl, "Error while trying to model check.\n") [owise] .
+
+	***
+	*** Parsing multistrategies (the last strategy is the control one)
+
+	sort Multistrategy .
+	subsort StrategyList < Multistrategy .
+	op parseError : QidList -> Multistrategy [ctor] .
+	eq St, parseError(QL) = parseError(QL) .
+
+	op parseMultistrat : QidList Module -> Multistrategy .
+	op parseMultistrat : QidList QidList Nat Module -> Multistrategy .
+
+	eq parseMultistrat(QL, M) = parseMultistrat(QL, nil, 0, M) .
+	eq parseMultistrat(nil, AQL, N, M) = parseError('unexpected 'end 'of 'tokens) .
+	eq parseMultistrat('`( QL, AQL, N, M) = parseMultistrat(QL, AQL '`(, s(N), M) .
+	eq parseMultistrat('`) QL, AQL, s(N), M) = parseMultistrat(QL, AQL '`), N, M) .
+	eq parseMultistrat('`, QL, AQL, s(N), M) = parseMultistrat(QL, AQL '`,, N, M) .
+	eq parseMultistrat('`, QL, AQL, 0, M) = if metaParseStrategy(M, none, AQL) :: Strategy then
+			metaParseStrategy(M, none, AQL), parseMultistrat(QL, nil, 0, M)
+		else
+			parseError('cannot 'parse 'strategy '\c AQL '\o)
+		fi .
+	eq parseMultistrat('by QL, AQL, 0, M) = if metaParseStrategy(M, none, AQL) :: Strategy then
+			metaParseStrategy(M, none, AQL), parsePolicy(QL, M)
+		else
+			parseError('cannot 'parse 'strategy '\c AQL '\o)
+		fi .
+	eq parseMultistrat(Q QL, AQL, N, M) = parseMultistrat(QL, AQL Q, N, M) [owise] .
+
+	op parsePolicy  : QidList Module -> Multistrategy .
+	op parsePolicy2 : Term Module -> Multistrategy .
+
+	eq parsePolicy(QL, M) = if metaParse(['MULTISTRAT-REPL-GRAMMAR], QL, '@Policy@) :: ResultPair then
+			parsePolicy2(getTerm(metaParse(['MULTISTRAT-REPL-GRAMMAR], QL, '@Policy@)), M)
+		else
+			parseError('cannot 'parse 'policy '\c QL '\o)
+		fi .
+
+	eq parsePolicy2('concurrent.@Policy@, M) = 'freec[[empty]] .	*** Tal vez convendría elegir entre free y freec
+	eq parsePolicy2('turns.@Policy@, M) = 'turns[['0.Zero, 'N:Nat]] .
+	eq parsePolicy2('concurrent[T], M) = 'freec[[T]] .
+	eq parsePolicy2('turns[T], M) = 'turns[['0.Zero, 'N:Nat, T]] .
+	eq parsePolicy2('custom_['bubble[T]], M) =
+		if metaParseStrategy(['MULTISTRAT-STRAT], 'N:Nat, downTerm(T, (nil).QidList)) :: Strategy then
+			metaParseStrategy(['MULTISTRAT-STRAT], 'N:Nat, downTerm(T, (nil).QidList))
+		else
+			parseError('cannot 'parse 'custom 'policy)
+		fi .
+
+	***
+	*** Fprmatting counterxamples (based on membrane system example)
+
+	op formatCounterexample : Module Term Term -> QidList .
+
+	eq formatCounterexample(M, 'nil.TransitionList, '__[T2, TL2]) =
+		formatCCycle(M, TL2) .
+	eq formatCounterexample(M, 'nil.TransitionList, '`{_`,_`}[TL2]) =
+		formatCCycle(M, '`{_`,_`}[TL2]) .
+	eq formatCounterexample(M, '__[TL1], '__[TL2]) =
+		formatCPath(M, TL1)
+		formatCCycle(M, TL2) .
+	eq formatCounterexample(M, '__[TL1], '`{_`,_`}[TL2]) =
+		formatCPath(M, TL1)
+		formatCCycle(M, '`{_`,_`}[TL2]) .
+	eq formatCounterexample(M, '`{_`,_`}[TL1], '__[TL2]) =
+		formatCPath(M, '`{_`,_`}[TL1])
+		formatCCycle(M, TL2) .
+	eq formatCounterexample(M, T1, T2) =
+		formatCPath(M, T1)
+		formatCCycle(M, T2) [owise] .
+
+	op formatCPath : Module TermList -> QidList .
+	op formatCCycle : Module NeTermList -> QidList .
+
+	eq formatCPath(M, empty) = nil .
+	eq formatCPath(M, ('`{_`,_`}[T1, T2], TL)) =
+		'\r '| '\o '\s metaPrettyPrint(M, T1) '\n
+		'\r '∨ '\o '\s formatStep(T2) '\n formatCPath(M, TL) .
+
+	eq formatCCycle(M, '`{_`,_`}[T1, 'deadlock.RuleName]) =
+		'\g 'X '\o '\s metaPrettyPrint(M, T1) '\n .
+	eq formatCCycle(M, '`{_`,_`}[T1, 'step[T2, 'deadlock.RuleName]]) =
+		'\g 'X '\o '\s metaPrettyPrint(M, T1) '\n .
+	eq formatCCycle(M, '`{_`,_`}[T1, T2]) =
+		'\r '| '| '\o '\s metaPrettyPrint(M, T1) '\n
+		'\r '< '∨ '\o '\s formatStep(T2) '\n [owise] .
+	eq formatCCycle(M, ('`{_`,_`}[T1, T2], '`{_`,_`}[T3, T4], TL)) =
+		'\r '| '| '\o '\s metaPrettyPrint(M, T1) '\n
+		'\r '| '∨ '\o '\s formatStep(T2) '\n formatCCycle(M, ('`{_`,_`}[T3, T4], TL)) .
+
+	op formatStep : Term -> QidList .
+	eq formatStep('step[T1, T2]) = '\c qid(string(downTerm(T1, 0), 10)) '\o 'does downTerm(T2, 'unknown) .
+	eq formatStep(T) = 'unknown .
+
+	*** The term in the transition pair
+	op transTerm : Term -> Term .
+	eq transTerm('`{_`,_`}[T1, T2]) = T1 .
+
+
+	***
+	*** Auxiliary functions and resources
+
+	*** Clear all of the attributes of an object
+	*** It is used to clean the meta-modules when the session has
+	*** terminated, since otherwise a lot of text will be shown.
+	op clearAttrs : Object -> Object .
+	eq clearAttrs(< O : C | Attrs >) = < O : C | none > .
+
+	*** Length of a strategy list
+	op length : StrategyList -> Nat .
+
+	eq length(empty) = 0 .
+	eq length((St, SL)) = s(length(SL)) .
+
+	*** String shown by the REPL
+	ops helpText greetingText : -> String .
+	op moduleLoaded : Qid -> String .
+
+	eq helpText = printTokens('Available 'commands: '\n
+		'\s '\s '\! 'select '\o '<modulename|meta-module> '\! '. '\o '\n
+		'\s '\s '\t 'Selects 'the 'target 'module. '\n
+		'\s '\s '\! 'srew '\o '<term> '\! 'using '\o '<strategyList> '\! 'by '\o '<policy>  '\! '. '\o '\n
+		'\s '\s '\t 'Rewrites 'a 'term 'using 'multiple 'strategies '\n
+		'\s '\s '\! 'dsrew '\o '<term> '\! 'using '\o '<strategyList> '\! 'by '\o '<policy>  '\! '. '\o '\n
+		'\s '\s '\t 'Rewrites 'a 'term 'using 'multiple 'strategies 'in 'a 'depth-first 'way '\n
+		'\s '\s '\! 'check '\o '<formula> '\! 'from '\o '<term> '\! 'using '\o '<strategyList> '\! 'by '\o '<policy>  '\! '. '\o '\n
+		'\s '\s '\t 'Check 'a 'LTL 'formula 'against 'a 'multistrategies 'model '\n
+		'\n
+		'Strategy 'lists 'are 'comma-separated 'lists 'of 'strategy 'expressions.
+		'Policies 'are 'either: '\n
+		'\s '\s '\! 'concurrent '\o 'or '\! 'concurrent '\o '`( '\m 'n '\o '`) 'where '\m 'n '\o 'is 'a 'bound 'on 'the 'number 'of
+		'steps '`, '\n
+		'\s '\s '\! 'turns '\o 'or '\! 'turns '\o '`( '\m 'n '\o '`) 'where '\m 'n '\o 'is 'a 'bound 'on 'the 'number 'of
+		'turns '`, '\n
+		'\s '\s 'or '\! 'custom '\o '<strategyExpr> 'for 'custom 'control 'strategies. '\n
+	) .
+
+	eq greetingText = printTokens(
+		'\n '\t '\t '\! '** 'Multistrategies 'playground '** '\o '\n '\n
+	) .
+
+	eq moduleLoaded(Q1) = printTokens(
+		'Module '\b Q1 '\o 'is 'now 'the 'current 'module. '\n
+	) .
+endm
+
+sload tictactoe
+select MULTISTRAT-REPL .
+
+*** set print conceal on .
+*** set print attribute on .
+*** print conceal fmod_is_sorts_.____endfm .
+*** print conceal mod_is_sorts_._____endm .
+*** print conceal smod_is_sorts_._______endsm .
+
+erew <> < repl : MultiStratREPL | none > initREPL(repl) .

@@ -1,0 +1,380 @@
+***
+*** Producer and consumer and mutual exclusion problems using semaphores.
+*** Different process scheduling policies are defined using strategies
+***
+*** Based on the infrastructure for the Dekker algorithm model checker
+*** example in All about Maude.
+***
+
+fmod MEMORY is
+	protecting INT .
+	protecting QID .
+	sorts Memory .
+	op none  : -> Memory [ctor] .
+	op __    : Memory Memory -> Memory [ctor assoc comm id: none] .
+	op [_,_] : Qid Int -> Memory [ctor] .
+endfm
+
+fmod TESTS is
+	protecting MEMORY .
+	sort Test .
+	op _=_ : Qid Int -> Test [ctor] .
+	op eval : Test Memory ~> Bool .
+
+	var  Q    : Qid .
+	var  M    : Memory .
+	vars N N' : Int .
+
+	eq eval(Q = N, [Q, N'] M) = N == N' .
+endfm
+
+fmod SEQUENTIAL is
+	protecting TESTS .
+	sorts UserStatement LoopingUserStatement Program .
+	subsort LoopingUserStatement < UserStatement < Program .
+	op skip           : -> Program [ctor] .
+	op _;_            : Program Program -> Program [ctor prec 61 assoc id: skip] .
+	op _:=_           : Qid Int -> Program [ctor] .
+	op if_then_fi     : Test Program -> Program [ctor] .
+	op while_do_od    : Test Program -> Program [ctor] .
+	op repeat_forever : Program -> Program [ctor] .
+endfm
+
+mod PARALLEL is
+	protecting SEQUENTIAL .
+	sorts Pid Process Soup MachineState .
+	subsort Process < Soup .
+	op [_,_]   : Pid Program -> Process [ctor] .
+	op empty   : -> Soup [ctor] .
+	op _|_     : Soup Soup -> Soup [ctor prec 61 assoc comm id: empty] .
+	op {_,_,_} : Soup Memory Pid -> MachineState [ctor] .
+
+	vars P R : Program .
+	var  S   : Soup .
+	var  U   : UserStatement .
+	var  L   : LoopingUserStatement .
+	vars I J : Pid .
+	var  M   : Memory .
+	var  Q   : Qid .
+	vars N X : Int .
+	var  T   : Test .
+
+	rl [exec] : {[I, U ; R] | S, M, J} => {[I, R] | S, M, I} .
+
+	rl [exec] : {[I, L ; R] | S, M, J} => {[I, L ; R] | S, M, I} .
+
+	rl [exec] : {[I, (Q := N) ; R] | S, [Q, X] M, J}
+		=> {[I, R] | S, [Q, N] M, I} .
+
+	rl [exec] : {[I, if T then P fi ; R] | S, M, J}
+		=> {[I, if eval(T, M) then P else skip fi ; R] | S, M, I} .
+
+	rl [exec] : {[I, while T do P od ; R] | S, M, J}
+		=> {[I, if eval(T, M) then (P ; while T do P od) else skip fi ; R] | S, M, I} .
+
+	rl [exec] : {[I, repeat P forever ; R] | S, M, J}
+		=> {[I, P ; repeat P forever ; R] | S, M, I} .
+endm
+
+view Pid from TRIV to PARALLEL is
+	sort Elt to Pid .
+endv
+
+mod SEMAPHORE is
+	extending PARALLEL .
+	protecting QID-SET .
+	protecting SET{Pid} .
+
+	op wait : Qid -> Program [ctor] .
+	op signal : Qid -> Program [ctor] .
+
+	var  Q   : Qid .
+	vars I J : Pid .
+	var  N   : Int .
+	var  R   : Program .
+	var  M   : Memory .
+	var  S   : Soup .
+
+	crl [exec] : {[I, wait(Q) ; R] | S, [Q, N] M, J}
+	          => {[I, R] | S, [Q, N - 1] M, I} if N > 0 .
+	rl [exec]  : {[I, signal(Q) ; R] | S, [Q, N] M, J}
+	          => {[I, R] | S, [Q, N + 1] M, I} .
+endm
+
+mod IO is
+	extending PARALLEL .
+
+	*** Input/output operation
+	op io : -> Program  [ctor] .
+
+	vars I J : Pid .
+	var  R   : Program .
+	var  S   : Soup .
+	var  M   : Memory .
+
+	rl [io] : {[I, io ; R] | S, M, J} => {[I, R] | S, M, I} .
+endm
+
+smod SCHEDULER is
+	extending SEMAPHORE .
+	extending IO .
+	protecting LIST{Pid} .
+
+	*** The next instruction may be executed by any process
+	strat free @ MachineState .
+	*** The next instruction is executed by the current process unless
+	*** blocked. Processes are blocked when the 'exec' rule cannot be
+	*** applied for them. This currently happens in three cases: when
+	*** the code is exhausted, when they execute 'wait' in a closed
+	*** semaphore, and when they reach an IO operation. IO operations
+	*** are consumed when a process is awaken.
+	strat blocked @ MachineState .
+	*** As above, but processes are selected in round-robin, i.e. a
+	*** process that has just been executed will not be executed
+	*** until the remaining processes have run (unless they cannot be
+	*** awaken). The process queue is the first argument of the strategy.
+	*** It can be initially empty or incomplete, in which case it will
+	*** be filled non-determinstically with non-blocked processes.
+	strat roundRobin : List{Pid} @ MachineState .
+	*** As above, but with preemption by time
+	*** (the first number is the remaining executions for
+	*** the current process, the second number is the time slice)
+	strat roundRobin : List{Pid} Nat Nat @ MachineState .
+	*** Simplified round-robin using an iteration to be interpreted as the
+	*** Kleene star
+	strat roundRobin* : List{Pid} @ MachineState .
+
+	var  Q          : Qid .
+	vars I J P      : Pid .
+	vars LP LP1 LP2 : List{Pid} .
+	vars N K        : Nat .
+	var  MS         : MachineState .
+	var  S          : Soup .
+	var  M          : Memory .
+	var  R          : Program .
+
+	sd free := all ; free .
+
+	sd blocked := ((matchrew MS s.t. {S, M, P} := MS
+			by MS using exec[I <- P]) or-else (try(io) ; exec))
+	              ; blocked .
+
+
+	sd roundRobin(nil) := matchrew MS s.t. {[P, R] | S, M, J} := MS
+				by MS using (exec[I <- P] ; roundRobin(P)) .
+	sd roundRobin(P LP) :=
+		*** Continue with the current process if possible
+		exec[I <- P] ? roundRobin(P LP) : (try(io) ; (
+		*** Otherwise, find the next process. In case there is a process
+		*** not included in the queue, try to execute it unless blocked.
+		(matchrew MS s.t. {[I, R] | S, M, J} := MS /\ not(occurs(I, P LP))
+			by MS using exec[I <- I])
+		? (matchrew MS s.t. {S, M, I} := MS by MS using roundRobin(I LP P))
+		*** Otherwise, execute the following process in the queue.
+		: roundRobin(LP P))
+	) .
+
+
+	sd roundRobin(nil, K, N) := matchrew MS s.t. {[P, R] | S, M, J} := MS
+				      by MS using (exec[I <- P] ; roundRobin(P, N, N)) .
+
+	*** The process time is exhausted, we must change to another process
+	sd roundRobin(P LP, 0, N) := try(io) ; (
+		*** If there is a resumable process outside the queue,
+		*** try to execute it.
+		(matchrew MS s.t. {[I, R] | S, M, J} := MS /\ not(occurs(I, P LP))
+					by MS using (exec[I <- I]))
+		? (matchrew MS s.t. {S, M, I} := MS by MS using roundRobin(I LP P, N, N))
+		*** Otherwise, change to the following process in the queue.
+		: roundRobin(LP P, N, N)) .
+
+	*** The process still has time, so continue executing it if possible
+	sd roundRobin(P LP, s(K), N) := exec[I <- P] ? roundRobin(P LP, K, N) :
+		*** Otherwise, treat the case as if the process time was
+		*** exhausted to share code.
+		roundRobin(P LP, 0, N) .
+
+	*** roundRobin with iteration
+	sd roundRobin*(P LP) := (exec[I <- P] ? exec[I <- P] * ; amatch ['mutex, s(N)] : idle) ; roundRobin*(LP P) .
+endsm
+
+mod EXAMPLES-COMMON is
+	extending SEMAPHORE .
+	extending IO .
+
+	subsort Int < Pid .
+
+	*** Critical section
+	op crit : -> UserStatement [ctor] .
+	*** Remainder
+	op rem  : -> LoopingUserStatement [ctor] .
+endm
+
+mod PRODUCER-CONSUMER is
+	extending EXAMPLES-COMMON .
+
+	ops producer consumer : -> Program .
+	op initialMem         : -> Memory .
+	op initial            : -> MachineState .
+
+	eq producer = repeat
+		wait('emptyCount) ;
+		wait('useQueue) ;
+		crit ;
+		signal('useQueue) ;
+		signal('fullCount)
+	forever .
+
+	eq consumer = repeat
+		wait('fullCount) ;
+		wait('useQueue) ;
+		crit ;
+		signal('useQueue) ;
+		signal('emptyCount)
+	forever .
+
+	eq initialMem = ['useQueue, 1] ['emptyCount, 5] ['fullCount, 0] .
+	eq initial = { [1, producer] | [2, consumer], initialMem, 0 } .
+endm
+
+mod CRITICAL-SECTION is
+	extending EXAMPLES-COMMON .
+
+	ops p pIo : -> Program .
+
+	eq p = repeat
+		wait('mutex) ;
+		crit ;
+		signal('mutex)
+	forever .
+
+	eq pIo = repeat
+		wait('mutex) ;
+		crit ;
+		signal('mutex) ;
+		io
+	forever .
+
+	var N : Nat .
+	var P : Program .
+
+	op initialMem  : -> Memory .
+	op initial     : -> MachineState .
+	op initial     : Nat Program -> MachineState .
+	op initialSoup : Nat Program -> Soup .
+
+	eq initialMem = ['mutex, 1] .
+	eq initial = initial(4, p) .
+	eq initial(N, P) = { initialSoup(N, P), initialMem, 0 } .
+	eq initialSoup(0, P) = empty .
+	eq initialSoup(s(N), P) = initialSoup(N, P) | [s(N), P] .
+endm
+
+sload model-checker
+
+mod EXAMPLES-CHECK is
+	protecting EXAMPLES-COMMON .
+	including MODEL-CHECKER .
+	including LTL-SIMPLIFIER .
+
+	subsort MachineState < State .
+	ops inCrit in-rem exec : Pid -> Prop .
+
+	var  M   : Memory .
+	var  MS  : MachineState .
+	var  R   : Program .
+	var  S   : Soup .
+	vars I J : Pid .
+
+	eq {[I, crit ; R] | S, M, J} |= inCrit(I) = true .
+	eq {[I, rem ; R] | S, M, J} |= in-rem(I) = true .
+	eq {S, M, J} |= exec(J) = true .
+
+	eq MS |= inCrit(I) = false [owise] .
+	eq MS |= in-rem(I) = false [owise] .
+	eq MS |= exec(J) = false [owise] .
+endm
+
+smod PC-SCHECK is
+	protecting SCHEDULER .
+	including EXAMPLES-CHECK .
+	including PRODUCER-CONSUMER .
+	including STRATEGY-MODEL-CHECKER .
+
+	strat roundRobin rr-fixed rr-preemptive @ MachineState .
+
+	sd roundRobin    := roundRobin(nil) .
+	sd rr-fixed      := roundRobin(1 2) .
+	sd rr-preemptive := roundRobin(1 2, 5, 5) .
+endsm
+
+mod CS-PROPS is
+	protecting EXAMPLES-CHECK .
+	protecting CRITICAL-SECTION .
+	protecting LTL .
+
+	*** Only one process at the critical section
+	op onlyOne : Nat -> Formula .
+
+	vars N M : Nat .
+
+	eq onlyOne(N) = []~ inCritFormula(N, N) .
+
+	op inCritFormula : Nat Nat -> Formula .
+	eq inCritFormula(0, 0) = False .
+	eq inCritFormula(1, s(M)) = inCritFormula(M, M) .
+	eq inCritFormula(s(N), M) = (inCrit(N) /\ inCrit(M)) \/ inCritFormula(N, M) [owise] .
+
+	*** Instantiation with 4 processes
+	op onlyOne : -> Formula .
+	eq onlyOne = onlyOne(4) .
+endm
+
+smod CS-SCHECK is
+	protecting SCHEDULER .
+	including CS-PROPS .
+	including STRATEGY-MODEL-CHECKER .
+
+	strats roundRobin rr-fixed rr-preemptive rr-preemptive-nil @ MachineState .
+
+	var MS : MachineState .
+
+	sd roundRobin    := roundRobin(nil) .
+	sd rr-fixed      := roundRobin(1 2 3 4) .
+	sd rr-preemptive := roundRobin(1 2 3 4, 5, 5) .
+	sd rr-preemptive-nil := roundRobin(nil, 5, 5) .
+
+	strat rr-fixed* @ MachineState .
+
+	sd rr-fixed* := roundRobin*(1 2 3 4) .
+endsm
+
+eof
+
+set verbose on .
+
+*** These properties can be model-checked with both examples and using different
+*** strategies. In producer-consumers, the semaphores guarantee that all of them
+*** hold in the unrestricted system, so they also hold for any strategy.
+red modelCheck(initial, []~ (inCrit(1) /\ inCrit(2))) .
+red modelCheck(initial, []<> exec(1) -> []<> inCrit(1)) .
+red modelCheck(initial, []<> exec(1) /\ []<> exec(2) -> []<> inCrit(1) /\ []<> inCrit(2)) .
+
+red modelCheck(initial, []<> inCrit(1)) .
+red modelCheck(initial, []<> exec(1)) .
+
+*** These are for the critical-section with four processes example.
+*** The first hold in the unrestricted system, thus for all strategies.
+red modelCheck(initial, onlyOne) .
+*** This predicate does not hold but with the preemptive scheduler.
+*** Moreover, roundRobin and rr-fixed can be used to obtain much shorter
+*** counterexamples than those produced by the standard model checker,
+*** which are still valid for the unrestricted case.
+red modelCheck(initial, []<> inCrit(2)) .
+*** Thanks to the IO blocking, the property also hold with the roundRobin
+*** and rr-fixed strategies (the roundRobin automaton has many states).
+red modelCheck(initial(4, pIo), []<> inCrit(2)) .
+
+*** Concrete executions included in the benchmarks
+red modelCheck(initial(6, p), []<> inCrit(1), 'rr-preemptive-nil) .
+red modelCheck(initial(4, pIo), []<> inCrit(1), 'roundRobin) .

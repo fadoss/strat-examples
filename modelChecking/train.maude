@@ -1,0 +1,203 @@
+***
+*** Upaal's train-gate example (without timing)
+***
+*** Adapted from the SPIN distribution examples (train.pml)
+***
+
+sload model-checker
+
+mod TRAINGATE is
+	protecting LIST{Nat} .
+	extending CONFIGURATION .
+
+	*** Train object
+	op Train : -> Cid [ctor] .
+	op train : Nat -> Oid [ctor] .
+
+	sort TrainState .
+	ops safe approaching stopped start crossed : -> TrainState [ctor] .
+
+	op state:_ : TrainState -> Attribute [ctor gather (&)] .
+
+	*** Gate object
+	op Gate : -> Cid [ctor] .
+	op gate : -> Oid [ctor] .
+
+	op queue:_ : List{Nat} -> Attribute [ctor gather (&)] .
+	op free:_  : Bool -> Attribute [ctor gather (&)] .
+
+	*** Messages
+	op go    : Oid Oid -> Msg [ctor msg] .	*** Train, you can go through the gate.
+	op stop  : Oid Oid -> Msg [ctor msg] .	*** Train, you must stop.
+
+	op appr  : Oid Oid -> Msg [ctor msg] .	*** Gate, a train is approaching to you.
+	op leave : Oid Oid -> Msg [ctor msg] .	*** Gate, a train has left.
+
+	***
+	*** Rules
+
+	*** The train announces it is approaching the gate
+	rl [approach] : < O : Train | state: safe >
+	             => < O : Train | state: approaching > appr(gate, O) .
+
+	*** The train is granted permission to continue
+	rl [go]       : < O : Train | state: S > go(O, gate)
+	             => < O : Train | state: start > .
+
+	*** The train is told to stop at the gate
+	rl [stop]     : < O : Train | state: approaching > stop(O, gate)
+	             => < O : Train | state: stopped > .
+
+	*** The train has passed the crossing
+	rl [crossed]  : < O : Train | state: start >
+	             => < O : Train | state: crossed > leave(gate, O) .
+
+
+	*** The gate deals with approximation announcements
+	rl [gateReq] : < gate : Gate | free: false, queue: Q > appr(gate, train(N))
+	            => < gate : Gate | free: false, queue: Q N > stop(train(N), gate) .
+	rl [gateReq] : < gate : Gate | free: true, queue: nil > appr(gate, O)
+	            => < gate : Gate | free: false, queue: nil > go(O, gate) .
+
+	*** The gate deals with the announce that a train has abandoned the crossing
+	rl [leave]   : < gate : Gate | free: false, queue: L M R > leave(gate, train(N))
+	            => < gate : Gate | free: false, queue: L R > go(train(M), gate) .
+	rl [leave]   : < gate : Gate | free: false, queue: nil > leave(gate, O)
+	            => < gate : Gate | free: true, queue: nil > .
+
+	*** The train passes from 'crossed' to 'safe' state
+	rl [reset] : < O : Train | state: crossed > => < O : Train | state: safe > .
+
+
+	var  O     : Oid .
+	vars N M   : Nat .
+	var  S     : TrainState .
+	vars L R Q : List{Nat} .
+endm
+
+mod TRAINGATE-GEN is
+	protecting TRAINGATE .
+
+	*** Generate a example configuration for N trains
+	op makeTrainConf : Nat -> Configuration .
+
+	eq makeTrainConf(0) = < gate : Gate | queue: nil, free: true > .
+	eq makeTrainConf(s(N)) = < train(s(N)) : Train | state: safe > makeTrainConf(N) .
+
+	var N : Nat .
+endm
+
+smod TRAINGATE-STRAT is
+	protecting TRAINGATE .
+
+	strat trainActions fifo lifo free @ Configuration .
+
+	*** These strategies ensures that messages are received
+	*** immediately. The number of configurations lost by this
+	*** restriction are irrelevant for the correctness of the
+	*** system assuming that messages are attended in order.
+
+	sd trainActions := approach ; gateReq ; (stop | go) | reset .
+
+	*** Trains are granted access in FIFO, LIFO or random order
+
+	sd fifo := (trainActions | crossed ; leave[L <- nil] ; try(go)) ; fifo .
+	sd lifo := (trainActions | crossed ; leave[R <- nil] ; try(go)) ; lifo .
+	sd free := (trainActions | crossed ; leave           ; try(go)) ; free .
+
+	vars L R : List{Nat} . 
+endsm
+
+mod TRAINGATE-PREDS is
+	protecting TRAINGATE .
+	including SATISFACTION .
+
+	subsort Configuration < State .
+
+	*** Train N is in the given state
+	op tstate : Nat TrainState -> Prop [ctor] .
+
+	eq < train(N) : Train | state: S > C |= tstate(N, S) = true .
+	eq C |= tstate(N, S) = false [owise] .
+
+	*** Count of trains in state is below a number
+	op cstate : TrainState Nat -> Prop [ctor] .
+	op countState : Configuration TrainState -> Nat .
+
+	eq C |= cstate(S, N) = countState(C, S) <= N .
+
+	eq countState(< train(N) : Train | state: S > C, S) = s(countState(C, S)) .
+	eq countState(C, S) = 0 [owise] .
+
+	*** Queue list size is below N
+	op queueBound : Nat -> Prop [ctor] .
+
+	eq < gate : Gate | queue: Q, Attrs > C |= queueBound(N) = size(Q) < N .
+	eq C |= queueBound(N) = false [owise] .
+
+	*** Gate is occupied
+	op gateOccupied : -> Prop [ctor] .
+
+	eq < gate : Gate | free: false, Attrs > C |= gateOccupied = true .
+	eq C |= gateOccupied = false [owise] .
+
+	var N     : Nat .
+	var S     : TrainState .
+	var C     : Configuration .
+	var Q     : List{Nat} .
+	var Obj   : Object .
+	var Attrs : AttributeSet .
+endm
+
+mod TRAINGATE-PROPS is
+	protecting TRAINGATE-PREDS .
+	protecting MODEL-CHECKER .
+
+	*** Some properties from the original SPIN example
+	***
+	*** c1: the gate becomes occupied infinitely often
+	*** c2: train(1) crosses infinitely often (does not hold, see c8)
+	*** c3/c4: train(1) eventually crosses while some others are stopped
+	*** c5: the number of trains in the crossed state is always below 1
+	*** c6: the size of the queue is strictly bounded by the number of trains
+	*** c8: every train that approaches the gate eventually crosses it
+
+	ops c1 c2 c3 c4 c5 c8 : -> Formula .
+	op  c6 : Nat -> Formula .
+
+	eq c1    = [] <> gateOccupied .
+	eq c2    = [] <> tstate(1, crossed) .
+	eq c3    = [] <> (tstate(1, crossed) /\ tstate(2, stopped)) .
+	eq c4    = [] <> (tstate(1, crossed) /\ tstate(2, stopped) /\ tstate(3, stopped) /\ tstate(4, stopped)) .
+	eq c5    = [] cstate(start, 1) .
+	eq c6(N) = [] queueBound(N) .
+	eq c8    = [] (tstate(1, approaching) -> <> tstate(1, crossed)) .
+
+	*** Other properties
+	***
+	*** f1: if train(1) approaches the gate, it will be eventually given way
+	*** f2: if train(1) approaches the gate infinitely often, it crosses the gate infinitely often
+	*** f3: every train approaching the gate is eventually given way
+
+	ops f1 f2 : -> Formula .
+	op  f3    : Nat -> Formula .
+
+	eq f1 = [] (tstate(1, approaching) -> <> tstate(1, start)) .
+	eq f2 = ([] <> tstate(1, approaching)) -> ([] <> tstate(1, crossed)) .
+
+	eq f3(0)    = True .
+	eq f3(s(N)) = ([] (tstate(s(N), approaching) -> <> tstate(s(N), start))) /\ f3(N) .
+
+	var N : Nat .
+endm
+
+smod TRAINGATE-CHECK is
+	protecting TRAINGATE-PROPS .
+	protecting TRAINGATE-STRAT .
+	protecting TRAINGATE-GEN .
+	including STRATEGY-MODEL-CHECKER .
+endsm
+
+eof
+
+red modelCheck(makeTrainConf(N), cX/fX, 'fifo/'lifo) .

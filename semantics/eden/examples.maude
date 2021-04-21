@@ -1,0 +1,282 @@
+***
+*** The Eden programming language in Maude (examples)
+***
+*** Source: Using Maude and Its Strategies for Defining a Framework for Analyzing Eden Semantics
+***	    Mercedes Hidalgo-Herrero, Alberto Verdejo, and Yolanda Ortega-Mallén
+***	    http://maude.ucm.es/eden/
+***
+
+in eden-strats.maude
+
+mod EXAMPLES{X :: NF, Y :: ET} is
+	pr EDEN{X, Y} .
+***	pr STATISTICS .
+
+	ops x y z x1 x2 x3 x4 z z1 z2 z3 : -> Std .
+
+	ops ex61 ex62 ex63 ex64 : -> Exp .
+
+	eq ex61 = let x1 = (\ y . (let z1 = y
+	                               z2 = (\ z . z)
+	                               z3 = (z2 z1)
+	                           in z3))
+	              x2 = (x1 x3)
+	              x3 = (x1 x4)
+	              x4 = n(1)
+	          in x2 .
+	op proc61 : -> Process .
+	eq proc61 = < "main", s("main") |- A -> ex61, 0, 0 > .
+
+	eq ex62 = let s("x") = s("x") in s("x") .
+	op proc62 : -> Process .
+	eq proc62 = < "main", s("main") |- A -> ex62, 0, 0 > .
+
+	eq ex63 = let s("x") = s("y")
+	              s("y") = s("x")
+	          in s("x") .
+	op proc63 : -> Process .
+	eq proc63 = < "main", s("main") |- A -> ex63, 0, 0 > .
+
+	eq ex64 = let s("x5") = n(1)
+	              s("x6") = (let s("x1") = (\ s("x") . s("x"))
+	                              s("x2") = (\ s("x") . s("x"))
+	                              s("x3") = (s("x2") s("x1"))
+	                          in s("x3"))
+	              s("x7") = (s("x6") s("x5"))
+	          in s("x7") .
+	op proc64 : -> Process .
+	eq proc64 = < "main", s("main") |- A -> ex64, 0, 0 > .
+
+	op proc65 : -> Process .
+---	eq proc65 = < "main", s("main") |- A -> s("x5") +
+---                        s("x3") |- I -> n(1) +
+---                        s("x4") |- I -> \ s("x") . s("x") +
+---                        s("x5") |- I -> s("x4") # s("x3"),
+---                5, 5 > .
+	eq proc65 = < "main", s("main") |- A -> let s("x0") = (\ s("x") . s("x"))
+	                                             s("x1") = (n(1))
+	                                             s("x2") = (s("x0") # s("x1"))
+	                                         in s("x2"), 0, 0 > .
+
+	op proc66 : -> Process .
+	eq proc66 = < "main", s("main") |- A -> s("x0") +
+	                      s("x1") |- I -> s("x2") s("x2") +
+	                      s("x2") |- I -> \ s("s") . s("s") +
+	                      s("x0") |- I -> s("x1") # s("x2"),
+	              0, 2 > .
+	op proc67 : -> Process .
+	eq proc67 = < "main", s("main") |- A -> let s("x") = (s("y") # s("z"))
+	                                             s("y") = (\ s("s") . s("z"))
+	                                             s("z") = (s("t") s("t"))
+	                                             s("t") = (\ s("u") . s("u"))
+	                                         in s("x"), 0, 0 > .
+	op proc68 : -> Process .
+	eq proc68 = < "main", s("main") |- A -> let s("z1") = (s("z2") # s("z3"))
+	                                             s("z2") = (\ s("s") . (\ s("t") . s("z3")))
+	                                             s("z3") = (\ s("x") . s("z1"))
+	                                         in s("z1"), 0, 0 > .
+	op proc69 : -> Process .
+	eq proc69 = < "main", s("main") |- A -> let s("x") = (s("y") # s("z"))
+	                                             s("y") = (s("x") # s("z"))
+	                                             s("z") = (n(1))
+	                                         in s("y"), 0, 0 > .
+
+	op proc610 : -> Process .
+	eq proc610 = < "main", s("main") |- A -> let s("x") = (s("y") # s("z"))
+	                                             s("y") = (s("s") # s("z"))
+	                                             s("s") = (\ s("t") . (\ s("t'") . s("t")))
+	                                             s("z") = (n(1))
+	                                         in s("y"), 0, 0 > .
+
+	op proc612 : -> Process .
+	eq proc612 = < "main", s("main") |- A -> let s("x") = (s("y") # s("z"))
+	                                             s("z") = (\ s("t'") . n(1))
+	                                             s("y") = (\ s("t") . s("t"))
+	                                         in s("x"), 0, 0 > .
+
+	op proc614 : -> Process .
+	eq proc614 = < "main", s("main") |- A -> let s("x") = (s("y") s("z"))
+	                                             s("y") = (s("s") s("t"))
+	                                             s("s") = (\ s("u") . s("u"))
+	                                             s("t") = (\ s("u") . s("u"))
+	                                             s("z") = (n(1))
+	                                         in s("x"), 0, 0 > .
+
+	op proc618 : -> Process .
+	eq proc618 = < "main", s("main") |- A -> s("x7")   +
+	                       s("x0") |- B -> (s("x3") # s("x5"))  +
+	                       s("x1") |- B -> (s("x4") # s("x6"))  +
+	                       s("x2") |- I -> (\ s("t") . s("t"))+
+	                       s("x3") |- A -> (s("x2") s("x2"))+
+	                       s("x4") |- A -> (s("x2") s("x5"))+
+	                       s("x5") |- I -> (\ s("t") . s("t"))    +
+	                       s("x6") |- I -> (\ s("t") . n(2))+
+	                       s("x7") |- I -> (s("x2") s("x6")) , 0, 0 > .
+
+	op proclambda : -> Process .
+	eq proclambda = < "main", s("main") |- A -> let s("x") = (\ s("u") . (s("u") s("u")))
+													   s("y") = (s("x") s("x"))
+ 												in s("y"), 0, 0 > .
+
+	op procNAT : -> Process .
+	eq procNAT = < "main", s("main") |- A -> let s("x0") = (\ s("x") . s("x"))
+	                                             s("x1") = (n(1))
+	                                             s("x2") = (s("x0") # s("x1"))
+	                                             s("x3") = (s("x2") + s("x1"))
+	                                             s("x4") = (s("x3") + s("x5"))
+	                                             s("x5") = (s("x3"))
+	                                          in s("x4") , 0, 0 > .
+
+	op procIF0 : -> Process .
+	eq procIF0 = < "main", s("main") |- A -> let s("x0") = if0(s("x4"), s("x2"), s("x3"))
+	                                             s("x1") = (n(1))
+	                                             s("x2") = (n(2))
+	                                             s("x3") = (n(3))
+	                                             s("x4") = (s("x3") - s("x1"))
+	                                             s("x5") = (s("x3"))
+	                                          in s("x0") , 0, 0 > .
+
+	op eval : Exp -> Process .
+
+	ceq eval(E:Exp) = < "main", s("main") |- A -> E':Exp, 0, N:Nat >
+	 if < E':Exp, N:Nat > := norm(E:Exp, 0) .
+
+
+	op sum : Nat -> Exp .
+	eq sum(N:Nat) = let s("sum") = (\ s("x") . (if s("x") == n(0)
+	           then n(0)
+	           else s("x") + (s("sum") (s("x") - n(1))) endif))
+	         in s("sum") n(N:Nat) .
+
+	op sum2 : -> Exp .
+	eq sum2 = let s("sum") = (\ s("x") . (if s("x") > n(1)
+	            then s("x") + (s("sum") (s("x") - n(1)))
+	            else n(1) endif))
+	         in s("sum") n(6) .
+
+	op fib : Nat -> Exp .
+	eq fib(N:Nat) = let s("fib") =
+	              (\ x . (if x > n(1)
+	                      then (s("fib") (x - n(1))) + (s("fib") (x - n(2)))
+	                      else n(1) endif))
+	                in s("fib") n(N:Nat) .
+
+	op fib2 : Nat -> Exp .
+	eq fib2(N:Nat) = let s("fib2") = (\ s("x") .
+			(if s("x") > n(2)
+	                then (s("fib2") # (s("x") - n(1))) + (s("fib2") # (s("x") - n(2)))
+	                else
+				(if s("x") > n(1)
+	                	then (s("fib2") (s("x") - n(1))) + (s("fib2") (s("x") - n(2)))
+	                	else n(1)
+				endif)
+			endif))
+	         in s("fib2") n(N:Nat) .
+
+endm
+
+smod STRAT-EXAMPLES{X :: NF, Y :: ET} is
+	pr EXAMPLES{X, Y} .
+	pr STRAT-EDEN{X, Y} .
+endsm
+
+smod MAIN is
+	pr STRAT-EXAMPLES{NfEval, EtMax} .
+endsm
+
+
+eof
+srew [1] eval(fib2(2)) using start .
+
+
+srew [1] eval(fib(2)) using start .
+
+rewrites: 239300 in 170ms cpu (6709ms real) (1407647 rewrites/second)    12-4-05 powermac
+rewrites: 239298 in 11660ms cpu (12632ms real) (20522 rewrites/second)   11-4-05 powerbook
+rewrites: 1921665 in 17160ms cpu (18371ms real) (111985 rewrites/second) 3-4-05 two heaps powerbook
+rewrites: 1623868 in 15750ms cpu (16564ms real) (103102 rewrites/second) 23-3-05 powermac
+rewrites: 1639432 in 17750ms cpu (18688ms real) (92362 rewrites/second)  16-3-05 powermac
+
+
+srew [1] eval(sum(3)) using start .
+
+rewrites: 567693 in 670ms cpu (20363ms real) (847302 rewrites/second)   12-4-05 powermac
+rewrites: 3050124 in 34580ms cpu (36288ms real) (88204 rewrites/second) 23-3-05
+rewrites: 3083888 in 40070ms cpu (41867ms real) (76962 rewrites/second) 16-3-05
+
+
+srew [1] Sys(eval(fib)) using start .		*** This does not work and the following two give nothing
+
+srew [1] proc65 using let ; =pc=> .
+
+srew [1] proc610 using let ; =pc=> .
+cont using value .
+
+srew < "p", x |- I -> n(1) +
+	           s("y") |- A -> x +
+	           s("z") |- A -> x +
+	           s("t") |- A -> (let s("v") = n(2) in s("v")), 0, 0 >
+ using extend ; value ; contract .
+
+srew [ procNAT | 0 ] using run .	*** What is that syntax?
+
+srew [1] proc618 using =par=>p(s("main") . s("x3") . s("x4")) .
+
+srew < "p", s("y") |- I -> (\ s("z") . s("z")) +			 *** FIXME This example is wrong because =par=> must receive a parameter
+	           x |- A -> s("y") +
+	           s("t") |- A -> x, 0, 0 > using =par=> .
+
+red nh(s("t"), < "p", s("t") |- I -> s("x2") +
+	                     s("x2") |- B -> (let s("y1") = n(4)
+	                                          s("y2") = (\ s("z") . s("x3") # s("x4"))
+	                                      in s("y1")) +
+	                     s("x3") |- A -> n(6)  +
+	                     s("x4") |- A -> n(5), 8, 1 >) .
+
+srew nf(s("x1"), s("main") |- A -> s("x0") +
+	                      s("x1") |- I -> s("x2") s("x2") +
+	                      s("x2") |- I -> \ s("s") . s("s") +
+	                      s("x0") |- I -> s("x1") # s("x2") ) using strat-nf .	*** FIXME What is strat-nf
+
+< "main",
+	s("main")|- B -> s("main.45")+
+	s("main.44")|- I -> \ x .(let s("x.37")=(let s("x.1")= n(2)s("x.2")= x s("x.3")=(s("x.2")- s(
+	  "x.1"))in s("x.3"))s("x.38")=(let s("x.20")=(let s("x.4")= n(1)s("x.5")= x s("x.6")=(s("x.5")-
+	  s("x.4"))in s("x.6"))s("x.21")= n(1)s("x.22")=(let s("x.17")=(let s("x.15")=(s("main.44")s(
+	  "x.16"))s("x.16")=(let s("x.12")= n(2)s("x.13")= x s("x.14")=(s("x.13")- s("x.12"))in s(
+	  "x.14"))in s("x.15"))s("x.18")=(let s("x.10")=(s("main.44")s("x.11"))s("x.11")=(let s("x.7")=
+	  n(1)s("x.8")= x s("x.9")=(s("x.8")- s("x.7"))in s("x.9"))in s("x.10"))s("x.19")=(s("x.18")+ s(
+	  "x.17"))in s("x.19"))s("x.23")= if0(s("x.20"),s("x.21"),s("x.22"))in s("x.23"))s("x.39")=(let
+	  s("x.34")= s("x.25")s("x.24")=(let s("x.26")= n(2)s("x.27")= x s("x.28")=(s("x.27")- s(
+	  "x.26"))in s("x.28"))s("x.25")=(s("main.44")# s("x.24"))s("x.35")=(let s("x.29")=(let s(
+	  "x.31")= n(1)s("x.32")= x s("x.33")=(s("x.32")- s("x.31"))in s("x.33"))s("x.30")=(s("main.44")#
+	  s("x.29"))in s("x.30"))s("x.36")=(s("x.35")+ s("x.34"))in s("x.36"))s("x.40")= if0(s("x.37"),s(
+	  "x.38"),s("x.39"))in s("x.40"))+
+	s("main.45")|- B -> s("main.46")+
+	s("main.46")|- B -> s("main.51")+
+	s("main.47")|- I -> n(3)+
+	s("main.48")|- I -> n(1)+
+	s("main.49")|- I -> let s("x.20")=(let s("x.4")= n(1)s("x.5")= s("main.47")s("x.6")=(s("x.5")- s(
+	  "x.4"))in s("x.6"))s("x.21")= n(1)s("x.22")=(let s("x.17")=(let s("x.15")=(s("main.44")s(
+	  "x.16"))s("x.16")=(let s("x.12")= n(2)s("x.13")= s("main.47")s("x.14")=(s("x.13")- s("x.12"))in
+	  s("x.14"))in s("x.15"))s("x.18")=(let s("x.10")=(s("main.44")s("x.11"))s("x.11")=(let s("x.7")=
+	  n(1)s("x.8")= s("main.47")s("x.9")=(s("x.8")- s("x.7"))in s("x.9"))in s("x.10"))s("x.19")=(s(
+	  "x.18")+ s("x.17"))in s("x.19"))s("x.23")= if0(s("x.20"),s("x.21"),s("x.22"))in s("x.23")+
+	s("main.50")|- A -> let s("x.34")= s("x.25")s("x.24")=(let s("x.26")= n(2)s("x.27")= s(
+	  "main.47")s("x.28")=(s("x.27")- s("x.26"))in s("x.28"))s("x.25")=(s("main.44")# s("x.24"))s(
+	  "x.35")=(let s("x.29")=(let s("x.31")= n(1)s("x.32")= s("main.47")s("x.33")=(s("x.32")- s(
+	  "x.31"))in s("x.33"))s("x.30")=(s("main.44")# s("x.29"))in s("x.30"))s("x.36")=(s("x.35")+ s(
+	  "x.34"))in s("x.36")+
+	s("main.51")|- B -> s("main.50")+
+	s("main.52")|- I -> n(2)+
+	s("main.53")|- I -> n(3)+
+	s("main.54")|- I -> n(1), 0, 54 >
+
+	let s("x.11")= s("x.2")
+	s("x.1")=(let s("x.3")= n(2)s("x.4")= x s("x.5")=(s("x.4")- s("x.3"))in s(
+	  "x.5"))
+	s("x.2")=(s("fib2")# s("x.1"))
+	s("x.12")=(let s("x.6")=(let s("x.8")= n(1)s("x.9")= x s(
+	  "x.10")=(s("x.9")- s("x.8"))in s("x.10"))s("x.7")=(s("fib2")# s("x.6"))in s("x.7"))
+	s("x.13")=(
+	  s("x.12")+ s("x.11"))in s("x.13")

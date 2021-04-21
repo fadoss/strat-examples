@@ -1,0 +1,9 @@
+algorithms/dynprog
+
+srew [1] empty using solve((7 ; 3)) .
+
+smod MAIN2 is
+	protecting DYNAMIC-PROGRAMMING{Fibonnaci} .
+endsm
+
+srew empty using solve(15) .

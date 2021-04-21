@@ -1,0 +1,393 @@
+***
+*** Description. Sudoku Solver with Strategies
+***
+*** Author: Gustavo Santos-Garcia & Miguel Palomino
+*** Email: santos@usal.es, miguelpt@sip.ucm.es
+*** Date: Feb 10, 2005
+*** Version: 1.2.2
+***
+*** Modified by Rubén Rubio. Jul 25, 2018.
+***
+
+mod CONFIGURATION-FORMAT is
+	sorts Attribute AttributeSet .
+	subsort Attribute < AttributeSet .
+	op none : -> AttributeSet .
+	op _`,_ : AttributeSet AttributeSet -> AttributeSet
+		 [ctor assoc comm id: none	format (m! o sm! o)] .
+	sorts Oid Cid Object Configuration .
+	subsort Object < Configuration .
+	op <_:_|_> : Oid Cid AttributeSet -> Object
+		 [ctor object format (n r! o g o tm! ot d)] .
+	op none : -> Configuration .
+	op __ : Configuration Configuration -> Configuration
+		 [ctor config assoc comm id: none] .
+endm
+
+mod SUDOKU is
+	protecting NAT .
+	protecting QID .
+	protecting CONVERSION .
+	extending CONFIGURATION-FORMAT .
+
+
+	*** Cell (Grid, Given, Value and Number) definitions
+	ops cell rows :	-> Cid .
+	op id : Nat Nat -> Oid .
+	ops (grd`:_) (giv`:_) (num`:_) : Nat -> Attribute .
+	op	pss`:_ : Set -> Attribute .
+	op	val`:_ : List -> Attribute .
+
+
+********* Initialization of the sudoku *********
+
+--- Initial position of a sudoku according to the grid "grid".
+	sort Sudoku .
+	subsort Sudoku < Configuration .
+	op sudoku : List -> Sudoku .
+	eq sudoku(LL) = fill(1, 1, LL) .
+
+	op fill : Nat Nat List -> Object .
+	eq fill(R, C, (N ; LL)) =
+		 if C == 9 then
+				< id(R, C) : cell | grd : grd(R, C), pss : pss(N), num : num(N) >
+				fill(s R,	 1, LL)
+		 else < id(R, C) : cell | grd : grd(R, C), pss : pss(N), num : num(N) >
+					fill(	R, s C, LL)
+		 fi .
+	eq fill(R, C, N) = < id(R, C) : cell | grd : grd(R, C), pss : pss(N), num : num(N) > .
+
+	op grd : Nat Nat -> Nat .
+	eq grd(R, C) = (sd(R, 1) quo 3) * 3 + (sd(C, 1) quo 3) + 1 .
+
+	op pss : Nat -> Set .
+	eq pss(N) = if N == 0 then (1 2 3 4 5 6 7 8 9) else (N) fi .
+
+	op num : Nat -> Nat .
+	eq num(N) = if N == 0 then 9 else 1 fi .
+
+********* Variables *********
+	var VOid : Oid .
+	var VCid : Cid .
+	vars VConf VConf' : Configuration .
+	var Obj	: Object .
+	vars At At1 At2 At3 At4 At5 At6 At7 At8 At9 : AttributeSet .
+	vars N N' N1 N2 N3 N4 N5 N6 N7 N8 N9	 R R' R1 R2 R3 R4 R5 R6 R7 R8 R9 : Nat .
+	vars C C' C1 C2 C3 C4 C5 C6 C7 C8 C9	 G G' G1 G2 G3 G4 G5 G6 G7 G8 G9
+			 P P' P1 P2 P3 : Nat .
+	vars LP LP' LP1 LP2 LP3 LP4 LP5 LP6 LP7 LP8 LP9 : Set .
+	vars NeLP NeLP1 NeLP2 : NeSet .
+	var LL : List .
+
+********* List and Set *********
+	sorts List Set NeSet .
+	subsort Nat < List .
+	subsort Nat < NeSet < Set .
+
+	op _;_ : Nat List -> List .
+	op empty : -> Set [ctor] .
+	op __ : Set Set -> Set	[ctor assoc comm id: empty] .
+	op __ : NeSet NeSet -> NeSet [ctor ditto] .
+	ops inters union : Set Set -> Set [comm assoc memo] .
+	op card : Set -> Nat .
+	op minus : Set Set -> Set .
+	op _in_ : Nat Set -> Bool .
+	ops (_subset_) (disj) : Set Set -> Bool .
+
+	eq inters((P LP), (P LP')) = P inters(LP, LP') .
+	eq inters(LP, LP') = empty [owise] .
+
+	eq union((P LP), (P LP')) = P union(LP, LP') .
+	eq union(LP, LP') = (LP LP') [owise] .
+
+	eq card(N LP) = s card(LP) .
+	eq card(empty) = 0 .
+
+	eq minus((P LP), (P LP')) = minus(LP, LP') .
+	eq minus(LP, LP') = LP [owise] .
+
+	eq N in (N LP) = true .
+	eq N in LP = false [owise] .
+
+	eq LP subset LP' = (inters(LP, LP') == LP ) .
+
+	eq disj(LP, LP') = (inters(LP, LP') == empty) .
+
+	op same : Nat Nat Nat -> Bool .
+	op same : Nat Nat Nat Nat -> Bool .
+	op same : Nat Nat Nat Nat Nat Nat Nat Nat Nat -> Bool .
+	eq same(N1, N2, N3) = (N1 == N2) and (N1 == N3) .
+	eq same(N1, N2, N3, N4) = (N1 == N2) and (N1 == N3)	and (N1 == N4) .
+	eq same(R1, R2, R3, R4, R5, R6, R7, R8, R9) =
+		 ((R1 == R2) and (R1 == R3) and (R1 == R4) and (R1 == R5) and
+			(R1 == R6) and (R1 == R7) and (R1 == R8) and (R1 == R9)) .
+
+********* Configuration functions *********
+	ops maxCard minCard betCard : Configuration -> Nat [memo] .
+	eq maxCard(none) = 0 .
+	eq minCard(none) = 9 .
+	eq betCard(none) = 9 .
+	eq maxCard(VConf < VOid : VCid | num : N, At >) = max(N, maxCard(VConf)) .
+	eq minCard(VConf < VOid : VCid | num : N, At >) = min(N, minCard(VConf)) .
+	eq betCard(VConf < VOid : VCid | num : N, At >) =
+		 if N == 1 then betCard(VConf) else min(N, betCard(VConf)) fi .
+
+	ops notInRow notInCol notInGrid : Nat Nat Configuration -> Bool .
+
+	eq notInRow(P, R, < id(R, C) : cell | pss : (P LP), At > VConf) = false .
+	eq notInRow(P, R, VConf) = true [owise] .
+
+	eq notInCol(P, C, < id(R, C) : cell | pss : (P LP), At > VConf) = false .
+	eq notInCol(P, C, VConf) = true [owise] .
+
+	eq notInGrid(P, G, < id(R, C) : cell | pss : (P LP), grd : G, At > VConf) = false .
+	eq notInGrid(P, G, VConf) = true [owise] .
+
+	ops removeFromRow removeFromCol removeFromGrid
+		: Set Nat Configuration -> Configuration .
+
+	eq removeFromRow(LP, R, none) = none .
+	eq removeFromRow(LP, R, < id(R, C) : cell | pss : LP', num : N, At > VConf) =
+		< id(R, C) : cell | pss : minus(LP', LP), num : card(minus(LP', LP)), At >
+			removeFromRow(LP, R, VConf) .
+	eq removeFromRow(LP, R, Obj VConf) = Obj removeFromRow(LP, R, VConf) [owise] .
+
+	eq removeFromCol(LP, C, none) = none .
+	eq removeFromCol(LP, C, < id(R, C) : cell | pss : LP', num : N, At > VConf) =
+		< id(R, C) : cell | pss : minus(LP', LP), num : card(minus(LP', LP)), At >
+			removeFromCol(LP, C, VConf) .
+	eq removeFromCol(LP, C, Obj VConf) = Obj removeFromCol(LP, C, VConf) [owise] .
+
+	eq removeFromGrid(LP, G, none) = none .
+	eq removeFromGrid(LP, G, < id(R, C) : cell | grd : G, pss : LP', num : N, At > VConf) =
+		< id(R, C) : cell | grd : G, pss : minus(LP', LP), num : card(minus(LP', LP)), At >
+			removeFromGrid(LP, G, VConf) .
+	eq removeFromGrid(LP, G, Obj VConf) = Obj removeFromGrid(LP, G, VConf) [owise] .
+
+********* Equations and rewrite rules *********
+
+	*** [simplify1st] If only one number is possible in a cell, then we remove
+	*** this number from the set of possible numbers in all the other cells in the
+	*** same row, column or grid.
+	crl [simplify1st] :
+			< id(R1, C1) : cell | grd : G1, pss : P, num : 1 >
+			< id(R2, C2) : cell | grd : G2, pss : (P LP), num : N >
+	=>	< id(R1, C1) : cell | grd : G1, pss : P, num : 1 >
+			< id(R2, C2) : cell | grd : G2, pss : LP, num : sd(N,1) >
+			if ((R1 == R2) or (C1 == C2) or (G1 == G2)) .
+
+	*** [simplify2nd] If two cells in the same row (column or grid) have the same
+	*** set of possible numbers and its cardinality is 2, then those numbers can
+	*** be removed from the sets of possible numbers of every other cell in the
+	*** same row (column or grid).
+	crl [simplify2nd] :
+			< id(R1, C1) : cell | grd : G1, pss : (P P'), num : 2 >
+			< id(R2, C2) : cell | grd : G2, pss : (P P'), num : 2 >
+			< id(R3, C3) : cell | grd : G3, pss : (P LP3), num : N3 >
+	=>	< id(R1, C1) : cell | grd : G1, pss : (P P'), num : 2 >
+			< id(R2, C2) : cell | grd : G2, pss : (P P'), num : 2 >
+			< id(R3, C3) : cell | grd : G3, pss : LP3, num : sd(N3,1) >
+			if (same(R1, R2, R3) or same(C1, C2, C3) or same(G1, G2, G3)) .
+
+	*** [simplify3rd] If three cells in the same row (column or grid) have the
+	*** same set of possible numbers and its cardinality is 3, then those numbers
+	*** can be removed from the sets of possible numbers of every other cell in
+	*** the same row (column or grid).
+	crl [simplify3rd] :
+			< id(R, C1) : cell | pss : (P1 P2 P3), At1 >
+			< id(R, C2) : cell | pss : (P2 LP2), At2 >
+			< id(R, C3) : cell | pss : (P3 LP3), At3 >
+			VConf
+	=>	< id(R, C1) : cell | pss : (P1 P2 P3), At1	>
+			< id(R, C2) : cell | pss : (P2 LP2), At2 >
+			< id(R, C3) : cell | pss : (P3 LP3), At3 >
+			removeFromRow(P1 P2 P3, R, VConf)
+		 if LP2 subset (P1 P3) and LP3 subset (P1 P2)
+			and not (notInRow(P1, R, VConf) and notInRow(P2, R, VConf)
+				and notInRow(P3, R, VConf)) .
+
+	crl [simplify3rd] :
+			< id(R1, C) : cell | pss : (P1 P2 P3), At1 >
+			< id(R2, C) : cell | pss : (P2 LP2), At2 >
+			< id(R3, C) : cell | pss : (P3 LP3), At3 >
+			VConf
+	=>	< id(R1, C) : cell | pss : (P1 P2 P3), At1	>
+			< id(R2, C) : cell | pss : (P2 LP2), At2 >
+			< id(R3, C) : cell | pss : (P3 LP3), At3 >
+			removeFromCol(P1 P2 P3, C, VConf)
+		 if LP2 subset (P1 P3) and LP3 subset (P1 P2)
+			and not (notInCol(P1, C, VConf) and notInCol(P2, C, VConf)
+				and notInCol(P3, C, VConf)) .
+
+	crl [simplify3rd] :
+			< id(R1, C1) : cell | grd : G, pss : (P1 P2 P3), At1 >
+			< id(R2, C2) : cell | grd : G, pss : (P2 LP2), At2 >
+			< id(R3, C3) : cell | grd : G, pss : (P3 LP3), At3 >
+			VConf
+	=>	< id(R1, C1) : cell | grd : G, pss : (P1 P2 P3), At1 >
+			< id(R2, C2) : cell | grd : G, pss : (P2 LP2), At2 >
+			< id(R3, C3) : cell | grd : G, pss : (P3 LP3), At3 >
+			removeFromGrid(P1 P2 P3, G, VConf)
+		 if LP2 subset (P1 P3) and LP3 subset (P1 P2)
+			and not (notInGrid(P1, G, VConf) and notInGrid(P2, G, VConf)
+				and notInGrid(P3, G, VConf)) .
+
+	*** [onlyOneNumber] When a number is not possible in any cell of a row (column
+	*** or grid) but one, and the cardinality of the set of possible numbers for
+	*** this cell is greater than one, then this set can become a singleton
+	*** containing that number.
+	crl [onlyOneNumber] :
+		< id(R, C) : cell	| grd : G, pss : (P NeLP), At1	> VConf
+	=>	< id(R, C) : cell	| grd : G, pss : P, num : 1 > VConf
+		if
+			notInRow(P, R, VConf) or notInCol(P, C, VConf) or
+			notInGrid(P, G, VConf)
+		.
+
+	*** [onlyTwoNumbers] When two numbers p1 and p2 are not possible in any
+	*** cell of a row (column or grid) but two, and the sets of possible numbers
+	*** for these cells have cardinality greater than two, then these sets can
+	*** become p1, p2.
+	crl [onlyTwoNumbers] :
+			< id(R1, C1) : cell | grd : G1, pss : (P1 P2 NeLP1), num : N1 >
+			< id(R2, C2) : cell | grd : G2, pss : (P1 P2 NeLP2), num : N2 >
+			VConf
+	=>	< id(R1, C1) : cell | grd : G1, pss : (P1 P2), num : 2 >
+			< id(R2, C2) : cell | grd : G2, pss : (P1 P2), num : 2 >
+			VConf
+		if
+			(R1 == R2 and notInRow(P1, R1, VConf) and notInRow(P2, R1, VConf)) or
+			(C1 == C2 and notInCol(P1, C1, VConf) and notInRow(P2, C1, VConf)) or
+			(G1 == G2 and notInGrid(P1, G1, VConf) and notInGrid(P2, G1, VConf))
+		.
+
+	*** [twins] If, in a given grid, a number is only possible in one row (or
+	*** column), then that number can be removed from the set of possible numbers
+	*** in all the cells in that same row (or column) but different grid.
+	crl [twins] :
+			< id(R, C)  : cell | grd : G',	pss : (P LP1), num : N  >
+			< id(R, C1) : cell | grd : G,	pss : (P LP2), num : N1 >
+			< id(R, C2) : cell | grd : G,	pss : LP3, num : N2 >
+			< id(R, C3) : cell | grd : G,	pss : LP4, num : N3 >
+			VConf
+	=>		< id(R, C)  : cell | grd : G',	pss : LP1, num : sd(N, 1) >
+			< id(R, C1) : cell | grd : G,	pss : (P LP2), num : N1 >
+			< id(R, C2) : cell | grd : G,	pss : LP3, num : N2 >
+			< id(R, C3) : cell | grd : G,	pss : LP4, num : N3 >
+			VConf
+		if notInGrid(P, G, VConf) . *** G =/= G'
+
+	crl [twins] :
+			< id(R, C)  : cell | grd : G',	pss : (P LP1), num : N  >
+			< id(R1, C) : cell | grd : G,	pss : (P LP2), num : N1 >
+			< id(R2, C) : cell | grd : G,	pss : LP3, num : N2 >
+			< id(R3, C) : cell | grd : G,	pss : LP4, num : N3 >
+			VConf
+	=>		< id(R, C)  : cell | grd : G',	pss : LP1, num : sd(N, 1) >
+			< id(R1, C) : cell | grd : G,	pss : (P LP2), num : N1 >
+			< id(R2, C) : cell | grd : G,	pss : LP3, num : N2 >
+			< id(R3, C) : cell | grd : G,	pss : LP4, num : N3 >
+			VConf
+		if notInGrid(P, G, VConf) . *** G =/= G'
+
+	*** [sudokuSplit] This rule splits a sudoku when none of the other rules can
+	*** be applied. We select a cell with a minimum number (greater than $1$) of
+	*** possible numbers. Then a sudoku is created with the first possible number
+	*** and another one with the remaining possible numbers.
+	rl [sudokuSplit2] :
+		< id(R, C) : cell | grd : G, pss : (P1 P2), num : 2 >
+	=> 	< id(R, C) : cell | grd : G, pss : P1, num : 1 >	.
+
+	rl [sudokuSplitN] :
+		< id(R, C) : cell | grd : G, pss : (P NeLP), num : N >
+	=> < id(R, C) : cell | grd : G, pss : P, num : 1 >	.
+
+
+	*** [presentSolution] This rule presents the final solution of a sudoku.
+	rl [presentSolution] :
+		< id(R, 1) : cell | pss : N1, At1 > < id(R, 2) : cell | pss : N2, At2 >
+		< id(R, 3) : cell | pss : N3, At3 > < id(R, 4) : cell | pss : N4, At4 >
+		< id(R, 5) : cell | pss : N5, At5 > < id(R, 6) : cell | pss : N6, At6 >
+		< id(R, 7) : cell | pss : N7, At7 > < id(R, 8) : cell | pss : N8, At8 >
+		< id(R, 9) : cell | pss : N9, At9 >
+		=>
+		< id(R, 0) : rows | val : (N1 ; N2 ; N3 ; N4 ; N5 ; N6 ; N7 ; N8 ; N9) >
+	.
+
+endm
+
+
+*** The strategies here are slightly different from the ones in the paper:
+*** they are a bit more efficient but slightly more cumbersome to describe.
+
+smod STRAT is
+	pr SUDOKU .
+
+	var VConf 	: Configuration .
+	var Obj		: Object .
+	var R C		: Nat .
+	var At		: AttributeSet .
+
+	strats rulesA rulesB rulesC @ Sudoku .
+
+	sd rulesA := one(simplify1st) .
+	sd rulesB := one(simplify2nd) or-else one(top(onlyOneNumber)) .
+	sd rulesC := one(top(onlyTwoNumbers)) or-else
+			(one(top(simplify3rd)) or-else
+				one(top(twins))) .
+
+	strat split : @ Sudoku .
+	*** Using matchrew would be better if we could say that only a single
+	*** match is considered
+***	sd split := (matchrew VConf Obj by Obj using sudokuSplit2)
+*** 	or-else (matchrew VConf Obj by Obj using sudokuSplitN) .
+	sd split := sudokuSplit2 or-else sudokuSplitN .
+
+	strat solve : @ Sudoku .
+	sd solve := ((rulesA ; rulesA !)
+			or-else (rulesB or-else (rulesC or-else split))) ?
+				(not(match VConf < id(R, C) : cell | pss : empty, At >) ; solve)
+			: one(presentSolution) ! .
+endsm
+
+eof
+
+---SUDOKU N01. Easy. The Daily Sudoku. Fri 21-Jan-2005
+srew sudoku(
+	0 ; 6 ; 2 ; 	3 ; 4 ; 0 ; 	7 ; 5 ; 0 ;
+	1 ; 0 ; 0 ; 	0 ; 0 ; 5 ; 	6 ; 0 ; 0 ;
+	5 ; 7 ; 0 ; 	0 ; 0 ; 0 ; 	0 ; 4 ; 0 ;
+	0 ; 0 ; 0 ; 	0 ; 9 ; 4 ; 	8 ; 0 ; 0 ;
+	4 ; 0 ; 0 ; 	0 ; 0 ; 0 ; 	0 ; 0 ; 6 ;
+	0 ; 0 ; 5 ; 	8 ; 3 ; 0 ; 	0 ; 0 ; 0 ;
+	0 ; 3 ; 0 ; 	0 ; 0 ; 0 ; 	0 ; 9 ; 1 ;
+	0 ; 0 ; 6 ; 	4 ; 0 ; 0 ; 	0 ; 0 ; 7 ;
+	0 ; 5 ; 9 ; 	0 ; 8 ; 3 ; 	2 ; 6 ; 0 )
+	 using solve .
+
+---SUDOKU N06. Medium. The Daily Sudoku. Wed 26-Jan-2005.
+srew sudoku(
+	7 ; 8 ; 0 ; 	9 ; 0 ; 2 ; 	0 ; 0 ; 3 ;
+	0 ; 0 ; 0 ; 	4 ; 0 ; 0 ; 	0 ; 0 ; 0 ;
+	1 ; 3 ; 5 ; 	0 ; 8 ; 0 ; 	0 ; 0 ; 0 ;
+	0 ; 2 ; 0 ; 	0 ; 1 ; 0 ; 	0 ; 7 ; 8 ;
+	0 ; 0 ; 0 ; 	0 ; 0 ; 0 ; 	0 ; 0 ; 0 ;
+	6 ; 7 ; 0 ; 	0 ; 9 ; 0 ; 	0 ; 2 ; 0 ;
+	0 ; 0 ; 0 ; 	0 ; 6 ; 0 ; 	5 ; 9 ; 2 ;
+	0 ; 0 ; 0 ; 	0 ; 0 ; 3 ; 	0 ; 0 ; 0 ;
+	2 ; 0 ; 0 ; 	5 ; 0 ; 9 ; 	0 ; 6 ; 1 )
+	 using solve .
+
+
+---	Diabolical sudoku. Crosswords Ltd, 2005
+srew [1] sudoku(
+	0 ; 9 ; 0 ; 	7 ; 0 ; 0 ; 	8 ; 6 ; 0 ;
+	0 ; 3 ; 1 ; 	0 ; 0 ; 5 ; 	0 ; 2 ; 0 ;
+	8 ; 0 ; 6 ; 	0 ; 0 ; 0 ; 	0 ; 0 ; 0 ;
+	0 ; 0 ; 7 ; 	0 ; 5 ; 0 ; 	0 ; 0 ; 6 ;
+	0 ; 0 ; 0 ; 	3 ; 0 ; 7 ; 	0 ; 0 ; 0 ;
+	5 ; 0 ; 0 ; 	0 ; 1 ; 0 ; 	7 ; 0 ; 0 ;
+	0 ; 0 ; 0 ; 	0 ; 0 ; 0 ; 	1 ; 0 ; 9 ;
+	0 ; 2 ; 0 ; 	6 ; 0 ; 0 ; 	3 ; 5 ; 0 ;
+	0 ; 5 ; 4 ; 	0 ; 0 ; 8 ; 	0 ; 7 ; 0 )
+	 using solve .

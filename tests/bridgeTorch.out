@@ -1,0 +1,29 @@
+==========================================
+srewrite in BRIDGE-SCHECK : initial using wrong .
+
+No solution.
+rewrites: 1108
+==========================================
+srewrite in BRIDGE-SCHECK : initial using wiser .
+
+Solution 1
+rewrites: 1184
+result Bridge: none | dest pers(1) pers(2) pers(5) pers(8) torch(0)
+
+No more solutions.
+rewrites: 1184
+==========================================
+srewrite in BRIDGE-SCHECK : initial using fastest .
+
+Solution 1
+rewrites: 1180
+result Bridge: none | dest pers(1) pers(2) pers(5) pers(8) torch(0)
+
+No more solutions.
+rewrites: 1875
+==========================================
+srewrite in BRIDGE-SCHECK : initial using slowest .
+
+No solution.
+rewrites: 109
+Bye.

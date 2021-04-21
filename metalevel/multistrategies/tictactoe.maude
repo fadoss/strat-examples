@@ -1,0 +1,251 @@
+***
+*** Tic-tac-toe example using multistrategies
+***
+*** Different strategies are allowed to play together
+***
+
+sload multistrat
+
+fmod TICTACTOE is
+	protecting NAT .
+	protecting EXT-BOOL .
+
+	sort Position Player Grid .
+
+	ops O X - : -> Player [ctor] .
+
+	op [_,_,_] : Nat Nat Player -> Grid [ctor] .
+	op empty   : -> Grid [ctor] .
+	op __      : Grid Grid -> Grid [ctor assoc comm id: empty] .
+
+	***
+	*** Equations
+	***
+
+	var  P                     : Player .
+	vars I J I1 I2 I3 J1 J2 J3 : Nat .
+	var  G                     : Grid .
+
+	*** Tests whether the grid has a full horizontal,
+	*** vertical or diagonal row
+	ops hasHRow hasVRow hasDRow : Player Grid -> Bool .
+
+	eq hasHRow(P, [I1, J, P] [I2, J, P] [I3, J, P] G) = true .
+	eq hasHRow(P, G) = false [owise] .
+
+	eq hasVRow(P, [I, J1, P] [I, J2, P] [I, J3, P] G) = true .
+	eq hasVRow(P, G) = false [owise] .
+
+	eq hasDRow(P, [I1, I1, P] [I2, I2, P] [I3, I3, P] G) = true .
+	eq hasDRow(P, [1, 3, P] [2, 2, P] [3, 1, P] G) = true .
+	eq hasDRow(P, G) = false [owise] .
+
+	*** Test whether some player has won
+	op hasWon : Player Grid -> Bool .
+
+	eq hasWon(P, G) = hasHRow(P, G) or-else hasVRow(P, G) or-else hasDRow(P, G) .
+
+	*** Gets the winning positions of a player in the grid
+	ops winningPos winningHPos winningVPos winningD1Pos
+	    winningD2Pos : Player Grid -> Grid .
+
+	eq winningPos(P, G) = winningHPos(P, G) winningVPos(P, G)
+	                      winningD1Pos(P, G) winningD2Pos(P, G) .
+	eq winningHPos(P, [I1, J, P] [I2, J, P] [I3, J, -] G) = [I3, J, -] winningHPos(P, G) .
+	eq winningVPos(P, [I, J1, P] [I, J2, P] [I, J3, -] G) = [I, J3, -] winningVPos(P, G) .
+	eq winningD1Pos(P, [I1, I1, P] [I2, I2, P] [I3, I3, -] G) = [I3, I3, -] .
+	eq winningD2Pos(P, [1, 3, -] [2, 2, P] [3, 1, P] G) = [1, 3, -] .
+	eq winningD2Pos(P, [1, 3, P] [2, 2, -] [3, 1, P] G) = [2, 2, -] .
+	eq winningD2Pos(P, [1, 3, P] [2, 2, P] [3, 1, -] G) = [3, 1, -] .
+	eq winningHPos(P, G) = empty [owise] .
+	eq winningVPos(P, G) = empty [owise] .
+	eq winningD1Pos(P, G) = empty [owise] .
+	eq winningD2Pos(P, G) = empty [owise] .
+
+	*** Initial game
+	op initial : -> Grid .
+	op initial : Nat Nat -> Grid .
+	op initialRow : Nat Nat -> Grid .
+
+	eq initial = initial(3, 3) .
+	eq initial(0, J) = empty .
+	eq initial(s(I), J) = initialRow(J, s(I)) initial(I, J) .
+	eq initialRow(0, J) = empty .
+	eq initialRow(s(I), J) = [s(I), J, -] initialRow(I, J) .
+endfm
+
+mod TICTACTOE-RULES is
+	protecting TICTACTOE .
+
+	vars I J : Nat .
+
+	rl [putO] : [I, J, -] => [I, J, O] .
+	rl [putX] : [I, J, -] => [I, J, X] .
+endm
+
+smod TICTACTOE-STRAT is
+	protecting TICTACTOE-RULES .
+
+	*** For simplicity, the tests "match G s.t. not hasWon(P, G)" can be
+	*** removed, but then players will be able to move after the opponent
+	*** has won.
+
+	*** Place items at random
+	strats randomO randomX @ Grid .
+
+	sd randomO := (match G s.t. not hasWon(X, G) ; putO) ? randomO : idle .
+	sd randomX := (match G s.t. not hasWon(O, G) ; putX) ? randomX : idle .
+
+	*** Place items where we can win directly
+	*** or prevent the adversary to do so
+	strats betterO betterX @ Grid .
+
+	sd betterO := (match G s.t. not hasWon(X, G) ;
+		((matchrew G s.t. [I, J, -] R := winningPos(O, G) by G using putO[I <- I, J <- J])
+		or-else
+		(matchrew G s.t. [I, J, -] R := winningPos(X, G) by G using putO[I <- I, J <- J])
+		or-else
+		putO)) ? betterO : idle .
+
+	sd betterX := (match G s.t. not hasWon(O, G) ;
+		((matchrew G s.t. [I, J, -] R := winningPos(X, G) by G using putX[I <- I, J <- J])
+		or-else
+		(matchrew G s.t. [I, J, -] R := winningPos(O, G) by G using putX[I <- I, J <- J])
+		or-else
+		putX)) ? betterX : idle .
+
+	*** Perfect game
+	***
+	*** The strategy is based on Crowley K. and Siegler R.S (1993),
+	*** Flexible Strategy Use in Young Children's Tic-Tac-Toe. Cognitive
+	*** Science, 17: 531-561 (DOI: 10.1016/0364-0213(93)90003-Q), in turn
+	*** based on Newell and Simon's 1972 tic-tac-toe program.
+	strats perfectO perfectX          @ Grid .
+	strat  perfect-step      : Player @ Grid .
+
+	sd perfectO := (match G s.t. not hasWon(X, G) ; perfect-step(O)) ? perfectO : idle .
+	sd perfectX := (match G s.t. not hasWon(O, G) ; perfect-step(X)) ? perfectX : idle .
+
+	*** Testing some conditions like forks could have been done
+	*** more efficiently by inspecting the board instead of
+	*** moving and then checking if the desired condition is met
+
+	sd perfect-step(P) :=
+		*** Win
+		(matchrew G s.t. [I, J, -] R := winningPos(P, G) by G using put(P, I, J))
+		or-else
+		*** Block
+		(matchrew G s.t. [I, J, -] R := winningPos(opponent(P), G) by G using put(P, I, J))
+		or-else
+		*** Fork
+		(put(P) ; hasFork(P))
+		or-else
+		*** Blocking an opponent's fork
+		(test(put(opponent(P)) ; hasFork(opponent(P))) ; put(P) ;
+			*** The opponent cannot fork
+			(not(put(opponent(P)) ; hasFork(opponent(P)))
+			*** The opponent is forced to block rather that fork
+			| (matchrew G s.t. [I, J, -] R := winningPos(P, G) by G using
+				not(put(opponent(P), I, J) ; hasFork(opponent(P)))))
+		)
+		or-else
+		*** Center
+		put(P, 2, 2)
+		or-else
+		*** Opposite corner
+		((matchrew [I, I, Q] G s.t. I =/= 2 /\ Q = opponent(P) by G using put(P, sd(4, I), sd(4, I)))
+		| (matchrew [I, J, Q] G s.t. I =/= 2 /\ J =/= 2 /\ Q = opponent(P) by G using put(P, J, I)))
+		or-else
+		*** Empty corner
+		(put(P, 1, 1) | put(P, 3, 3) | put(P, 1, 3) | put(P, 3, 1))
+		or-else
+		*** Empty side
+		(match G s.t. P == O ? (putO[I <- 2] | putO[J <- 2])
+		                     : (putX[I <- 2] | putX[J <- 2]))
+	.
+
+	*** A fork is a situation where there are at least two
+	*** possible moves to win
+	strat hasFork : Player @ Grid .
+	sd hasFork(P) := match G s.t. size(winningPos(P, G)) >= 2 .
+
+	*** Wrapper over putX and putO not to repeat strategies twice
+	strat put : Player @ Grid .
+	strat put : Player Nat Nat @ Grid .
+
+	sd put(X) := putX .
+	sd put(O) := putO .
+	sd put(X, I, J) := putX[I <- I, J <- J] .
+	sd put(O, I, J) := putO[I <- I, J <- J] .
+
+	*** The opponent of a given player
+	op opponent : Player -> Player .
+
+	eq opponent(X) = O .
+	eq opponent(O) = X .
+
+	*** The size of a (sub)grid
+	op size : Grid -> Nat .
+
+	eq size(empty) = 0 .
+	eq size([I, J, P] G) = s(size(G)) .
+
+	vars I J : Nat .
+	var  G R : Grid .
+	var  P Q : Player .
+endsm
+
+mod TICTACTOE-PREDS is
+	protecting TICTACTOE-RULES .
+	including SATISFACTION .
+
+	subsort Grid < State .
+
+	vars I J I1 I2 I3 J1 J2 J3 : Nat .
+	var  G : Grid .
+
+	ops Owins Xwins : -> Prop [ctor] .
+
+	eq G |= Owins = hasWon(O, G) .
+	eq G |= Xwins = hasWon(X, G) .
+endm
+
+smod TICTACTOE-MAIN is
+	protecting MULTISTRAT-STRAT .
+	protecting TICTACTOE-STRAT .
+endsm
+
+smod TICTACTOE-CHECK is
+	protecting TICTACTOE-PREDS .
+	protecting TICTACTOE-STRAT .
+	protecting MULTISTRAT-MODEL-CHECKER .
+endsm
+
+eof
+
+set verbose on .
+set print conceal on .
+print conceal smod_is_sorts_._______endsm .
+
+*** Executing players with different strategies
+dsrew [10] in TICTACTOE-MAIN : makeContext(upTerm(initial), ('randomO[[empty]], 'randomX[[empty]]), upModule('TICTACTOE-STRAT, true)) using turns(0, 2) .
+srew in TICTACTOE-MAIN : makeContext(upTerm(initial), ('perfectO[[empty]], 'perfectX[[empty]]), upModule('TICTACTOE-STRAT, true)) using turns(0, 2) .
+srew in TICTACTOE-MAIN : makeContext(upTerm(initial), ('perfectO[[empty]], 'betterX[[empty]]), upModule('TICTACTOE-STRAT, true)) using turns(0, 2) .
+srew in TICTACTOE-MAIN : makeContext(upTerm(initial), ('perfectO[[empty]], 'randomX[[empty]]), upModule('TICTACTOE-STRAT, true)) using turns(0, 2) .
+
+*** Model checking properties of the game strategies
+
+*** No one wins when both follow a perfect strategy
+red in TICTACTOE-CHECK : modelCheckTurns('TICTACTOE-CHECK, initial, [] (~ Owins /\ ~ Xwins), ('perfectO[[empty]], 'perfectX[[empty]])) .
+*** This property does not hold when the adversary plays betterP, i.e. betterX is not perfect
+red modelCheckTurns('TICTACTOE-CHECK, initial, [] (~ Owins /\ ~ Xwins), ('perfectO[[empty]], 'betterX[[empty]])) .
+*** O does not neccesarily wins
+red modelCheckTurns('TICTACTOE-CHECK, initial, <> Owins, ('perfectO[[empty]], 'betterX[[empty]])) .
+*** X cannot win (this formula is valid even if the strategies allow continuing the game even after someone has won, i.e. O always win before)
+red modelCheckTurns('TICTACTOE-CHECK, initial, Owins R (~ Xwins), ('perfectO[[empty]], 'betterX[[empty]])) .
+*** This is true even if X starts (but harder to prove, 722 states vs 214)
+red modelCheckTurns('TICTACTOE-CHECK, initial, Owins R (~ Xwins), ('betterX[[empty]], 'perfectO[[empty]])) .
+*** The last property also holds regardless of what the second player does (690 states)
+red modelCheckTurns('TICTACTOE-CHECK, initial, Owins R (~ Xwins), ('perfectO[[empty]], 'randomX[[empty]])) .
+*** Even if the non-perfect player starts (1222 states)
+red modelCheckTurns('TICTACTOE-CHECK, initial, Owins R (~ Xwins), ('randomX[[empty]], 'perfectO[[empty]])) .

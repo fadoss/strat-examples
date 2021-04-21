@@ -1,0 +1,170 @@
+***
+*** Dining philosophers problem:
+*** testing different strategies and properties
+***
+
+sload model-checker
+
+mod PHILOSOPHERS-DINNER is
+	protecting NAT .
+
+	sort Obj Phil Being List Table .
+	subsort Obj Phil < Being < List .
+
+	op (_|_|_) : Obj Nat Obj -> Phil [ctor] .
+	ops o ψ : -> Obj [ctor] .
+	op empty : -> List [ctor] .
+	op __ : List List -> List [ctor assoc id: empty] .
+	op <_> : List -> Table [ctor] .
+
+	var  Id  : Nat .
+	var  P   : Phil .
+	vars X Y : Obj .
+	vars L M : List .
+
+	rl [left] : ψ (o | Id | X) => (ψ | Id | X) .
+	rl [right] : (X | Id | o) ψ => (X | Id | ψ) .
+	rl [left] : < (o | Id | X) L ψ > => < (ψ | Id | X) L > .
+	rl [release] : (ψ | Id | ψ) => ψ (o | Id | o) ψ .
+
+	eq < ψ L P > = < L P ψ > .
+endm
+
+mod DINNER-PREDS is
+	protecting PHILOSOPHERS-DINNER .
+	including SATISFACTION .
+
+	subsort Table < State .
+
+	*** eats(N): philosopher N is eating
+	*** used(N): fork N is being used
+	ops eats used : Nat -> Prop [ctor] .
+	*** hasFork(N): philisopher N has at least one fork
+	*** secondAvailable(N): the second fork for ph N is available
+	ops hasFork secondAvailable : Nat -> Prop [ctor] .
+
+	var  Id  : Nat .
+	var  X   : Obj .
+	vars L M : List .
+
+	eq < L (ψ | Id | ψ) M > |= eats(Id) = true .
+	eq < L > |= eats(Id) = false [owise] .
+
+	eq < L (X | Id | o) ψ M > |= used(Id) = false .
+	eq < L > |= used(Id) = true [owise] .
+
+	eq < L (ψ | Id | X) M > |= hasFork(Id) = true .
+	eq < L (X | Id | ψ) M > |= hasFork(Id) = true .
+	eq < L > |= hasFork(Id) = false [owise] .
+
+	eq < L (ψ | Id | o) ψ M > |= secondAvailable(Id) = true .
+	eq < L ψ (o | Id | ψ) M > |= secondAvailable(Id) = true .
+	eq < L > |= secondAvailable(Id) = false [owise] .
+endm
+
+mod DINNER-INIT is
+	protecting DINNER-PREDS .
+	protecting LTL .
+
+	op initial : -> Table .
+	op initialList : Nat -> List .
+	op initial : Nat -> Table .
+
+	var N : Nat .
+
+	eq initial = initial(5) .
+	eq initial(N) = < initialList(N) > .
+
+	eq initialList(0) = empty .
+	eq initialList(s(N)) = initialList(N) (o | N | o) ψ .
+endm
+
+mod DINNER-MCS-AUX is
+	protecting DINNER-PREDS .
+	protecting MODEL-CHECKER .
+	protecting LTL-SIMPLIFIER .
+
+	op first : Table -> Nat .
+
+	var L : List .
+	var X Y : Obj .
+	var Id N : Nat .
+
+	eq first(< (X | Id | Y) L >) = Id .
+
+	*** Properties for a generic number of messmates
+	op someoneEats : Nat -> Formula .
+	ops allEat allUsed : Nat -> Formula .
+
+	eq someoneEats(0) = False .
+	eq someoneEats(s(N)) = someoneEats(N) \/ eats(N) .
+
+	eq allEat(0) = True .
+	eq allEat(s(N)) = allEat(N) /\ <> eats(N) .
+
+	eq allUsed(0) = True .
+	eq allUsed(s(N)) = allUsed(N) /\ <> used(N) .
+endm
+
+smod DINNER-MCS is
+	protecting DINNER-INIT .
+	protecting DINNER-MCS-AUX .
+	protecting STRATEGY-MODEL-CHECKER .
+
+	*** Free rule execution
+	strat free @ Table .
+	*** The left fork must be taken before the right one
+	strat left-first @ Table .
+	*** The even philosophers must take the left fork first and the odd
+	*** ones the right fork
+	strat parity @ Table .
+	*** The philoshophers eat by turns
+	strat turns : Nat Nat @ Table .
+	strat turns @ Table .
+
+	var M : Table .
+	var L L' : List .
+	var K Id : Nat .
+	var N : NzNat .
+
+	sd free := all ? free : idle .
+
+	sd left-first := (left
+		| (amatchrew L s.t. (ψ | Id | o) ψ := L by L using right)
+		| release
+		) ? left-first : idle .
+
+	sd parity := (release
+		*** The even take the left fork first
+		| (amatchrew L s.t. ψ (o | Id | o) := L /\ 2 divides Id by L using left)
+		| (matchrew M s.t. 2 divides first(M) by M using left[Id <- first(M)])
+		*** The odd take the right fork first
+		| (amatchrew L s.t. (o | Id | o) ψ := L /\ not (2 divides Id) by L using right)
+		*** When they already have one, they take the other fork
+		| (amatchrew L s.t. (ψ | Id | o) ψ := L by L using right)
+		| (matchrew M s.t. < L (o | Id | ψ) L' > := M by M using left[Id <- Id])
+		) ? parity : idle .
+
+	sd turns(K, N) := left[Id <- K] ; right[Id <- K] ; release ; turns(s(K) rem N, N) .
+	sd turns := matchrew M s.t. < L (o | Id | o) ψ > := M by M using turns(0, s(Id)) .
+endsm
+
+eof
+
+*** Someone eats at least once does not hold due to deadlocks in the uncontroled system
+red modelCheck(initial, <> someoneEats(3), 'free) .
+*** Always starting by the left fork does not help
+red modelCheck(initial, <> someoneEats(3), 'left-first) .
+*** The property holds using the parity strategy, the philosophers eat infinitely often
+red modelCheck(initial, [] <> someoneEats(3), 'parity) .
+*** However, a given philosopher may never eat
+red modelCheck(initial, <> eats(0), 'parity) .
+*** Using turns, philosophers also eat infinitely often
+red modelCheck(initial, [] <> someoneEats(3), 'turns) .
+*** And moreover, every individual philosopher does it, no one gets starved
+red modelCheck(initial(5), [] allEat(5), 'turns) .
+
+*** A philosopher may retain a fork and never eat with parity
+red modelCheck(initial, [] (hasFork(0) -> <> eats(0)), 'parity) .
+*** The problem is not that philosophers do not release their forks
+red modelCheck(initial, [] ((eats(0) -> O ~ eats(0)) /\ (eats(1) -> O ~ eats(1)) /\ (eats(2) -> O ~ eats(2))) -> <> eats(0), 'parity) .

@@ -1,0 +1,15 @@
+==========================================
+reduce in MAIN : norm(upModule('NATS-FROM, true), 'take['s_^3['0.Zero],
+    'natsFrom['0.Zero]]) .
+rewrites: 3131
+result GroundTerm: '_:_['0.Zero,'_:_['s_['0.Zero],'_:_['s_^2['0.Zero],
+    'nil.LazyList`{Nat`}]]]
+==========================================
+reduce in MAIN : norm('NATS-FROM, "take(3, natsFrom(0))") .
+rewrites: 3139
+result String: "0 : 1 : 2 : nil"
+==========================================
+reduce in MAIN : norm('ExSec11_1_Luc02, "first(s(s(s(s(0)))), terms(s(0)))") .
+rewrites: 597
+result String: "recip(s(0)) : recip(s(s(s(s(0))))) : recip(s(s(s(s(s(s(s(s(s(0)))))))))) : recip(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(0))))))))))))))))) : nil"
+Bye.

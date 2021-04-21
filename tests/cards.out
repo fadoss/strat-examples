@@ -1,0 +1,159 @@
+==========================================
+dsrewrite [5] in MAIN : cinquillo0 using cinquillo .
+
+Solution 1
+rewrites: 3211
+result Game: < 'p1 : empty > < 'p2 : 1 of cups, 2 of swords > < 'p3 : 1 of
+    clubs, 3 of swords > < 'p4 : 1 of swords, 2 of cups > {'clubs : (2 of
+    clubs) (3 of clubs) (4 of clubs) (5 of clubs) (6 of clubs) (7 of clubs) (10
+    of clubs) (11 of clubs) (12 of clubs)} {'coins : (1 of coins) (2 of coins)
+    (3 of coins) (4 of coins) (5 of coins) (6 of coins) (7 of coins) (10 of
+    coins) (11 of coins) (12 of coins)} {'cups : (3 of cups) (4 of cups) (5 of
+    cups) (6 of cups) (7 of cups) (10 of cups) (11 of cups) (12 of cups)} {
+    'swords : (4 of swords) (5 of swords) (6 of swords) (7 of swords) (10 of
+    swords) (11 of swords) (12 of swords)}
+
+Solution 2
+rewrites: 3232
+result Game: < 'p1 : empty > < 'p2 : 1 of cups, 2 of swords > < 'p3 : 1 of
+    clubs, 3 of swords > < 'p4 : 1 of swords, 2 of clubs > {'clubs : (3 of
+    clubs) (4 of clubs) (5 of clubs) (6 of clubs) (7 of clubs) (10 of clubs) (
+    11 of clubs) (12 of clubs)} {'coins : (1 of coins) (2 of coins) (3 of
+    coins) (4 of coins) (5 of coins) (6 of coins) (7 of coins) (10 of coins) (
+    11 of coins) (12 of coins)} {'cups : (2 of cups) (3 of cups) (4 of cups) (5
+    of cups) (6 of cups) (7 of cups) (10 of cups) (11 of cups) (12 of cups)} {
+    'swords : (4 of swords) (5 of swords) (6 of swords) (7 of swords) (10 of
+    swords) (11 of swords) (12 of swords)}
+
+Solution 3
+rewrites: 3347
+result Game: < 'p1 : empty > < 'p2 : 1 of cups, 2 of swords > < 'p3 : 1 of
+    clubs, 12 of swords > < 'p4 : 1 of swords, 2 of clubs > {'clubs : (3 of
+    clubs) (4 of clubs) (5 of clubs) (6 of clubs) (7 of clubs) (10 of clubs) (
+    11 of clubs) (12 of clubs)} {'coins : (1 of coins) (2 of coins) (3 of
+    coins) (4 of coins) (5 of coins) (6 of coins) (7 of coins) (10 of coins) (
+    11 of coins) (12 of coins)} {'cups : (2 of cups) (3 of cups) (4 of cups) (5
+    of cups) (6 of cups) (7 of cups) (10 of cups) (11 of cups) (12 of cups)} {
+    'swords : (3 of swords) (4 of swords) (5 of swords) (6 of swords) (7 of
+    swords) (10 of swords) (11 of swords)}
+
+Solution 4
+rewrites: 3430
+result Game: < 'p1 : empty > < 'p2 : 2 of swords > < 'p3 : 1 of clubs, 3 of
+    swords, 12 of swords > < 'p4 : 1 of swords, 2 of clubs > {'clubs : (3 of
+    clubs) (4 of clubs) (5 of clubs) (6 of clubs) (7 of clubs) (10 of clubs) (
+    11 of clubs) (12 of clubs)} {'coins : (1 of coins) (2 of coins) (3 of
+    coins) (4 of coins) (5 of coins) (6 of coins) (7 of coins) (10 of coins) (
+    11 of coins) (12 of coins)} {'cups : (1 of cups) (2 of cups) (3 of cups) (4
+    of cups) (5 of cups) (6 of cups) (7 of cups) (10 of cups) (11 of cups) (12
+    of cups)} {'swords : (4 of swords) (5 of swords) (6 of swords) (7 of
+    swords) (10 of swords) (11 of swords)}
+
+Solution 5
+rewrites: 3450
+result Game: < 'p1 : empty > < 'p2 : 2 of swords > < 'p3 : 1 of clubs, 3 of
+    swords, 12 of swords > < 'p4 : 1 of swords, 11 of swords > {'clubs : (2 of
+    clubs) (3 of clubs) (4 of clubs) (5 of clubs) (6 of clubs) (7 of clubs) (10
+    of clubs) (11 of clubs) (12 of clubs)} {'coins : (1 of coins) (2 of coins)
+    (3 of coins) (4 of coins) (5 of coins) (6 of coins) (7 of coins) (10 of
+    coins) (11 of coins) (12 of coins)} {'cups : (1 of cups) (2 of cups) (3 of
+    cups) (4 of cups) (5 of cups) (6 of cups) (7 of cups) (10 of cups) (11 of
+    cups) (12 of cups)} {'swords : (4 of swords) (5 of swords) (6 of swords) (7
+    of swords) (10 of swords)}
+==========================================
+dsrewrite [5] in MAIN : cinquillo0 using cinquillo2 .
+
+Solution 1
+rewrites: 2957
+result Game: < 'p1 : empty > < 'p2 : 1 of cups, 2 of swords > < 'p3 : 1 of
+    clubs, 3 of swords > < 'p4 : 1 of swords, 2 of cups > {'clubs : (2 of
+    clubs) (3 of clubs) (4 of clubs) (5 of clubs) (6 of clubs) (7 of clubs) (10
+    of clubs) (11 of clubs) (12 of clubs)} {'coins : (1 of coins) (2 of coins)
+    (3 of coins) (4 of coins) (5 of coins) (6 of coins) (7 of coins) (10 of
+    coins) (11 of coins) (12 of coins)} {'cups : (3 of cups) (4 of cups) (5 of
+    cups) (6 of cups) (7 of cups) (10 of cups) (11 of cups) (12 of cups)} {
+    'swords : (4 of swords) (5 of swords) (6 of swords) (7 of swords) (10 of
+    swords) (11 of swords) (12 of swords)}
+
+Solution 2
+rewrites: 2978
+result Game: < 'p1 : empty > < 'p2 : 1 of cups, 2 of swords > < 'p3 : 1 of
+    clubs, 3 of swords > < 'p4 : 1 of swords, 2 of clubs > {'clubs : (3 of
+    clubs) (4 of clubs) (5 of clubs) (6 of clubs) (7 of clubs) (10 of clubs) (
+    11 of clubs) (12 of clubs)} {'coins : (1 of coins) (2 of coins) (3 of
+    coins) (4 of coins) (5 of coins) (6 of coins) (7 of coins) (10 of coins) (
+    11 of coins) (12 of coins)} {'cups : (2 of cups) (3 of cups) (4 of cups) (5
+    of cups) (6 of cups) (7 of cups) (10 of cups) (11 of cups) (12 of cups)} {
+    'swords : (4 of swords) (5 of swords) (6 of swords) (7 of swords) (10 of
+    swords) (11 of swords) (12 of swords)}
+
+Solution 3
+rewrites: 3095
+result Game: < 'p1 : empty > < 'p2 : 1 of cups, 2 of swords > < 'p3 : 1 of
+    clubs, 12 of swords > < 'p4 : 1 of swords, 2 of clubs > {'clubs : (3 of
+    clubs) (4 of clubs) (5 of clubs) (6 of clubs) (7 of clubs) (10 of clubs) (
+    11 of clubs) (12 of clubs)} {'coins : (1 of coins) (2 of coins) (3 of
+    coins) (4 of coins) (5 of coins) (6 of coins) (7 of coins) (10 of coins) (
+    11 of coins) (12 of coins)} {'cups : (2 of cups) (3 of cups) (4 of cups) (5
+    of cups) (6 of cups) (7 of cups) (10 of cups) (11 of cups) (12 of cups)} {
+    'swords : (3 of swords) (4 of swords) (5 of swords) (6 of swords) (7 of
+    swords) (10 of swords) (11 of swords)}
+
+Solution 4
+rewrites: 3180
+result Game: < 'p1 : empty > < 'p2 : 2 of swords > < 'p3 : 1 of clubs, 3 of
+    swords, 12 of swords > < 'p4 : 1 of swords, 2 of clubs > {'clubs : (3 of
+    clubs) (4 of clubs) (5 of clubs) (6 of clubs) (7 of clubs) (10 of clubs) (
+    11 of clubs) (12 of clubs)} {'coins : (1 of coins) (2 of coins) (3 of
+    coins) (4 of coins) (5 of coins) (6 of coins) (7 of coins) (10 of coins) (
+    11 of coins) (12 of coins)} {'cups : (1 of cups) (2 of cups) (3 of cups) (4
+    of cups) (5 of cups) (6 of cups) (7 of cups) (10 of cups) (11 of cups) (12
+    of cups)} {'swords : (4 of swords) (5 of swords) (6 of swords) (7 of
+    swords) (10 of swords) (11 of swords)}
+
+Solution 5
+rewrites: 3200
+result Game: < 'p1 : empty > < 'p2 : 2 of swords > < 'p3 : 1 of clubs, 3 of
+    swords, 12 of swords > < 'p4 : 1 of swords, 11 of swords > {'clubs : (2 of
+    clubs) (3 of clubs) (4 of clubs) (5 of clubs) (6 of clubs) (7 of clubs) (10
+    of clubs) (11 of clubs) (12 of clubs)} {'coins : (1 of coins) (2 of coins)
+    (3 of coins) (4 of coins) (5 of coins) (6 of coins) (7 of coins) (10 of
+    coins) (11 of coins) (12 of coins)} {'cups : (1 of cups) (2 of cups) (3 of
+    cups) (4 of cups) (5 of cups) (6 of cups) (7 of cups) (10 of cups) (11 of
+    cups) (12 of cups)} {'swords : (4 of swords) (5 of swords) (6 of swords) (7
+    of swords) (10 of swords)}
+==========================================
+srewrite in MAIN : soliTwo0 using soli2 .
+
+Solution 1
+rewrites: 2642
+result Game: < 'p : empty > {'source : (2 of clubs) (11 of clubs) (12 of clubs)
+    (7 of clubs) (2 of cups) (5 of cups) (2 of coins) (11 of swords) (4 of
+    cups) (7 of cups) (7 of swords) (3 of swords) (4 of clubs) (10 of cups) (6
+    of clubs) (6 of swords) (12 of swords) (10 of coins) (6 of coins) (3 of
+    coins) (5 of swords) (3 of cups) (4 of coins) (5 of clubs) (12 of cups) (3
+    of clubs) (4 of swords) (5 of coins) (11 of coins) (12 of coins) (10 of
+    clubs) (6 of cups) (7 of coins) (10 of swords) (11 of cups)} {'seen : nil}
+    {'clubs : 1 of clubs} {'coins : 1 of coins} {'cups : 1 of cups} {'swords :
+    (1 of swords) (2 of swords)}
+
+No more solutions.
+rewrites: 2642
+==========================================
+srewrite in MAIN : soliTwo0 using soli2-shuffle((12).NzNat) .
+
+Solution 1
+rewrites: 13271
+result Game: < 'p : empty > {'source : nil} {'seen : nil} {'clubs : (1 of
+    clubs) (2 of clubs) (3 of clubs) (4 of clubs) (5 of clubs) (6 of clubs) (7
+    of clubs) (10 of clubs) (11 of clubs) (12 of clubs)} {'coins : (1 of coins)
+    (2 of coins) (3 of coins) (4 of coins) (5 of coins) (6 of coins) (7 of
+    coins) (10 of coins) (11 of coins) (12 of coins)} {'cups : (1 of cups) (2
+    of cups) (3 of cups) (4 of cups) (5 of cups) (6 of cups) (7 of cups) (10 of
+    cups) (11 of cups) (12 of cups)} {'swords : (1 of swords) (2 of swords) (3
+    of swords) (4 of swords) (5 of swords) (6 of swords) (7 of swords) (10 of
+    swords) (11 of swords) (12 of swords)}
+
+No more solutions.
+rewrites: 13271
+Bye.

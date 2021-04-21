@@ -1,0 +1,82 @@
+***
+*** Posthouse example to illustrate the specification of Markov decision processes
+***
+*** A postman on horseback is charged of transmitting a message from one city to another,
+*** which are connected by a road where multiple posthouse are available to change horses
+*** for a coin. These animals have energy for a limited number of length units and they
+*** will not continue when it gets exhausted. Moreover, accidents are more likely when
+*** less energy is left.
+***
+
+mod POSTHOUSE is
+	protecting NAT .
+
+	sorts Postman Posthouse Soup .
+	subsorts Postman Posthouse < Soup .
+
+	*** A postman (its position in the path, the energy of its horse, the money to rent horses)
+	op postman : Nat Nat Nat -> Postman [ctor] .
+
+	*** A posthouse (its position in the path, the energy of its horses)
+	op house : Nat Nat -> Posthouse [ctor] .
+
+	op none : -> Soup [ctor] .
+	op __ : Soup Soup -> Soup [ctor assoc comm id: none] . 
+
+	vars E F N M : Nat .
+
+	*** Advance to the next position
+	rl [advance] : postman(N, s(E), M) => postman(s(N), E, M) .
+	*** An accident hurts the horse 
+	rl [advance] : postman(N, s(E), M) => postman(N, 0, M) .
+
+	*** Change horse in the posthouse (but not to lose energy)
+	crl [change] : postman(N, F, s(M)) house(N, E) => postman(N, E, M) house(N, E) if F < E .
+
+	*** Initial setting
+	op initial : -> Soup .
+
+	eq initial = postman(0, 4, 3) house(2, 3) house(3, 5) house(7, 6) house(7, 2) house(11, 4) house(13, 5) . 
+endm
+
+sload model-checker
+
+mod POSTHOUSE-PREDS is
+	protecting POSTHOUSE .
+	including SATISFACTION .
+
+	subsort Soup < State .
+
+	*** Whether a given position in the road is reached
+	op reach : Nat -> Prop [ctor] .
+
+	vars N E M : Nat .
+	var  S     : Soup .
+
+	eq postman(N, E, M) S |= reach(N) = true .
+	eq S |= reach(N) = false [owise] .
+endm
+
+mod MESSAGE-MAIN is
+	protecting POSTHOUSE-PREDS .
+	including MODEL-CHECKER .
+
+	vars N E M : Nat .
+	vars S L R : Soup .
+
+	*** Accidents are more likely when there is less energy
+	op tiredness : Soup Soup -> Nat .
+	eq tiredness(postman(N, E, M) L, postman(N, 0, M) R) = if E > 5 then 1 else sd(6, E) fi  .
+	eq tiredness(L, R) = 200 [owise] .
+endm
+
+eof
+
+*** The point 15 of the road can be reached, but it may not
+red modelCheck(initial, [] ~ reach(15)) .
+red modelCheck(initial, <> reach(15)) .
+*** Check it using a search command
+search initial =>* postman(15, E, M) S .
+
+*** The postman actions are nondeterministic, accidents are subject to probabilities
+*** umaudemc pcheck posthouse initial '<> reach(15)' --assign 'mdp-term(tiredness(L, R))'

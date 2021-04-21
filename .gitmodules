@@ -1,0 +1,3 @@
+[submodule "protocols/bitml-maude"]
+	path = protocols/bitml-maude
+	url = https://github.com/bitml-lang/bitml-maude

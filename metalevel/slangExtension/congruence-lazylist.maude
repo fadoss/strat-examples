@@ -1,0 +1,40 @@
+***
+*** Congruence and generic traversal operators on the lazy list
+*** used to illustrate context-sensitive rewriting.
+***
+
+mod LAZY-LIST-RLS is
+  protecting INT .
+  sort LazyList .
+
+  op nil : -> LazyList [ctor] .
+  op _:_ : Int LazyList -> LazyList [ctor frozen (2)] .
+
+  var E : Int . var N : Nat . var L : LazyList .
+
+  op take : Nat LazyList -> LazyList .
+  rl take(0, L) => nil .
+  rl take(s(N), E : L) => E : take(N, L) .
+
+  op natsFrom : Nat -> LazyList .
+  rl natsFrom(N) => N : natsFrom(N + 1) .
+endm
+
+eof
+
+sload congruenceOpsExt
+erew <> < repl : SlangREPL | none > initREPL(repl) .
+
+***
+*** Once the interface strategy language extension interface has printed its
+*** SLExt prompt, the following module can be introduced:
+***
+***	smod LAZY-LIST-MUNORM is protecting LAZY-LIST-RLS . strat norm-via-munorm @ LazyList . sd norm-via-munorm := one(all) ! ; gt-all(norm-via-munorm) . endsm
+***
+*** It must be given in a single line because of some parsing limitations.
+*** Then the following command can be executed:
+***
+*** 	srew take(3, natsFrom(0)) using norm-via-munorm .
+***
+*** The solution 0 : 1 : 2 : nil will be obtained.
+***

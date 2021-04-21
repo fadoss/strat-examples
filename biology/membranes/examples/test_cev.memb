@@ -1,0 +1,16 @@
+***
+*** Example with promoters and inhibitors
+***
+
+membrane M1 is
+	cev r1 : a -> c with b without h .
+	cev r2 : b -> d with a .
+	ev r3 : h -> a .
+end
+
+trans < M1 | a b > .
+*** < M1 | c d > .
+trans < M1 | a b h > .
+*** < M1 | a a d > .
+trans < M1 | b > .
+*** No solutions.

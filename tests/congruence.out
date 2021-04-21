@@ -1,0 +1,123 @@
+==========================================
+srewrite in ABSTRACT-CONGRUENCE-CLOSURE-STRAT : < 0,'a.S = 'b.S 'f['b.S] = 'f[
+    'f['a.S]],mtRlS > using Shos .
+
+Solution 1
+rewrites: 2862
+result State: < 4,mtEqS,'a.S -> c(1) 'b.S -> c(0) c(0) -> c(1) c(2) -> c(3) 'f[
+    c(1)] -> c(2) 'f[c(2)] -> c(3) >
+
+Solution 2
+rewrites: 2862
+result State: < 5,mtEqS,'a.S -> c(2) 'b.S -> c(0) c(0) -> c(2) c(1) -> c(4) 'f[
+    c(0)] -> c(1) 'f[c(2)] -> c(3) 'f[c(3)] -> c(4) >
+
+Solution 3
+rewrites: 2862
+result State: < 5,mtEqS,'a.S -> c(1) 'b.S -> c(0) c(0) -> c(1) c(2) -> c(4) 'f[
+    c(0)] -> c(2) 'f[c(1)] -> c(3) 'f[c(3)] -> c(4) >
+
+Solution 4
+rewrites: 2862
+result State: < 5,mtEqS,'a.S -> c(1) 'b.S -> c(0) c(0) -> c(1) c(3) -> c(4) 'f[
+    c(0)] -> c(3) 'f[c(1)] -> c(2) 'f[c(2)] -> c(4) >
+
+Solution 5
+rewrites: 2862
+result State: < 5,mtEqS,'a.S -> c(0) 'b.S -> c(1) c(0) -> c(1) c(2) -> c(4) 'f[
+    c(0)] -> c(3) 'f[c(1)] -> c(2) 'f[c(3)] -> c(4) >
+
+Solution 6
+rewrites: 2862
+result State: < 5,mtEqS,'a.S -> c(0) 'b.S -> c(1) c(0) -> c(1) c(3) -> c(4) 'f[
+    c(0)] -> c(2) 'f[c(1)] -> c(3) 'f[c(2)] -> c(4) >
+
+Solution 7
+rewrites: 2862
+result State: < 5,mtEqS,'a.S -> c(0) 'b.S -> c(2) c(0) -> c(2) c(3) -> c(4) 'f[
+    c(0)] -> c(1) 'f[c(1)] -> c(3) 'f[c(2)] -> c(4) >
+
+Solution 8
+rewrites: 2862
+result State: < 4,mtEqS,'a.S -> c(0) 'b.S -> c(1) c(0) -> c(1) c(2) -> c(3) 'f[
+    c(1)] -> c(2) 'f[c(2)] -> c(3) >
+
+Solution 9
+rewrites: 2862
+result State: < 5,mtEqS,'a.S -> c(1) 'b.S -> c(0) c(0) -> c(1) c(3) -> c(4) 'f[
+    c(0)] -> c(4) 'f[c(1)] -> c(2) 'f[c(2)] -> c(3) >
+
+Solution 10
+rewrites: 2862
+result State: < 5,mtEqS,'a.S -> c(0) 'b.S -> c(1) c(0) -> c(1) c(3) -> c(4) 'f[
+    c(0)] -> c(2) 'f[c(1)] -> c(4) 'f[c(2)] -> c(3) >
+
+Solution 11
+rewrites: 2862
+result State: < 5,mtEqS,'a.S -> c(0) 'b.S -> c(2) c(0) -> c(2) c(3) -> c(4) 'f[
+    c(0)] -> c(1) 'f[c(1)] -> c(4) 'f[c(2)] -> c(3) >
+
+Solution 12
+rewrites: 2862
+result State: < 5,mtEqS,'a.S -> c(0) 'b.S -> c(3) c(0) -> c(3) c(2) -> c(4) 'f[
+    c(0)] -> c(1) 'f[c(1)] -> c(2) 'f[c(3)] -> c(4) >
+
+No more solutions.
+rewrites: 2862
+==========================================
+dsrewrite in ABSTRACT-CONGRUENCE-CLOSURE-STRAT : < 0,'a.S = 'b.S 'f['b.S] = 'f[
+    'f['a.S]],mtRlS > using start ; DST .
+
+Solution 1
+rewrites: 654
+result State: < 5,mtEqS,'a.S -> c(0) 'b.S -> c(1) c(0) -> c(3) c(1) -> c(4) c(
+    2) -> c(4) 'f[c(1)] -> c(2) 'f[c(3)] -> c(4) >
+
+Solution 2
+rewrites: 1298
+result State: < 5,mtEqS,'a.S -> c(0) 'b.S -> c(1) c(0) -> c(2) c(1) -> c(4) c(
+    3) -> c(4) 'f[c(1)] -> c(3) 'f[c(2)] -> c(4) >
+
+Solution 3
+rewrites: 1831
+result State: < 5,mtEqS,'a.S -> c(0) 'b.S -> c(1) c(0) -> c(2) c(1) -> c(4) c(
+    3) -> c(4) 'f[c(1)] -> c(4) 'f[c(2)] -> c(3) >
+
+Solution 4
+rewrites: 2516
+result State: < 5,mtEqS,'a.S -> c(0) 'b.S -> c(2) c(0) -> c(1) c(2) -> c(4) c(
+    3) -> c(4) 'f[c(1)] -> c(3) 'f[c(2)] -> c(4) >
+
+Solution 5
+rewrites: 3148
+result State: < 5,mtEqS,'a.S -> c(0) 'b.S -> c(2) c(0) -> c(1) c(2) -> c(4) c(
+    3) -> c(4) 'f[c(1)] -> c(4) 'f[c(2)] -> c(3) >
+
+Solution 6
+rewrites: 3781
+result State: < 5,mtEqS,'a.S -> c(0) 'b.S -> c(3) c(0) -> c(1) c(2) -> c(4) c(
+    3) -> c(4) 'f[c(1)] -> c(3) 'f[c(3)] -> c(4) >
+
+Solution 7
+rewrites: 4583
+result State: < 5,mtEqS,'a.S -> c(1) 'b.S -> c(0) c(0) -> c(2) c(2) -> c(1) c(
+    3) -> c(4) 'f[c(1)] -> c(4) 'f[c(3)] -> c(4) >
+
+Solution 8
+rewrites: 5239
+result State: < 5,mtEqS,'a.S -> c(1) 'b.S -> c(0) c(0) -> c(3) c(2) -> c(4) c(
+    3) -> c(1) 'f[c(1)] -> c(4) 'f[c(2)] -> c(4) >
+
+Solution 9
+rewrites: 5599
+result State: < 5,mtEqS,'a.S -> c(1) 'b.S -> c(0) c(0) -> c(1) c(3) -> c(4) 'f[
+    c(0)] -> c(4) 'f[c(1)] -> c(2) 'f[c(2)] -> c(3) >
+
+Solution 10
+rewrites: 6214
+result State: < 5,mtEqS,'a.S -> c(2) 'b.S -> c(0) c(0) -> c(1) c(1) -> c(2) c(
+    3) -> c(4) 'f[c(2)] -> c(4) 'f[c(3)] -> c(4) >
+
+No more solutions.
+rewrites: 6453
+Bye.

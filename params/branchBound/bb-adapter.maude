@@ -1,0 +1,85 @@
+***
+*** Adaptation of the labyrinth problem for B&B algorithm (metalevel version)
+***
+*** This adaptation can be applied similarly to any other backtracking problem
+*** by defining its cost and estimation.
+***
+
+sload branchBound
+sload ../bt-labyrinth
+
+fmod BB-DEFAULTS is
+
+	*** Empty fix data
+	sort FixData .
+	op nothing : -> FixData .
+
+	*** List of solutions
+	sort PRList .
+
+	op none : -> PRList [ctor] .
+	op __ : PRList PRList -> PRList [ctor assoc id: none] .
+
+endfm
+
+mod BB-LABYRINTH is
+	extending BB-DEFAULTS .
+	protecting LABYRINTH * (
+		op __ to _;_
+	) .
+
+	vars X Y : Nat .
+	var  L   : List{Pos} .
+
+	ops getBound getValue : List{Pos} FixData -> Nat .
+
+	*** l1 norm (taxicab distance)
+	eq getBound(L ; [X,Y], nothing) = size(L) + sd(8, X) + sd(8, Y) .
+	eq getValue(L, nothing) = getBound(L, nothing) .
+
+	*** Lists of solutions
+	subsort List{Pos} < PRList .
+endm
+
+smod BB-LABYRINTH-STRAT is
+	protecting BB-LABYRINTH .
+	protecting LABYRINTH-STRAT * (
+		op __ to _;_
+	) .
+
+	strat expand : FixData @ List{Pos} .
+	strat expand : FixData Nat @ List{Pos} .
+
+	var FD : FixData .
+	var P  : List{Pos} .
+	var VL : Nat .
+
+	sd expand(FD) := expand ; match P s.t. isOk(P) .
+	sd expand(FD, VL) := expand(FD) ; match P s.t. getBound(P, FD) <= VL .
+endsm
+
+view BBLabyrinth from BB-PROBLEM to BB-LABYRINTH-STRAT is
+	sort Value to Nat .
+	sort PartialResult to List{Pos} .
+
+	var PR : PartialResult .
+	var FD : FixData .
+	var VL : Value .
+
+	op result?(PR, FD) to term isSolution(PR) .
+
+	*** We cannot use to expr because we need the strategies
+	*** to be defined so that we can use them from the metalevel.
+
+	*** strat expand(FD) to expr expand ; match PR s.t. isOk(PR) .
+	*** strat expand(FD, VL) to expr expand ; match PR s.t. isOk(PR) .
+endv
+
+smod MAIN is
+	protecting BB-STRAT{BBLabyrinth} .
+endsm
+
+eof
+
+srew initial([7,7], nothing) using solve .
+srew initial([2,0], nothing) using solve .

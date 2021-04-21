@@ -1,0 +1,223 @@
+***
+*** Unification controlled by strategies with the Martelli-Montanari algorithm
+***
+*** Based on "An Efficient Unification Algorithm"
+*** by Alberto Martelli and Ugo Montanari (1976)
+***
+
+fth SIGNATURE is
+	protecting BOOL .
+
+	*** Variables and structured terms (including constants) are terms
+	sorts Var StTerm Term TermList .
+	subsorts Var StTerm < Term < TermList .
+
+	*** {Var, StTerm} is a partitition of Term
+	*** (the disjointness is not stated here)
+	cmb T:Term : StTerm if not(T:Term :: Var) .
+	cmb T:Term : Var if not(T:Term :: StTerm) .
+
+	*** Term lists
+	op none : -> TermList [ctor] .
+	op _,_ : TermList TermList -> TermList [ctor assoc id: none] .
+
+	*** Is the top symbol of two structured terms the same?
+	op sameSymbol : StTerm StTerm -> Bool .
+	*** Get the arguments of a structured term
+	op destructure : StTerm -> TermList .
+
+	*** Rebuild a structured term by updating its arguments
+	op rebuild : StTerm TermList -> StTerm .
+endfth
+
+fmod MM-UNIFICATION{X :: SIGNATURE} is
+	protecting NAT .
+	protecting EXT-BOOL .
+
+	sorts Equation NeEquationSet EquationSet .
+	subsort Equation < NeEquationSet < EquationSet .
+
+	op _=_ : X$Term X$Term -> Equation [ctor prec 40] .
+
+	op empty : -> EquationSet [ctor] .
+	op _;_ : EquationSet EquationSet -> EquationSet [ctor assoc comm id: empty] .
+	op _;_ : NeEquationSet EquationSet -> NeEquationSet [ditto] .
+	op _;_ : EquationSet NeEquationSet -> NeEquationSet [ditto] .
+
+
+	*** Auxiliary operations
+
+	vars T T1 T2    : X$Term .
+	vars X Y        : X$Var .
+	vars St St1 St2 : X$StTerm .
+	vars TL TL1 TL2 : X$TermList .
+	var  E          : Equation .
+	var  Es         : EquationSet .
+	var  NeEs       : NeEquationSet .
+
+	*** Size of a term list
+	op size : X$TermList -> Nat .
+
+	eq size(none) = 0 .
+	eq size(T, TL) = s(size(TL)) .
+
+	*** Substitution application
+	op substitute : X$Var X$Term EquationSet -> EquationSet .
+	op substitute : X$Var X$Term Equation -> Equation .
+	op substitute : X$Var X$Term X$TermList -> X$TermList .
+	op substitute : X$Var X$Term X$Term -> X$Term .
+
+	eq substitute(X, T, empty) = empty .
+	eq substitute(X, T, E ; NeEs) = substitute(X, T, E) ; substitute(X, T, NeEs) .
+	eq substitute(X, T, T1 = T2) = substitute(X, T, T1) = substitute(X, T, T2) .
+	eq substitute(X, T, T1 = T2) = substitute(X, T, T1) = substitute(X, T, T2) .
+	ceq substitute(X, T, (T1, TL))
+           = substitute(X, T, T1), substitute(X, T, TL) if TL =/= none .
+	eq substitute(X, T, X) = T .
+	eq substitute(X, T, Y) = Y [owise] .
+	eq substitute(X, T, St) = rebuild(St, substitute(X, T, destructure(St))) .
+
+	*** Occur check
+	op occurCheck : X$Var EquationSet -> Bool .
+	op occurCheck : X$Var Equation -> Bool .
+	op occurCheck : X$Var X$TermList -> Bool .
+	op occurCheck : X$Var X$Term -> Bool .
+
+	eq occurCheck(X, empty) = false .
+	eq occurCheck(X, E ; NeEs) = occurCheck(X, E) or-else occurCheck(X, NeEs) .
+	eq occurCheck(X, T1 = T2) = occurCheck(X, T1) or-else occurCheck(X, T2) .
+	eq occurCheck(X, none) = false .
+	ceq occurCheck(X, (T, TL))
+	   = occurCheck(X, T) or-else occurCheck(X, TL) if TL =/= none .
+	eq occurCheck(X, Y) = X == Y .
+	eq occurCheck(X, St) = occurCheck(X, destructure(St)) .
+
+	*** Generate equations for a pair of term lists
+	op generateEqns : X$TermList X$TermList -> EquationSet .
+
+	eq generateEqns(TL1, none) = empty .
+	eq generateEqns(none, TL2) = empty .
+	eq generateEqns((T1, TL1), (T2, TL2)) = T1 = T2 ; generateEqns(TL1, TL2) .
+endfm
+
+mod MM-RULES{X :: SIGNATURE} is
+	protecting MM-UNIFICATION{X} .
+
+	*** Extends the equation kind with a fail value
+	op fail : -> [EquationSet] [ctor] .
+	eq fail ; Es = fail .
+
+	vars X Y        : X$Var .
+	vars St St1 St2 : X$StTerm .
+	var  T          : X$Term .
+	var  Es         : NeEquationSet .
+
+
+	*** Delete an equation
+	rl [delete] : T = T => empty .
+
+	*** Generate equations for the arguments of a symbol
+	crl [decompose] : St1 = St2 => generateEqns(destructure(St1), destructure(St2))
+	 if sameSymbol(St1, St2)
+	 /\ size(destructure(St1)) = size(destructure(St2)) .
+
+	*** Detect a conflict due to an unsatisfiable equation
+	crl [conflict] : St1 = St2 => fail
+	 if not(sameSymbol(St1, St2)) or size(destructure(St1)) =/= size(destructure(St2)) .
+
+	*** Swap equations to put variables first
+	rl [swap] : St = X => X = St .
+
+	*** Replace a variable equation into all other equations
+	crl [eliminate] : X = T ; Es => X = T ; substitute(X, T, Es)
+	 if occurCheck(X, Es) .
+
+	*** Detect a failure in a recursive variable equation
+	crl [check] : X = St => fail
+	 if occurCheck(X, destructure(St)) .
+endm
+
+smod MM-STRAT{X :: SIGNATURE} is
+	protecting MM-RULES{X} .
+
+	strat marmon marmon-step marmon2 marmon2-step @ EquationSet .
+
+	*** Apply the rules of Algorithm 1
+	sd marmon-step := swap | delete | conflict or-else decompose | check or-else top(eliminate) .
+	sd marmon := marmon-step ? marmon : idle .
+
+	*** Apply some rules first
+	sd marmon2-step := delete or-else swap or-else conflict or-else check or-else top(eliminate) or-else decompose .
+	sd marmon2 := marmon2-step ? marmon2 : idle .
+endsm
+
+fmod ML-TYPES is
+	protecting NAT .
+
+	sorts Var StTerm Term .
+	subsort Var StTerm < Term .
+
+	op x : Nat -> Var [ctor] .	*** Variables
+	op c : Nat -> StTerm [ctor] .	*** Constants
+
+	op _->_ : Term Term -> StTerm [ctor prec 35] .
+	op _*_ : Term Term -> StTerm [ctor prec 30] .
+endfm
+
+view MLTerm from TRIV to ML-TYPES is
+	sort Elt to Term .
+endv
+
+fmod ML-TYPES-ADAPTOR is
+	protecting ML-TYPES .
+	protecting LIST{MLTerm} * (
+		sort List{MLTerm} to TermList,
+		sort NeList{MLTerm} to NeTermList,
+		op nil to none,
+		op __ to _`,_,
+		op size to $size
+	) .
+
+	vars N M         : Nat .
+	vars T1 T2 T3 T4 : Term .
+	var  TL          : TermList .
+	vars St St1 St2  : StTerm .
+
+	op sameSymbol : StTerm StTerm -> Bool .
+
+	eq sameSymbol(c(N), c(M)) = N == M .
+	eq sameSymbol(T1 -> T2, T3 -> T4) = true .
+	eq sameSymbol(T1 * T2, T3 * T4) = true .
+	eq sameSymbol(St1, St2) = false [owise] .
+
+	op destructure : StTerm -> TermList .
+
+	eq destructure(c(N)) = none .
+	eq destructure(T1 -> T2) = T1, T2 .
+	eq destructure(T1 * T2) = T1, T2 .
+
+	op rebuild : StTerm TermList -> StTerm .
+
+	eq rebuild(T1 -> T2, (T3, T4, TL)) = T3 -> T4 .
+	eq rebuild(T1 * T2, (T3, T4, TL)) = T3 * T4 .
+	eq rebuild(St, TL) = St [owise] .
+endfm
+
+view MLTypes from SIGNATURE to ML-TYPES-ADAPTOR is
+	*** identity
+endv
+
+smod MAIN is
+	protecting MM-STRAT{MLTypes} .
+endsm
+
+eof
+
+*** fail
+srewrite x(1) = c(1) * x(1) using marmon .
+*** x(2) = c(2), x(3) = c(1), ...
+srewrite x(1) = c(1) * x(2) ; x(1) = x(3) * c(2) using marmon .
+*** fail
+srewrite x(1) = x(2) * x(3) ; x(1) = x(3) -> x(4) using marmon .
+*** x(3) = c(3), x(4) = c(1) * c(2), ...
+srewrite x(1) = x(2) ; x(1) = c(1) * c(2) -> x(3) ; x(2) = x(4) -> c(3) using marmon .

@@ -1,0 +1,99 @@
+==========================================
+srewrite in MAIN : < N : Mediator | Config : iniConf > ChDemand(O1, N, N1, N4,
+    << SS1 ; 4 >>) using Smediator .
+
+Solution 1
+rewrites: 89
+result Configuration: < N : Mediator | Config : (< C1 : C-Connection | Nodes :
+    << N1 ; N4 >>,LinkList : (L1 L2 L3),DemandList : (<< SS1 ; 7 >> << SS2 ; 5
+    >>) > < C2 : C-Connection | Nodes : << N1 ; N7 >>,LinkList : (L1 L4),
+    DemandList : (<< SS1 ; 2 >> << SS2 ; 6 >>) > < C3 : C-Connection | Nodes :
+    << N1 ; N6 >>,LinkList : (L5 L6),DemandList : (<< SS1 ; 8 >> << SS2 ; 1 >>)
+    > < L1 : C-Link | Nodes : << N1 ; N2 >>,Load : 31 > < L2 : C-Link | Nodes :
+    << N2 ; N3 >>,Load : 17 > < L3 : C-Link | Nodes : << N3 ; N4 >>,Load : 17 >
+    < L4 : C-Link | Nodes : << N2 ; N7 >>,Load : 14 > < L5 : C-Link | Nodes :
+    << N1 ; N5 >>,Load : 10 > < L6 : C-Link | Nodes : << N5 ; N6 >>,Load : 10 >
+    < N1 : C-Node | Capacity : 10,Used : 37 > < N2 : C-Node | Capacity : 10,
+    Used : 54 > < N3 : C-Node | Capacity : 10,Used : 26 > < N4 : C-Node |
+    Capacity : 10,Used : 13 > < N5 : C-Node | Capacity : 10,Used : 20 > < N6 :
+    C-Node | Capacity : 10,Used : 10 > < N7 : C-Node | Capacity : 10,Used : 14
+    > < SS1 : C-Service | Capacity : 1 > < SS2 : C-Service | Capacity : 15 > <
+    SS3 : C-Service | Capacity : 10 >) > To O1 AckChDemand N1 and N4 in N
+
+No more solutions.
+rewrites: 89
+==========================================
+srewrite in MAIN : < N : Mediator | Config : iniConf > ChDemand(O1, N, N1, N4,
+    << SS2 ; 12 >>) using Smediator .
+
+Solution 1
+rewrites: 64
+result Configuration: To O1 ServiceCapacityNotSupported < N : Mediator | Config
+    : (< C1 : C-Connection | Nodes : << N1 ; N4 >>,LinkList : (L1 L2 L3),
+    DemandList : (<< SS1 ; 3 >> << SS2 ; 5 >>) > < C2 : C-Connection | Nodes :
+    << N1 ; N7 >>,LinkList : (L1 L4),DemandList : (<< SS1 ; 2 >> << SS2 ; 6 >>)
+    > < C3 : C-Connection | Nodes : << N1 ; N6 >>,LinkList : (L5 L6),DemandList
+    : (<< SS1 ; 8 >> << SS2 ; 1 >>) > < L1 : C-Link | Nodes : << N1 ; N2 >>,
+    Load : 27 > < L2 : C-Link | Nodes : << N2 ; N3 >>,Load : 13 > < L3 : C-Link
+    | Nodes : << N3 ; N4 >>,Load : 13 > < L4 : C-Link | Nodes : << N2 ; N7 >>,
+    Load : 14 > < L5 : C-Link | Nodes : << N1 ; N5 >>,Load : 10 > < L6 : C-Link
+    | Nodes : << N5 ; N6 >>,Load : 10 > < N1 : C-Node | Capacity : 10,Used : 37
+    > < N2 : C-Node | Capacity : 10,Used : 54 > < N3 : C-Node | Capacity : 10,
+    Used : 26 > < N4 : C-Node | Capacity : 10,Used : 13 > < N5 : C-Node |
+    Capacity : 10,Used : 20 > < N6 : C-Node | Capacity : 10,Used : 10 > < N7 :
+    C-Node | Capacity : 10,Used : 14 > < SS1 : C-Service | Capacity : 1 > < SS2
+    : C-Service | Capacity : 15 > < SS3 : C-Service | Capacity : 10 >) >
+
+No more solutions.
+rewrites: 64
+==========================================
+srewrite in MAIN : < N : Mediator | Config : iniConf > ChDemand(O1, N, N1, N4,
+    << SS3 ; 4 >>) using Smediator .
+
+Solution 1
+rewrites: 88
+result Configuration: < N : Mediator | Config : (< C1 : C-Connection | Nodes :
+    << N1 ; N4 >>,LinkList : (L1 L2 L3),DemandList : (<< SS3 ; 4 >> << SS1 ; 3
+    >> << SS2 ; 5 >>) > < C2 : C-Connection | Nodes : << N1 ; N7 >>,LinkList :
+    (L1 L4),DemandList : (<< SS1 ; 2 >> << SS2 ; 6 >>) > < C3 : C-Connection |
+    Nodes : << N1 ; N6 >>,LinkList : (L5 L6),DemandList : (<< SS1 ; 8 >> << SS2
+    ; 1 >>) > < L1 : C-Link | Nodes : << N1 ; N2 >>,Load : 67 > < L2 : C-Link |
+    Nodes : << N2 ; N3 >>,Load : 53 > < L3 : C-Link | Nodes : << N3 ; N4 >>,
+    Load : 53 > < L4 : C-Link | Nodes : << N2 ; N7 >>,Load : 14 > < L5 : C-Link
+    | Nodes : << N1 ; N5 >>,Load : 10 > < L6 : C-Link | Nodes : << N5 ; N6 >>,
+    Load : 10 > < N1 : C-Node | Capacity : 10,Used : 41 > < N2 : C-Node |
+    Capacity : 10,Used : 62 > < N3 : C-Node | Capacity : 10,Used : 34 > < N4 :
+    C-Node | Capacity : 10,Used : 17 > < N5 : C-Node | Capacity : 10,Used : 20
+    > < N6 : C-Node | Capacity : 10,Used : 10 > < N7 : C-Node | Capacity : 10,
+    Used : 14 > < SS1 : C-Service | Capacity : 1 > < SS2 : C-Service | Capacity
+    : 15 > < SS3 : C-Service | Capacity : 10 >) > To O1 AckChDemand N1 and N4
+    in N
+
+No more solutions.
+rewrites: 88
+==========================================
+srewrite in MAIN : < N : Mediator | Config : iniConf > ChDemand(O1, N, N4, N7,
+    << SS3 ; 4 >>) using Smediator .
+
+Solution 1
+rewrites: 62
+result Configuration: < N : Mediator | Config : (< C1 : C-Connection | Nodes :
+    << N1 ; N4 >>,LinkList : (L1 L2 L3),DemandList : (<< SS1 ; 3 >> << SS2 ; 5
+    >>) > < C2 : C-Connection | Nodes : << N1 ; N7 >>,LinkList : (L1 L4),
+    DemandList : (<< SS1 ; 2 >> << SS2 ; 6 >>) > < C3 : C-Connection | Nodes :
+    << N1 ; N6 >>,LinkList : (L5 L6),DemandList : (<< SS1 ; 8 >> << SS2 ; 1 >>)
+    > < L1 : C-Link | Nodes : << N1 ; N2 >>,Load : 27 > < L2 : C-Link | Nodes :
+    << N2 ; N3 >>,Load : 13 > < L3 : C-Link | Nodes : << N3 ; N4 >>,Load : 13 >
+    < L4 : C-Link | Nodes : << N2 ; N7 >>,Load : 14 > < L5 : C-Link | Nodes :
+    << N1 ; N5 >>,Load : 10 > < L6 : C-Link | Nodes : << N5 ; N6 >>,Load : 10 >
+    < N1 : C-Node | Capacity : 10,Used : 37 > < N2 : C-Node | Capacity : 10,
+    Used : 54 > < N3 : C-Node | Capacity : 10,Used : 26 > < N4 : C-Node |
+    Capacity : 10,Used : 13 > < N5 : C-Node | Capacity : 10,Used : 20 > < N6 :
+    C-Node | Capacity : 10,Used : 10 > < N7 : C-Node | Capacity : 10,Used : 14
+    > < SS1 : C-Service | Capacity : 1 > < SS2 : C-Service | Capacity : 15 > <
+    SS3 : C-Service | Capacity : 10 >) > To O1 NoConnectionBetween N4 and N7 in
+    N
+
+No more solutions.
+rewrites: 62
+Bye.

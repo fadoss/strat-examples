@@ -1,0 +1,55 @@
+==========================================
+srewrite in MAIN : 'f(10) using redValue(factorial) .
+
+Solution 1
+rewrites: 308
+result NzNat: 3628800
+
+No more solutions.
+rewrites: 308
+==========================================
+srewrite in MAIN : 'f(10) using redName(factorial) .
+
+Solution 1
+rewrites: 308
+result NzNat: 3628800
+
+No more solutions.
+rewrites: 308
+==========================================
+srewrite in MAIN : 'A(1,3) using redName(ackermann) .
+
+Solution 1
+rewrites: 730
+result NzNat: 5
+
+No more solutions.
+rewrites: 730
+==========================================
+srewrite in MAIN : 's(2) using redValue(sign) .
+
+Solution 1
+rewrites: 199
+result NzNat: 1
+
+No more solutions.
+rewrites: 199
+==========================================
+srewrite in MAIN : 's(-2) using redValue(sign) .
+
+Solution 1
+rewrites: 202
+result NzInt: -1
+
+No more solutions.
+rewrites: 202
+==========================================
+srewrite in MAIN : 'g('f(3)) using redName(nameonly) .
+
+Solution 1
+rewrites: 8
+result NzNat: 7
+
+No more solutions.
+rewrites: 8
+Bye.

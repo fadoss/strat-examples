@@ -1,0 +1,33 @@
+signature is
+	import NAT .
+
+	obs a b c d e f .
+	ob g : Obj Obj .
+	ob n : Nat .
+end
+
+membrane M1 is
+	ev  r11 : a -> b .
+	xev r11 : a -> c .
+	xev r11 : a -> (d, here) .
+	xev r12 : a -> (e, out) .
+	xev r13 : a -> (f, in M2) .
+end
+
+membrane M2 is
+
+end
+
+membrane M3 is
+	var N : Nat .
+
+	ev r31 : n(s(N)) -> a n(N) .
+	xev r32 : 0 -> (0, out) .
+end
+
+trans < M1 | g(a, a) < M2 | empty > > .
+*** 8 solutions
+trans < M2 | < M3 | n(5) > > .
+*** two solutions: either r31 or r32 inside 5
+compute < M2 | < M3 | n(5) > > .
+*** 6 solutions

@@ -1,0 +1,582 @@
+***
+*** The Eden programming language in Maude (normalization)
+***
+*** Source: Using Maude and Its Strategies for Defining a Framework for Analyzing Eden Semantics
+***	    Mercedes Hidalgo-Herrero, Alberto Verdejo, and Yolanda Ortega-Mallén
+***	    http://maude.ucm.es/eden/
+***
+
+fmod NORMALIZATION is
+	pr EDEN-SYNTAX .
+	pr NEWVARS .
+
+
+	vars N N' N'' M N1 N2 N3 : Nat .
+	vars x x' y z X1 X2 : Std .
+	vars V V' : Var .
+	vars E E' E'' E1 E2 E3 E4 E5 E6 : Exp .
+	vars id id' id'' id''' id1 id2 p : String .
+	vars LBS LBS' : LetBindings .
+	var LB : LetBinding .
+
+	sort StdExp .
+	op {_`,_} : Std Exp -> StdExp .
+	sort StdExpList .
+	subsort StdExp < StdExpList .
+	op none : -> StdExpList .
+	op __ : StdExpList StdExpList -> StdExpList [assoc id: none] .
+
+	sort StdExpListNat .
+	op <_`,_> : StdExpList Nat -> StdExpListNat .
+
+	vars sel sel' : StdExpList .
+	vars seln seln' : StdExpListNat .
+
+	op norm : Exp -> Exp .
+
+	ceq norm(E) = E'
+	 if < E', N > := norm(E, 0) .
+
+	op norm : Exp Nat -> ExpNat .
+
+	eq norm(n(N), M) = < n(N), M > .
+	eq norm(V, N) = < V, N > .
+	ceq norm(\ x . E, N) = < \ x . E', N' >
+	 if < E', N' > := norm(E, N) .
+	eq norm(s(id) s(id'), N) = < s(id) s(id'), N > .
+	eq norm(s(id) c(id'), N) = < s(id) c(id'), N > .
+	eq norm(c(id) s(id'), N) = < c(id) s(id'), N > .
+	eq norm(c(id) c(id'), N) = < c(id) c(id'), N > .
+	eq norm(E E', N) = normAplic(E E', N) [owise] .
+	ceq norm(let LBS in s(id), N) = < let LBS' in s(id), N1 >
+	 if < LBS', N1 > := normLBindings(LBS, N) .
+	ceq norm(let LBS in c(id), N) = < let LBS' in c(id), N1 >
+	 if < LBS', N1 > := normLBindings(LBS, N) .
+	ceq norm(let LBS in E, N) = < let LBS' s(id) = E' in s(id), N2 + 1 >
+	 if < LBS', N1 > := normLBindings(LBS,N) /\
+	    < E', N2 > := norm(E, N1) /\
+	    id := newvars("x", N2, 1) [owise] .
+	eq norm(E # E', N) = norm#(E # E', N) .
+
+
+	***
+	*** Sum normalization
+	***
+
+	ceq norm(s(id) + s(id), N) = < let s(id') = s(id)
+	                                   s(id'') = (s(id) + s(id')) in s(id''), N + 2 >
+	 if id' ; id'' := newvars("x", N, 2) .
+	eq norm(E + E', N) = normVarDisSuma(E + E', N) [owise] .
+
+	op normVarDisSuma : Exp Nat -> ExpNat .
+
+	eq normVarDisSuma(V + V', N) = < V + V', N > .
+	eq normVarDisSuma(E + E', N) = normSuma(E + E', N) [owise] .
+
+	op normSuma : Exp Nat -> ExpNat .
+
+	eq normSuma(E + s(id), N) = normSumaInstanStd2(E + s(id), N) .
+	eq normSuma(E + c(id), N) = normSumaInstanCha2(E + c(id), N) .
+	eq normSuma(E + E', N) = normSuma2(E + E', N) [owise] .
+
+	op normSuma2 : Exp Nat -> ExpNat .
+
+	eq normSuma2(s(id) + E, N) = normSumaInstanStd1(s(id) + E, N) .
+	eq normSuma2(c(id) + E, N) = normSumaInstanCha1(c(id) + E, N) .
+	eq normSuma2(E + E', N) = normSumaResto(E + E', N) [owise] .
+
+	op normSumaResto : Exp Nat -> ExpNat .
+
+	ceq normSumaResto((E3 # E4) + (E5 # E6), N) =
+	    < let LBS LBS' s(id'') = (s(id) + s(id')) in s(id''), N2 + 3 >   ***( + 3 ??)
+	 if < E1, N1 > := norm(E3 # E4, N) /\
+	    < E2, N2 > := norm(E5 # E6, N1)
+	    /\ id ; id' ; id'' := newvars("x", N2, 3)
+	    /\ LBS := unifLet(id, E1) /\ LBS' := unifLet(id', E2) .
+	eq normSumaResto(E + E', N) = normSumaRestoInstans(E + E', N) [owise].
+
+	op normSumaRestoInstans : Exp Nat -> ExpNat .
+
+	ceq normSumaRestoInstans((E3 # E4) + E', N) =
+	   < let LBS s(id') = E2 s(id'') = (s(id) + s(id')) in s(id''), N2 + 3 > ***(+3??)
+	 if < E1, N1 > := norm(E3 # E4, N) /\ < E2, N2 > := norm(E', N1)
+	    /\ id ; id' ; id'' := newvars("x", N2, 3)
+	    /\ LBS := unifLet(id, E1) .
+	ceq normSumaRestoInstans(E' + (E3 # E4), N) =
+	    < let LBS s(id') = E2 s(id'') = (s(id') + s(id)) in s(id''), N2 + 3 > ***(+3?)
+	 if < E1, N1 > := norm(E3 # E4, N) /\ < E2, N2 > := norm(E', N1)
+	    /\ id ; id' ; id'' := newvars("x", N2, 3)
+	    /\ LBS := unifLet(id, E1) .
+	eq normSumaRestoInstans(E + E', N) = normSumaRestoExps(E + E', N) [owise].
+
+	op normSumaRestoExps : Exp Nat -> ExpNat .
+
+	ceq normSumaRestoExps(E + E', N) =
+	    < let s(id) = E2 s(id') = E1 s(id'') = (s(id') + s(id)) in s(id''), N2 + 3 >   ***( + 3 ??)
+	 if < E1, N1 > := norm(E, N) /\ < E2, N2 > := norm(E', N1)
+	    /\ id ; id' ; id'' := newvars("x", N2, 3) .
+
+	op normSumaInstanStd1 : Exp Nat -> ExpNat .
+
+	ceq normSumaInstanStd1((s(id)) + (E1 # E2), N) =
+	    < let s(id') = (s(id) + s(id'')) LBS in s(id'), N' + 2 >
+	 if < E', N' > := norm(E1 # E2, N) /\
+	    id' ; id'' := newvars("x", N', 2) /\
+	    LBS := unifLet(id'', E') .
+	ceq normSumaInstanStd1((s(id)) + E, N) =
+	    < let s(id') = (s(id) + s(id'')) s(id'') = E' in s(id'), N' + 2 >
+	 if < E', N' > := norm(E, N) /\
+	    id' ; id'' := newvars("x", N', 2) [owise] .
+
+	op normSumaInstanCha1 : Exp Nat -> ExpNat .
+
+	ceq normSumaInstanCha1(c(id) + (E1 # E2), N) =
+	    < let s(id') = (c(id) + s(id'')) LBS in s(id'), N' + 2 >
+	 if < E', N' > := norm(E1 # E2, N) /\
+	    id' ; id'' := newvars("x", N', 2) /\
+	    LBS := unifLet(id'', E') .
+	ceq normSumaInstanCha1((c(id)) + E, N) =
+	    < let s(id') = (c(id) + s(id'')) s(id'') = E' in s(id'), N' + 2 >
+	 if < E', N' > := norm(E, N) /\
+	    id' ; id'' := newvars("x", N', 2) [owise] .
+
+	op normSumaInstanStd2 : Exp Nat -> ExpNat .
+
+	ceq normSumaInstanStd2(E1 # E2 + s(id), N) =
+	    < let s(id') = (s(id) + s(id'')) LBS in s(id'), N' + 2 >
+	 if < E', N' > := norm(E1 # E2, N) /\
+	    id' ; id'' := newvars("x", N', 2) /\
+	    LBS := unifLet(id'', E') .
+	ceq normSumaInstanStd2(E + s(id), N) =
+	    < let s(id') = (s(id'') + s(id)) s(id'') = E' in s(id'), N' + 2 >
+	 if < E', N' > := norm(E, N) /\
+	    id' ; id'' := newvars("x", N', 2) [owise] .
+
+	op normSumaInstanCha2 : Exp Nat -> ExpNat .
+
+	ceq normSumaInstanCha2(E1 # E2 + c(id), N) =
+	    < let s(id') = (c(id) + s(id'')) LBS in s(id'), N' + 2 >
+	 if < E', N' > := norm(E1 # E2, N) /\
+	    id' ; id'' := newvars("x", N', 2) /\
+	    LBS := unifLet(id'', E') .
+	ceq normSumaInstanCha2(E + c(id), N) =
+	    < let s(id') = (s(id'') + c(id)) s(id'') = E' in s(id'), N' + 2 >
+	 if < E', N' > := norm(E, N) /\
+	    id' ; id'' := newvars("x", N', 2) [owise] .
+
+	***
+	*** Subtraction normalization
+	***
+
+	ceq norm(s(id) - s(id), N) = < let s(id') = s(id)
+	                               s(id'') = (s(id) - s(id')) in s(id''), N + 2 >
+	 if id' ; id'' := newvars("x", N, 2) .
+	eq norm(E - E', N) = normVarDisResta(E - E', N) [owise] .
+
+	op normVarDisResta : Exp Nat -> ExpNat .
+
+	eq normVarDisResta(V - V', N) = < V - V', N > .
+	eq normVarDisResta(E - E', N) = normResta(E - E', N) [owise] .
+
+	op normResta : Exp Nat -> ExpNat .
+
+	eq normResta(E - s(id), N) = normRestaInstanStd2(E - s(id), N) .
+	eq normResta(E - c(id), N) = normRestaInstanCha2(E - c(id), N) .
+	eq normResta(E - E', N) = normResta2(E - E', N) [owise] .
+
+	op normResta2 : Exp Nat -> ExpNat .
+
+	eq normResta2(s(id) - E, N) = normRestaInstanStd1(s(id) - E, N) .
+	eq normResta2(c(id) - E, N) = normRestaInstanCha1(c(id) - E, N) .
+	eq normResta2(E - E', N) = normRestaResto(E - E', N) [owise] .
+
+	op normRestaResto : Exp Nat -> ExpNat .
+
+	ceq normRestaResto((E3 # E4) - (E5 # E6), N) =
+	    < let LBS LBS' s(id'') = (s(id) - s(id')) in s(id''), N2 + 3 >   ***( + 3 ??)
+	 if < E1, N1 > := norm(E3 # E4, N) /\ < E2, N2 > := norm(E5 # E6, N1)
+	    /\ id ; id' ; id'' := newvars("x", N2, 4)
+	    /\ LBS := unifLet(id, E1) /\ LBS' := unifLet(id', E2) .
+	eq normRestaResto(E - E', N) = normRestaRestoInstans(E - E', N) [owise].
+
+	op normRestaRestoInstans : Exp Nat -> ExpNat .
+
+	ceq normRestaRestoInstans((E3 # E4) - E', N) =
+	   < let LBS s(id') = E2 s(id'') = (s(id) - s(id')) in s(id''), N2 + 3 > ***(+3??)
+	 if < E1, N1 > := norm(E3 # E4, N) /\ < E2, N2 > := norm(E', N1)
+	    /\ id ; id' ; id'' := newvars("x", N2, 3)
+	    /\ LBS := unifLet(id, E1) .
+	ceq normRestaRestoInstans(E' - (E3 # E4), N) =
+	    < let LBS s(id') = E2 s(id'') = (s(id') - s(id)) in s(id''), N2 + 3 > ***(+3?)
+	 if < E1, N1 > := norm(E3 # E4, N) /\ < E2, N2 > := norm(E', N1)
+	    /\ id ; id' ; id'' := newvars("x", N2, 3)
+	    /\ LBS := unifLet(id, E1) .
+	eq normRestaRestoInstans(E - E', N) = normRestaRestoExps(E - E', N) [owise].
+
+	op normRestaRestoExps : Exp Nat -> ExpNat .
+
+	ceq normRestaRestoExps(E - E', N) =
+	    < let s(id) = E2 s(id') = E1 s(id'') = (s(id') - s(id)) in s(id''), N2 + 3 >   ***( + 3 ??)
+	 if < E1, N1 > := norm(E, N) /\ < E2, N2 > := norm(E', N1)
+	    /\ id ; id' ; id'' := newvars("x", N2, 3) .
+
+	op normRestaInstanStd1 : Exp Nat -> ExpNat .
+
+	ceq normRestaInstanStd1((s(id)) - (E1 # E2), N) =
+	    < let s(id') = (s(id) - s(id'')) LBS in s(id'), N' + 2 >
+	 if < E', N' > := norm(E1 # E2, N) /\
+	    id' ; id'' := newvars("x", N', 2) /\
+	    LBS := unifLet(id'', E') .
+	ceq normRestaInstanStd1((s(id)) - E, N) =
+	    < let s(id') = (s(id) - s(id'')) s(id'') = E' in s(id'), N' + 2 >
+	 if < E', N' > := norm(E, N) /\
+	    id' ; id'' := newvars("x", N', 2) [owise] .
+
+	op normRestaInstanCha1 : Exp Nat -> ExpNat .
+
+	ceq normRestaInstanCha1(c(id) - (E1 # E2), N) =
+	    < let s(id') = (c(id) - s(id'')) LBS in s(id'), N' + 2 >
+	 if < E', N' > := norm(E1 # E2, N) /\
+	    id' ; id'' := newvars("x", N', 2) /\
+	    LBS := unifLet(id'', E') .
+	ceq normRestaInstanCha1((c(id)) - E, N) =
+	    < let s(id') = (c(id) - s(id'')) s(id'') = E' in s(id'), N' + 2 >
+	 if < E', N' > := norm(E, N) /\
+	    id' ; id'' := newvars("x", N', 2) [owise] .
+
+	op normRestaInstanStd2 : Exp Nat -> ExpNat .
+
+	ceq normRestaInstanStd2(E1 # E2 - s(id), N) =
+	    < let s(id') = (s(id) - s(id'')) LBS in s(id'), N' + 2 >
+	 if < E', N' > := norm(E1 # E2, N) /\
+	    id' ; id'' := newvars("x", N', 2) /\
+	    LBS := unifLet(id'', E') .
+	ceq normRestaInstanStd2(E - s(id), N) =
+	    < let s(id') = (s(id'') - s(id)) s(id'') = E' in s(id'), N' + 2 >
+	 if < E', N' > := norm(E, N) /\
+	    id' ; id'' := newvars("x", N', 2) [owise] .
+
+	op normRestaInstanCha2 : Exp Nat -> ExpNat .
+
+	ceq normRestaInstanCha2(E1 # E2 - c(id), N) =
+	    < let s(id') = (c(id) - s(id'')) LBS in s(id'), N' + 2 >
+	 if < E', N' > := norm(E1 # E2, N) /\
+	    id' ; id'' := newvars("x", N', 2) /\
+	    LBS := unifLet(id'', E') .
+	ceq normRestaInstanCha2(E - c(id), N) =
+	    < let s(id') = (s(id'') - c(id)) s(id'') = E' in s(id'), N' + 2 >
+	 if < E', N' > := norm(E, N) /\
+	    id' ; id'' := newvars("x", N', 2) [owise] .
+
+	***
+	*** Conditional expression normalization
+	***
+
+	eq norm(if0(s(id),s(id'),s(id'')), N) = < if0(s(id),s(id'),s(id'')), N > .
+	eq norm(if0(E,E',E''), N) = normIf0Var12(if0(E,E',E''), N) [owise] .
+
+	op normIf0Var12 : Exp Nat -> ExpNat .
+	ceq normIf0Var12(if0(s(id),s(id'),E), N) =
+	    < let s(id'') = E1
+	          s(id''') = if0(s(id), s(id'), s(id'')
+)        in s(id'''), N1 + 2 >
+	 if < E1, N1 > := norm(E, N) /\
+	    id'' ; id''' := newvars("x", N1, 2) .
+	eq normIf0Var12(if0(E,E',E''), N) = normIf0Var13(if0(E,E',E''), N) [owise] .
+
+	op normIf0Var13 : Exp Nat -> ExpNat .
+	ceq normIf0Var13(if0(s(id),E,s(id')), N) =
+	    < let s(id'') = E1
+	          s(id''') = if0(s(id), s(id''), s(id')
+)        in s(id'''), N1 + 2 >
+	 if < E1, N1 > := norm(E, N) /\
+	    id'' ; id''' := newvars("x", N1, 2) .
+	eq normIf0Var13(if0(E,E',E''), N) = normIf0Var23(if0(E,E',E''), N) [owise] .
+
+	op normIf0Var23 : Exp Nat -> ExpNat .
+	ceq normIf0Var23(if0(E,s(id),s(id')), N) =
+	    < let s(id'') = E1
+	          s(id''') = if0(s(id''), s(id), s(id')
+)        in s(id'''), N1 + 2 >
+	 if < E1, N1 > := norm(E, N) /\
+	    id'' ; id''' := newvars("x", N1, 2) .
+	eq normIf0Var23(if0(E,E',E''), N) = normIf0Var1(if0(E,E',E''), N) [owise] .
+
+	op normIf0Var1 : Exp Nat -> ExpNat .
+	ceq normIf0Var1(if0(s(id),E,E'), N) =
+	    < let s(id') = E1
+	          s(id'') = E2
+	          s(id''') = if0(s(id), s(id'), s(id''))
+	      in s(id'''), N2 + 3 >
+	 if < E1, N1 > := norm(E, N) /\
+	    < E2, N2 > := norm(E', N1) /\
+	    id' ; id'' ; id''' := newvars("x", N2, 3) .
+	eq normIf0Var1(if0(E,E',E''), N) = normIf0Var2(if0(E,E',E''), N) [owise] .
+
+	op normIf0Var2 : Exp Nat -> ExpNat .
+	ceq normIf0Var2(if0(E,s(id),E'), N) =
+	    < let s(id') = E1
+	          s(id'') = E2
+	          s(id''') = if0(s(id'), s(id), s(id''))
+	      in s(id'''), N2 + 3 >
+	 if < E1, N1 > := norm(E, N) /\
+	    < E2, N2 > := norm(E', N1) /\
+	    id' ; id'' ; id''' := newvars("x", N2, 3) .
+	eq normIf0Var2(if0(E,E',E''), N) = normIf0Var3(if0(E,E',E''), N) [owise] .
+
+	op normIf0Var3 : Exp Nat -> ExpNat .
+	ceq normIf0Var3(if0(E,E',s(id)), N) =
+	    < let s(id') = E1
+	          s(id'') = E2
+	          s(id''') = if0(s(id'), s(id''), s(id))
+	      in s(id'''), N2 + 3 >
+	 if < E1, N1 > := norm(E, N) /\
+	    < E2, N2 > := norm(E', N1) /\
+	    id' ; id'' ; id''' := newvars("x", N2, 3) .
+	eq normIf0Var3(if0(E,E',E''), N) = normIf0Var0(if0(E,E',E''), N) [owise] .
+
+	op normIf0Var0 : Exp Nat -> ExpNat .
+	ceq normIf0Var0(if0(E,E',E''), N) =
+	    < let s(id) = E1
+	          s(id') = E2
+	          s(id'') = E3
+	          s(id''') = if0(s(id), s(id'), s(id''))
+	      in s(id'''), N3 + 4 >
+	 if < E1, N1 > := norm(E, N) /\
+	    < E2, N2 > := norm(E', N1) /\
+	    < E3, N3 > := norm(E'', N2) /\
+	    id ; id' ; id'' ; id''' := newvars("x", N3, 4) .
+
+
+	***
+	*** Application normalization
+	***
+
+	op normAplic : Exp Nat -> ExpNat .
+
+	eq normAplic(E s(id), N) = normAplicInstanStd2(E s(id), N) .
+	eq normAplic(E c(id), N) = normAplicInstanCha2(E c(id), N) .
+	eq normAplic(E E', N) = normAplic2(E E', N) [owise] .
+
+	op normAplic2 : Exp Nat -> ExpNat .
+
+	eq normAplic2(s(id) E, N) = normAplicInstanStd1(s(id) E, N) .
+	eq normAplic2(c(id) E, N) = normAplicInstanCha1(c(id) E, N) .
+	eq normAplic2(E E', N) = normAplicResto(E E', N) [owise] .
+
+	op normAplicResto : Exp Nat -> ExpNat .
+
+	ceq normAplicResto((E3 # E4) (E5 # E6), N) =
+	    < let LBS LBS' s(id'') = (s(id) s(id')) in s(id''), N2 + 3 >   ***( + 3 ??)
+	 if < E1, N1 > := norm(E3 # E4, N) /\ < E2, N2 > := norm(E5 # E6, N1)
+	    /\ id ; id' ; id'' := newvars("x", N2, 4)
+	    /\ LBS := unifLet(id, E1) /\ LBS' := unifLet(id', E2) .
+	eq normAplicResto(E E', N) = normAplicRestoInstans(E E', N) [owise].
+
+	op normAplicRestoInstans : Exp Nat -> ExpNat .
+
+	ceq normAplicRestoInstans((E3 # E4) E', N) =
+	   < let LBS s(id') = E2 s(id'') = (s(id) s(id')) in s(id''), N2 + 3 > ***(+3??)
+	 if < E1, N1 > := norm(E3 # E4, N) /\ < E2, N2 > := norm(E', N1)
+	    /\ id ; id' ; id'' := newvars("x", N2, 3)
+	    /\ LBS := unifLet(id, E1) .
+	ceq normAplicRestoInstans(E' (E3 # E4), N) =
+	    < let LBS s(id') = E2 s(id'') = (s(id') s(id)) in s(id''), N2 + 3 > ***(+3?)
+	 if < E1, N1 > := norm(E3 # E4, N) /\ < E2, N2 > := norm(E', N1)
+	    /\ id ; id' ; id'' := newvars("x", N2, 3)
+	    /\ LBS := unifLet(id, E1) .
+	eq normAplicRestoInstans(E E', N) = normAplicRestoExps(E E', N) [owise].
+
+
+	op normAplicRestoExps : Exp Nat -> ExpNat .
+
+	ceq normAplicRestoExps(E E', N) =
+	    < let s(id) = E2 s(id') = E1 s(id'') = (s(id') s(id)) in s(id''), N2 + 3 >   ***( + 3 ??)
+	 if < E1, N1 > := norm(E, N) /\ < E2, N2 > := norm(E', N1)
+	    /\ id ; id' ; id'' := newvars("x", N2, 3) .
+
+
+	op normAplicInstanStd1 : Exp Nat -> ExpNat .
+
+	ceq normAplicInstanStd1((s(id)) (E1 # E2), N) =
+	    < let s(id') = (s(id) s(id'')) LBS in s(id'), N' + 2 >
+	 if < E', N' > := norm(E1 # E2, N) /\
+	    id' ; id'' := newvars("x", N', 2) /\
+	    LBS := unifLet(id'', E') .
+	ceq normAplicInstanStd1((s(id)) E, N) =
+	    < let s(id') = (s(id) s(id'')) s(id'') = E' in s(id'), N' + 2 >
+	 if < E', N' > := norm(E, N) /\
+	    id' ; id'' := newvars("x", N', 2) [owise] .
+
+
+	op normAplicInstanCha1 : Exp Nat -> ExpNat .
+
+	ceq normAplicInstanCha1(c(id) (E1 # E2), N) =
+	    < let s(id') = (c(id) s(id'')) LBS in s(id'), N' + 2 >
+	 if < E', N' > := norm(E1 # E2, N) /\
+	    id' ; id'' := newvars("x", N', 2) /\
+	    LBS := unifLet(id'', E') .
+	ceq normAplicInstanCha1((c(id)) E, N) =
+	    < let s(id') = (c(id) s(id'')) s(id'') = E' in s(id'), N' + 2 >
+	 if < E', N' > := norm(E, N) /\
+	    id' ; id'' := newvars("x", N', 2) [owise] .
+
+	op normAplicInstanStd2 : Exp Nat -> ExpNat .
+
+	ceq normAplicInstanStd2(E1 # E2 s(id), N) =
+	    < let s(id') = (s(id) s(id'')) LBS in s(id'), N' + 2 >
+	 if < E', N' > := norm(E1 # E2, N) /\
+	    id' ; id'' := newvars("x", N', 2) /\
+	    LBS := unifLet(id'', E') .
+	ceq normAplicInstanStd2(E s(id), N) =
+	    < let s(id') = (s(id'') s(id)) s(id'') = E' in s(id'), N' + 2 >
+	 if < E', N' > := norm(E, N) /\
+	    id' ; id'' := newvars("x", N', 2) [owise] .
+
+	op normAplicInstanCha2 : Exp Nat -> ExpNat .
+
+	ceq normAplicInstanCha2(E1 # E2 c(id), N) =
+	    < let s(id') = (c(id) s(id'')) LBS in s(id'), N' + 2 >
+	 if < E', N' > := norm(E1 # E2, N) /\
+	    id' ; id'' := newvars("x", N', 2) /\
+	    LBS := unifLet(id'', E') .
+	ceq normAplicInstanCha2(E c(id), N) =
+	    < let s(id') = (s(id'') c(id)) s(id'') = E' in s(id'), N' + 2 >
+	 if < E', N' > := norm(E, N) /\
+	    id' ; id'' := newvars("x", N', 2) [owise] .
+
+
+	***
+	*** Let bindings normalization
+	***
+
+	op normLBindings : LetBindings Nat -> LbsNat .
+
+	eq normLBindings(nil, N) = < nil, N > .
+	ceq normLBindings(x = (E1 # E2) LBS, N) = < unifLet(x', E') LBS', N2 >
+	 if < x' = E', N1 > := normLB(x = (E1 # E2), N) /\
+	    < LBS', N2 > := normLBindings(LBS, N1) .
+	ceq normLBindings(x = E LBS, N) = < (x' = E') LBS', N2 >
+	 if < x' = E', N1 > := normLB(x = E, N) /\
+	    < LBS', N2 > := normLBindings(LBS, N1) [owise] .
+
+	op normLB : LetBindings Nat -> LbsNat .
+
+	ceq normLB(x = E, N) = < x = E', N' >
+	 if < E', N' > := norm(E,N) .
+
+
+	op unifLet : Exp Exp -> LetBinding .
+
+	eq unifLet(x, let LBS in E) = (x = E) LBS .
+	eq unifLet(x, E) = (x = E) [owise] .
+
+	op unifLet : String Exp -> LetBinding .
+
+	eq unifLet(id,E) = unifLet(s(id), E) .
+
+
+	***
+	*** Process instantiation normalization
+	***
+
+	op norm# : Exp Nat -> ExpNat .
+
+	eq norm#(s(id) # s(id'), N) = < s(id) # s(id'), N > .
+	ceq norm#(s(id') # (E1 # E2), N) =
+	    < let LBS s(id) = (s(id') # E) in s(id), N1 >
+	 if id := newvars("x", N, 1) /\
+	    < let LBS in E, N1 > := norm(E1 # E2, N + 1) . ***(+1 aunque en el haskell pone +2)
+	eq norm#(E # E', N) = norm#2(E # E', N) [owise] .
+
+
+	op norm#2 : Exp Nat -> ExpNat .
+
+	***(  ceq norm#2(s("x") # E, N) =
+	        < let LBS s(id) = E' s(id') = (s("x") # s(id)) in s(id'), N' > )
+	ceq norm#2(s(id1) # E, N) =
+	    < let s(id) = E' s(id') = (s(id1) # s(id)) in s(id'), N' >
+	 if id ; id' := newvars("x", N, 2) /\
+	    < E', N' > := norm(E, N + 2) .
+	ceq norm#2(E # E', N) = < let LBS in x , N2 >
+	 if < sel, N1 > := dcCrea#(E # E', N)
+	    /\ < { x, E'' } sel', N2 > := compCrea#(sel, sel, N1)
+	    /\ LBS := creLetB({ x, E'' } sel') [owise] .
+
+
+	op dcCrea# : Exp Nat -> StdExpListNat .
+
+	ceq dcCrea#(E1 # (E2 # E3), N) =  < sel' { s(id), E1 } , N' >
+	 if id := newvars("x", N, 1)
+	    /\ < sel', N' > := dcCrea#((E2 # E3), N + 1) .
+	ceq dcCrea#(E1 # E2, N) = < { s(id), E2 } { s(id'), E1 } , N + 2 >
+	 if id ; id' := newvars("x", N, 2) [owise] .
+
+
+	op compCrea# : StdExpList StdExpList Nat -> StdExpListNat .
+
+	eq compCrea#(none, sel, N) = < sel, N > .
+	ceq compCrea#({ x, E } { y, E' }, sel, N) = < { s(id), y # x } sel', N' >
+	 if id := newvars("x", N, 1) /\ < sel', N' > := multNormEsp(sel, N + 1) .
+	ceq compCrea#({ x, E } { y, E' } sel, sel', N) =
+	    compCrea#({ s(id), y # x } sel, { s(id), y # x } sel', N + 1)
+	 if id := newvars("x", N, 1) [owise] .
+
+
+	op multNormEsp : StdExpList Nat -> StdExpListNat .
+
+	eq multNormEsp(none, N) = < none, N > .
+	ceq multNormEsp({ x, E } sel, N) = < { x, E' } sel', N'' >
+	 if < sel', N' > := multNormEsp(sel, N) /\ < E', N'' > := norm(E, N') .
+
+
+	op creLetB : StdExpList -> LetBindings .
+
+	eq creLetB(none) = nil .
+	eq creLetB({ x, E } sel) = x = E creLetB(sel) .
+
+
+***(
+--- EXAMPLES
+	ops ej, ej1, ej2, ej3, ej4, ej5, ej6, ej7, ej8, ej9, ej10, ej11 : -> Exp .
+
+	eq ej = s("x") ((\ s("y") . s("y")) # (\ s("z") . s("z"))) .
+
+	eq ej1 = s("x") ((\ s("y") . s("y")) # (\ s("z") . s("z"))) .
+
+	eq ej2 = \ s("x") . s("x") .
+
+	eq ej3 = (\ s("x") . s("x")(\) s("x") . s("x")) .
+
+	eq ej4 = (\ s("x") . s("x")) # (\ s("z") . s("z")) .
+
+	eq ej5 = ((\ s("x") . s("x")) # (\ s("y") . (s("y") s("y"))))
+	          # ((\ s("z") . n(1)) # (\ s("t") . ((s("t") s("t")) s("t")))) .
+
+	eq ej6 = (\ s("t") . ((s("t") s("t")) s("t"))) .
+
+	eq ej7 = (\ s("t") . ((c("t") c("t")) c("t"))) .
+
+	eq ej8 = let s("x") = (\ s("t") . ((s("t1") s("t2")) s("t3"))) in s("x") .
+
+	eq ej9 = let s("y") = n(3)
+	             s("x") = ((\ s("t") . s("t")) # (\ s("s") . s("s")) # n(4))
+	         in s("y") .
+
+	eq ej10 = let s("y") = n(3)
+	              s("x") = ((\ s("t") . s("t")) # ((\ s("s") . s("s")) # n(4)))
+	          in s("y") .
+
+	eq ej11 = let s("y") = (\ s("x") . (s("x") n(3)))
+	              s("z") = (s("y") # (let s("t") = n(1) in s("t")))
+	          in s("y") s("z") .
+
+
+	ops ejlb1, ejlb2 : -> LetBinding .
+
+	eq ejlb1 = s("x") = ((\ s("t") . s("t")) # ((\ s("s") . s("s")) # n(4))) .
+
+	eq ejlb2 = s("z") = (s("y") # (let s("t") = n(1) in s("t"))) .
+)
+
+endfm

@@ -1,0 +1,7 @@
+metalevel/multistrategies/tictactoe
+
+set print conceal on .
+print conceal smod_is_sorts_._______endsm .
+
+dsrew [10] in TICTACTOE-MAIN : makeContext(upTerm(initial), ('randomO[[empty]], 'randomX[[empty]]), upModule('TICTACTOE-STRAT, true)) using turns(0, 2) .
+srew in TICTACTOE-MAIN : makeContext(upTerm(initial), ('perfectO[[empty]], 'perfectX[[empty]]), upModule('TICTACTOE-STRAT, true)) using turns(0, 2) .

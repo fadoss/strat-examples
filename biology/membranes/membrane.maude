@@ -1,0 +1,440 @@
+***
+*** Membrane systems
+***
+*** Now remotely based on "Strategy-Based Proof Calculus for
+*** Membrane Systems" by Oana Andrei and Dorel Lucanu.
+***
+
+***
+*** P-System syntax
+***
+
+mod P-SYSTEM-CONFIGURATION is
+	including QID-LIST .
+
+	sorts Obj Membrane MembraneName Target TargetMsg .
+	sorts EmptySoup MembraneSoup ObjSoup TargetSoup Soup .
+
+	subsort  Obj       < ObjSoup .
+	subsort  Membrane  < MembraneSoup .
+	subsort  TargetMsg < TargetSoup .
+	subsorts EmptySoup < MembraneSoup ObjSoup TargetSoup < Soup .
+
+	*** Membrane
+	op <_|_>   : MembraneName Soup -> Membrane [ctor] .
+	*** Membrane dissolution symbol
+	op delta   : -> Obj [ctor] .
+
+	*** Hierarchy of Soup: the multiple subsorts of Soup only contain
+	*** elements of the element that give them name
+	op empty   : -> EmptySoup [ctor] .
+        op __      : Soup         Soup         -> Soup [ctor assoc comm id: empty] .
+	op __      : EmptySoup    EmptySoup    -> EmptySoup [ditto] .
+	op __      : MembraneSoup MembraneSoup -> MembraneSoup [ditto] .
+	op __      : TargetSoup   TargetSoup   -> TargetSoup [ditto] .
+	op __	   : ObjSoup      ObjSoup      -> ObjSoup [ditto] .
+	op __      : TargetSoup   Soup         -> Soup [ditto] .
+	op __      : ObjSoup      Soup         -> Soup [ditto] .
+	op __      : MembraneSoup Soup         -> Soup [ditto] .
+
+	*** Target tags
+	ops here out : -> Target [ctor] .
+	op  in_ : MembraneName -> Target [ctor] .
+
+	*** Target messages
+	op `(_,_`) : ObjSoup Target -> TargetMsg [ctor frozen (1)] .
+	op `(_,_,div`) : ObjSoup ObjSoup -> TargetMsg [ctor frozen (1 2)] .
+
+	***
+	*** Communication rules
+
+	vars MN MN'     : MembraneName .
+	vars W W' CW EW : Soup .
+	var  T          : Target .
+
+	*** Messages of the same type (except division) are combined
+	*** equationally (the result would be the same)
+	eq (W, T) (W', T) = (W W', T) .
+
+	rl [here] : (W, here) => W .
+
+	rl [in] : (CW, in MN') < MN | W >
+	       => < MN | W CW > .
+
+	rl [out] : < MN | W (CW, out) >
+	        => < MN | W > CW .
+
+	*** The outer membrane is written explicitly because
+	*** dissolving or dividing the outermost membrane
+	*** is not allowed
+
+	rl [dis] : < MN | W < MN' | W' delta > >
+	        => < MN | W W' > .
+
+	rl [div] : < MN' | EW < MN | CW (W, W', div) > >
+	        => < MN' | EW < MN | CW W > < MN | CW W' > > .
+
+endm *** P-SYSTEM-CONFIGURATION
+
+view Membrane from TRIV to P-SYSTEM-CONFIGURATION is
+	sort Elt to Membrane .
+endv
+
+smod P-SYSTEM-STRATEGY is
+	protecting P-SYSTEM-CONFIGURATION .
+	protecting (LIST * (op __ to _++_)){Membrane} * (
+		sort List{Membrane} to MembraneList,
+		sort NeList{Membrane} to NeMembraneList
+	) .
+
+	*** These strategies must be specified by the user for each membrane (see example)
+	strat membraneRules  : MembraneName ObjSoup @ Soup .
+	strat handleMembrane : MembraneName ObjSoup @ Soup .
+
+	*** Maximal parallel step implementation
+	strats mpr visit-mpr communication @ Soup .
+	strat  nested-mpr : MembraneList @ Soup .
+
+	sd mpr := *** 1) Apply evolution on each membrane
+		visit-mpr ;
+		*** and check that at least one have succeded
+		amatch TM ;
+		*** 2) Communicate objects between membranes
+		communication ;
+		*** 3) Dissolve and divide the membranes if required
+		div ! ; dis ! .
+
+	*** Communication rules are deterministic, except 'in' in case
+	*** there are multiple membranes with the same name
+	sd communication := (in | one(out | here)) ? communication 
+	                                           : idle .
+
+	var  MN    : MembraneName .
+	vars M M'  : Membrane .
+	var  O     : Obj .
+	var  S S0  : ObjSoup .
+	var  GS    : Soup .
+	vars TS LS : TargetSoup .
+	var  TM    : TargetMsg .
+	vars MS MO : MembraneSoup .
+	var  ML    : MembraneList .
+	var  K     : Nat .
+
+	*** This strategy can be used for debugging
+	*** strat debug : Nat Soup @ Soup .
+	*** sd debug(K, S:Soup) := idle [print "debug " K " -- " S:Soup] .
+
+	***
+	*** Maximal parallel rewriting with and without priorities is
+	*** implemented by with the following strategy.
+	***
+	*** The undefined strategy handleMembrane should be instantiated to:
+	*** 1. inner-mpr, and membraneRules should be defined as a disjunction
+	***     of rules in case there are no priorities.
+	*** 2. inner-mpr, and membraneRules should be defined to a prioritized
+	***     strategy expression for the weak sense of priorities.
+	*** 3. a strategy able to handle priorities in the strong sense.
+	***
+
+	***
+	*** The ideal definition of the visit-mpr strategy would be:
+	***
+	***	sd visit-mpr := matchrew < MN | S MS >
+	***	     by S using handleMembrane(MN), MS using nested-mpr(MS) .
+	***
+	*** However, matching this pattern is very expensive for Maude, so we
+	*** first collect the objects and the membranes equationally before
+	*** executing the expected matchrew. Moreover, nested-mpr should receive a
+	*** list instead of a set of membranes to handle them efficiently, and
+	*** hence membraneList is used to convert it.
+	***
+
+	sd visit-mpr := (matchrew < MN | GS > s.t. S := filterObjs(GS) /\ MS := filterMembs(GS)
+	                 by GS using (matchrew S MS by S using handleMembrane(MN, S),
+	                                               MS using nested-mpr(membraneList(MS)))) .
+
+	sd nested-mpr(nil) := idle .
+	sd nested-mpr(M ++ ML) := (matchrew M GS by M using visit-mpr) ; nested-mpr(ML) .
+
+	*** inner-mpr applies membraneRules exhaustively on a membrane multiset.
+	*** Rules without or with weak priorities can be handled this way. Since
+	*** message arguments are frozen, membraneRules will only be applied on
+	*** unconsumed objects (a matchrew was used in previous versions).
+
+	strat inner-mpr : MembraneName ObjSoup @ Soup .
+
+	sd inner-mpr(MN, S0) := membraneRules(MN, S0)
+	                      ? inner-mpr(MN, S0) : idle .
+
+
+	*** Filter objects and membrane for a soup (in linear time)
+
+	op filterObjs : Soup -> ObjSoup .
+	eq filterObjs(empty) = empty .
+	eq filterObjs(O GS) = O filterObjs(GS) .
+	eq filterObjs(TM GS) = filterObjs(GS) .
+	eq filterObjs(M GS) = filterObjs(GS) .
+
+	op filterMembs : Soup -> MembraneSoup .
+	eq filterMembs(empty) = empty .
+	eq filterMembs(O GS) = filterMembs(GS) .
+	eq filterMembs(TM GS) = filterMembs(GS) .
+	eq filterMembs(M GS) = M filterMembs(GS) .
+
+	*** Convert a membrane soup into a list.
+	***
+	*** These equations are not confluent (different lists can be obtained
+	*** depending on how sets are matched). However, we are only interested
+	*** in fixing any order efficiently. An insertion sort algorithm using
+	*** the lt operator in the term-order.maude file of the Maude
+	*** distribution would probably produce the same list, but slower.
+
+	op membraneList : MembraneSoup -> MembraneList .
+	eq membraneList(empty) = nil .
+	eq membraneList(M MS) = M ++ membraneList(MS) .
+
+
+	*** Membrane system execution: a non-empty sequence of evolution
+	*** steps until an irreducible configuration is reached
+
+	strats mcomp mcomp2 @ Soup .
+
+	sd mcomp := mpr ; mcomp2 .
+	sd mcomp2 := mpr ? mcomp2 : idle .
+
+	*** Execution for a bounded number of steps
+	strats mcomp mcomp2 : Nat @ Soup .
+
+	sd mcomp(s(K)) := mpr ; mcomp2(K) .
+	sd mcomp2(0) := idle .
+	sd mcomp2(s(K)) := mpr ? mcomp2(K) : idle .
+
+endsm *** P-SYSTEM-STRATEGY
+
+sload model-checker
+
+***
+*** Model checking infrastructure
+***
+
+mod P-SYSTEM-PREDS is
+	protecting P-SYSTEM-CONFIGURATION .
+	including SATISFACTION .
+	protecting EXT-BOOL .
+
+	subsort Soup < State .
+
+	*** A membrane is present in the configuration
+	op isAlive  : MembraneName              -> Prop [ctor] .
+	*** A membrane contains another membrane (as a direct child)
+	op contains : MembraneName MembraneName -> Prop [ctor] .
+	*** A membrane contains some objects (as direct children)
+	op contains : MembraneName Soup         -> Prop [ctor] .
+	*** There is a delta in the configuration (outermost membrane)
+	op hasDelta :                           -> Prop [ctor] .
+	*** The membrane system matches the pattern (metalevel property, not implemented)
+	op match    : Soup                      -> Prop [ctor] .
+	*** A Boolean-integer expression in the language below holds
+	op {_}      : BoolExpr                  -> Prop [ctor] .
+
+	***
+	*** Language of integer expressions
+	***
+
+	sort NatExpr BoolExpr .
+	subsort Nat < NatExpr .
+	subsort Bool < BoolExpr .
+
+	op count     : MembraneName Soup -> NatExpr [ctor] .
+	op numObjs   : MembraneName -> NatExpr [ctor] .
+	op _+_       : NatExpr NatExpr -> NatExpr [ditto] .
+	op s_        : NatExpr -> NatExpr [ditto] .
+	op _*_       : NatExpr NatExpr -> NatExpr [ditto] .
+	op _quo_     : NatExpr NatExpr -> NatExpr [ditto] .
+	op _rem_     : NatExpr NatExpr -> NatExpr [ditto] .
+	op _^_       : NatExpr NatExpr -> NatExpr [ditto] .
+	op gcd       : NatExpr NatExpr -> NatExpr [ditto] .
+	op lcm       : NatExpr NatExpr -> NatExpr [ditto] .
+	op min       : NatExpr NatExpr -> NatExpr [ditto] .
+	op max       : NatExpr NatExpr -> NatExpr [ditto] .
+	op _<_       : NatExpr NatExpr -> BoolExpr [ditto] .
+	op _>_       : NatExpr NatExpr -> BoolExpr [ditto] .
+	op _<=_      : NatExpr NatExpr -> BoolExpr [ditto] .
+	op _>=_      : NatExpr NatExpr -> BoolExpr [ditto] .
+	op _divides_ : NatExpr NatExpr -> BoolExpr [ditto] .
+	op _=_       : NatExpr NatExpr -> BoolExpr [ctor] .
+
+	***
+	*** Equations
+	***
+
+	vars MN1 MN2 MN      : MembraneName .
+	var  S               : ObjSoup .
+	var  O               : Obj .
+	var  M               : Membrane .
+	vars CS GCS HS RS AS : Soup .
+	vars NE NE1 NE2      : NatExpr .
+	var  BE              : BoolExpr .
+	var  N               : Nat .
+	var  T               : Target .
+
+	*** Find a membrane by name (assuming there is at most one,
+	*** othwise it will be ambiguos and non-confluent)
+	op find : Soup MembraneName ~> Membrane .
+
+	eq find(< MN | CS > HS, MN) = < MN | CS > .
+	eq find(< MN1 | CS > HS, MN2) = if find(CS, MN2) :: Membrane then
+			find(CS, MN2)
+		else
+			find(HS, MN2)
+		fi
+	[owise] .
+
+	eq HS |= isAlive(MN) = find(HS, MN) :: Membrane .
+
+	ceq HS |= contains(MN1, MN2) = true if < MN1 | CS < MN2 | GCS > > RS := find(HS, MN1) .
+	eq  HS |= contains(MN1, MN2) = false [owise] .
+
+	ceq HS |= contains(MN, AS) = true if < MN | AS CS > RS := find(HS, MN) .
+	eq  HS |= contains(MN, AS) = false [owise] .
+
+	eq delta HS |= hasDelta = true .
+	eq < MN | CS delta > HS |= hasDelta = true .
+	eq HS |= hasDelta = false .
+
+	eq HS |= { BE } = evaluate(HS, BE) == true .
+
+
+	***
+	*** Evaluation of integer and Boolean expressions
+
+	op evaluate : Soup BoolExpr -> Bool .
+	op evaluate : Soup NatExpr -> Nat .
+	op count    : Soup Soup -> Nat .
+	op numObjs  : Soup -> Nat .
+	op getSoup  : Membrane -> Soup .
+
+	eq evaluate(CS, N) = N .
+	eq evaluate(CS, count(MN, S)) = if find(CS, MN) :: Membrane then count(S, getSoup(find(CS, MN))) else 0 fi .
+	eq evaluate(CS, numObjs(MN)) = if find(CS, MN) :: Membrane then numObjs(getSoup(find(CS, MN))) else 0 fi .
+	eq evaluate(CS, NE1 + NE2) = evaluate(CS, NE1) + evaluate(CS, NE2) .
+	eq evaluate(CS, s(NE)) = s(evaluate(CS, NE)) .
+	eq evaluate(CS, NE1 * NE2) = evaluate(CS, NE1) * evaluate(CS, NE2) .
+	eq evaluate(CS, NE1 quo NE2) = evaluate(CS, NE1) quo evaluate(CS, NE2) .
+	eq evaluate(CS, NE1 rem NE2) = evaluate(CS, NE1) rem evaluate(CS, NE2) .
+	eq evaluate(CS, NE1 ^ NE2) = evaluate(CS, NE1) ^ evaluate(CS, NE2) .
+	eq evaluate(CS, gcd(NE1, NE2)) = gcd(evaluate(CS, NE1), evaluate(CS, NE2)) .
+	eq evaluate(CS, lcm(NE1, NE2)) = lcm(evaluate(CS, NE1), evaluate(CS, NE2)) .
+	eq evaluate(CS, min(NE1, NE2)) = min(evaluate(CS, NE1), evaluate(CS, NE2)) .
+	eq evaluate(CS, max(NE1, NE2)) = max(evaluate(CS, NE1), evaluate(CS, NE2)) .
+
+	eq evaluate(CS, NE1 < NE2) = evaluate(CS, NE1) < evaluate(CS, NE2) .
+	eq evaluate(CS, NE1 > NE2) = evaluate(CS, NE1) > evaluate(CS, NE2) .
+	eq evaluate(CS, NE1 <= NE2) = evaluate(CS, NE1) <= evaluate(CS, NE2) .
+	eq evaluate(CS, NE1 >= NE2) = evaluate(CS, NE1) >= evaluate(CS, NE2) .
+	eq evaluate(CS, NE1 divides NE2) = evaluate(CS, NE1) divides evaluate(CS, NE2) .
+	eq evaluate(CS, NE1 = NE2) = evaluate(CS, NE1) == evaluate(CS, NE2) .
+	eq evaluate(CS, NE1 = NE2) = evaluate(CS, NE1) == evaluate(CS, NE2) .
+
+	eq count(CS, CS RS) = s(count(CS, RS)) .
+	eq count(CS, RS) = 0 [owise] .
+	eq getSoup(< MN | CS >) = CS .
+
+	eq numObjs(empty) = 0 .
+	eq numObjs(O CS) = numObjs(CS) + 1 .
+	eq numObjs(M CS) = numObjs(CS) .
+
+	op numObjsRec : Soup -> Nat .
+
+	eq numObjsRec(empty) = 0 .
+	eq numObjsRec(O RS) = s(numObjsRec(RS)) .
+	eq numObjsRec(< MN | CS > RS) = numObjsRec(CS) + numObjsRec(RS) .
+	eq numObjsRec((CS, T)  RS) = numObjsRec(CS) + numObjsRec(RS) .
+	eq numObjsRec(RS) = 0 [owise] .
+
+endm *** P-SYSTEM-PREDS
+
+***
+*** Membrane system example
+***
+*** The following example shows how a basic membrane system can be specified
+*** in this Maude framework:
+***  1. Define membrane names, objects, and rules in an extension of
+***     P-SYSTEM-CONFIGURATION. In the right-hand side of the rules, all
+***     objects may have a target.
+***  2. Indicate the rules that can be applied to a certain membrane by a
+***     strategy definition membraneRules(<membraneName>) := r1 | ... | rn.
+***  3. Define handleMembrane(M) as inner-mpr(M). This step and the previous
+***     may change if priorities or other alternative control method are used.
+***     inner-mpr works for weak priorities (with a prioritized membraneRules
+***     definition), but not for strong priorities.
+***  4. Call mpr.
+***
+*** In memparse.maude, this is generated automatically from a membrane-language
+*** specification.
+
+mod MEMBRANE-SYSTEM-EXAMPLE is
+	extending P-SYSTEM-CONFIGURATION .
+
+	ops M1 M2 M3 M4 : -> MembraneName [ctor] .
+	ops a b c d : -> Obj [ctor] .
+
+	*** Rules for M1
+	rl [r11] : a a => (a, here) (b, in M2) .
+	rl [r12] : a b => (c, here) (d, in M2) .
+	rl [r13] :   b => (d, here) (d, here) .
+
+	*** Rules for M2
+	rl [r21] : b b => (a, here) (a, out) .
+	rl [r22] : a   => (b, here) .
+
+	*** Rules for M3
+	rl [r31] :   b => (a, here) (a, out) .
+	rl [r32] : a b => (a, out) (b, here) .
+
+	*** Rules for M4
+	rl [r41] : a => (b, out) .
+	rl [r41] : b => (c, here) .
+
+endm
+
+smod MEMBRANE-SYSTEM-EXAMPLE-STRAT is
+	protecting MEMBRANE-SYSTEM-EXAMPLE .
+	protecting P-SYSTEM-STRATEGY .
+
+	var M  : MembraneName .
+	var S0 : ObjSoup .
+
+	sd handleMembrane(M, S0) := inner-mpr(M, S0) .
+
+	sd membraneRules(M1, S0) := r11 | r12 or-else r13 .
+	sd membraneRules(M2, S0) := r21 | r22 .
+	sd membraneRules(M3, S0) := r31 | r32 .
+	sd membraneRules(M4, S0) := r41 .
+endsm
+
+smod MEMBRANE-SYSTEM-EXAMPLE-CHECK is
+	protecting MEMBRANE-SYSTEM-EXAMPLE-STRAT .
+	protecting P-SYSTEM-PREDS .
+	protecting STRATEGY-MODEL-CHECKER .
+endsm
+
+eof
+
+srew < M1 | a a b b > using mpr .
+*** Solutions: < M1 | c c (d d,in M2) >, < M1 | a d d d d (b,in M2) >
+
+srew < M2 | a a b b > using mpr .
+*** Solutions: a < M2 | a b b >
+
+srew < M3 | a b b > using mpr .
+*** Solutions: a a < M3 | a a a >, a a < M3 | a b >
+
+srew < M1 | a a b b < M2 | a a b b > > using mpr .
+*** Solutions: < M1 | a c c < M2 | a b b d d > >, < M1 | a a d d d d < M2 | a b b b > >
+
+srew < M1 | a a b b < M2 | a a b b > < M3 | a b b > > using mpr .
+*** There are eight solutions.
+
+srew < M1 | a a b b < M2 | a a b b < M3 | a b b > > > using mpr .
+*** There are four solutions.

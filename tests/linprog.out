@@ -1,0 +1,70 @@
+==========================================
+srewrite in MAIN : opt1 using free .
+
+Solution 1
+rewrites: 638
+result SimplexState: solution(-26/3, x(1) <- 14/3 x(2) <- 13/3 h(5) <- 0)
+
+No more solutions.
+rewrites: 638
+==========================================
+srewrite in MAIN : opt2 using solve .
+
+Solution 1
+rewrites: 3634
+result SimplexState: solution(-50/3, x(3) <- 10/3 x(4) <- 20/3 h(6) <- 25/3)
+
+No more solutions.
+rewrites: 3634
+==========================================
+srewrite in MAIN : opt3 using one(makeTable) .
+
+Solution 1
+rewrites: 68
+result SimplexTablePhaseI: TSimplexFaseI max @ a(6) @ h(4) a(6) | (1 x(2) + 1
+    h(4) + 2 x(1) + -1 x(3) = 4) (1 x(1) + 1 x(3) + 1 a(6) + -1 h(5) + -2 x(2)
+    = 2) | 1 x(3) + 2 x(2) + 3 x(1) = 0 @ 1 h(5) + 2 x(2) + -1 x(1) + -1 x(3) =
+    -2
+
+No more solutions.
+rewrites: 68
+==========================================
+srewrite in MAIN : rand1 using solve .
+
+Solution 1
+rewrites: 5249
+result SimplexState: unfeasable
+
+No more solutions.
+rewrites: 5249
+==========================================
+srewrite in WATCH-MAIN : watch(other, 0) using watchor .
+
+Solution 1
+rewrites: 2152
+result NzNat: 1
+
+Solution 2
+rewrites: 4625
+result NzNat: 3
+
+Solution 3
+rewrites: 5886
+result NzNat: 5
+
+Solution 4
+rewrites: 6489
+result NzNat: 7
+
+No more solutions.
+rewrites: 6489
+==========================================
+srewrite in WATCH-MAIN : watch(opt1, 0) using watch .
+
+Solution 1
+rewrites: 2843
+result NzNat: 3
+
+No more solutions.
+rewrites: 2843
+Bye.

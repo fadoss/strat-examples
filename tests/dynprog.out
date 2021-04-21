@@ -1,0 +1,19 @@
+==========================================
+srewrite [1] in MAIN-BINOMIAL : empty using solve(7 ; 3) .
+
+Solution 1
+rewrites: 5341
+result Table: < 1 ; 0,1 > < 1 ; 1,1 > < 2 ; 0,1 > < 2 ; 1,2 > < 2 ; 2,1 > < 3 ;
+    0,1 > < 3 ; 1,3 > < 3 ; 2,3 > < 3 ; 3,1 > < 4 ; 0,1 > < 4 ; 1,4 > < 4 ; 2,6
+    > < 4 ; 3,4 > < 5 ; 1,5 > < 5 ; 2,10 > < 5 ; 3,10 > < 6 ; 2,15 > < 6 ; 3,20
+    > < 7 ; 3,35 >
+==========================================
+srewrite in MAIN2 : empty using solve(15) .
+
+Solution 1
+rewrites: 22957
+result Table: < 14,610 > < 15,987 >
+
+No more solutions.
+rewrites: 23987
+Bye.

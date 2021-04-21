@@ -1,0 +1,9 @@
+params/branchBound/bb-traveler
+
+srew initial(node(city(0), 0), generateFixData(4)) using solve .
+
+load bb-traveler-list
+srew initial(node(city(0), 0), generateFixData(3)) using solve .
+
+load bb-traveler-index
+srew initial(node(city(0), 0), generateFixData(5)) using solve .

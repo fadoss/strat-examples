@@ -1,0 +1,40 @@
+***
+*** Divisors calculator
+***
+*** Starting from < M1 | a^n tic < M2 | empty > >, the membrane
+*** system yields < M1 | d^m > for each divisor m of n
+***
+
+membrane M1 is
+	ev r11 : a a -> (a a d, in M2)  .
+	ev r12 : a   -> (a, in M2) .
+	ev r13 : tic -> (tic, in M2) .
+end
+
+membrane M2 is
+	ev r21 : d a -> c .
+	ev r22 : c   -> d .
+	ev r23 : tic -> tac .
+	ev r24 : a tac -> a tic .
+	ev r25 : d tac -> d .
+	ev r26 : tac -> delta .
+
+	pr r24 > r26 .
+	pr r25 > r26 .
+end
+
+eof
+
+trans < M1 | a a a tic < M2 | d tac > > .
+
+*** Compute all the divisors of 8
+compute < M1 | a a a a a a a a tic < M2 | empty > > .
+*** Check that all results from this term are divisors of 12
+check < M1 | a a a a a a a a a a a a tic < M2 | empty > > satisfies [] ({ count (M1 , d) = 0 } \/ { count (M1 , d) divides 12 }) .
+*** Check whether a tac in M2 is followed by a tic (this does not hold, but
+*** tic is always followed by a tac)
+check < M1 | a a a a a tic < M2 | empty > > satisfies [] (contains(M2, tac) -> O contains(M2, tic)) .
+
+*** The system contains a non-terminating executioon, but it can be avoided by
+*** by putting «d tac» as the initial content of M2
+check < M1 | a a tic < M2 | empty > > satisfies <> contains(M2, c) .

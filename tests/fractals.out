@@ -1,0 +1,45 @@
+==========================================
+srewrite [1] in MAIN : a a a a a using map .
+
+Solution 1
+rewrites: 10
+result NeList{Letters0}: c c c c c
+==========================================
+srewrite in MAIN : a a a a a using map .
+
+Solution 1
+rewrites: 10
+result NeList{Letters0}: c c c c c
+
+No more solutions.
+rewrites: 10
+==========================================
+srewrite [1] in MAIN : a a a a a using map2 .
+
+Solution 1
+rewrites: 10
+result NeList{Letters0}: c c c c c
+==========================================
+srewrite [1] in MAIN : a a a a a using map3 .
+
+Solution 1
+rewrites: 11
+result NeList{Letters0}: c c c c c
+==========================================
+srewrite [1] in MAIN : a a a a a using map4 .
+
+Solution 1
+rewrites: 5
+result NeList{Letters0}: c c c c c
+==========================================
+srewrite [1] in MAIN : a a a a a using map5 .
+
+Solution 1
+rewrites: 5
+result NeList{Letters0}: c c c c c
+==========================================
+srewrite in FRACTALS-STRAT : (0.0, 0.0) >> (1.0, 0.0) using expandTimes(3) .
+
+No solution.
+rewrites: 0
+Bye.

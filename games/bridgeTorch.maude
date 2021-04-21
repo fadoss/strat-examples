@@ -1,0 +1,175 @@
+***
+*** Bridge and torch problem
+***
+*** A number of people must cross a river in the night through a narrow bridge
+*** with space for only two people at a time. When two people cross the puzzle,
+*** they must move at the slower person's pace and carry a torch to light the
+*** way. Can they all cross if the torch only last 15 minutes?
+***
+
+fmod BRIDGE-DATA is
+	protecting NAT .
+
+	sort Bridge Being Group .
+	subsort Being < Group .
+
+	op pers  : Nat -> Being [ctor] .
+	op torch : Nat -> Being [ctor] .
+
+	op none : -> Group [ctor] .
+	op dest : -> Group [ctor format (g o)] .
+	op __ : Group Group -> Group [ctor assoc comm id: none] .
+
+	op _|_ : Group Group -> Bridge [ctor comm prec 50] .
+
+	op initial : -> Bridge .
+	eq initial = pers(1) pers(2) pers(5) pers(8) torch(15) | dest .
+endfm
+
+mod BRIDGE is
+	protecting BRIDGE-DATA .
+
+	vars L R : Group .
+	vars N M K : Nat .
+
+	crl [bridge1] : pers(N) torch(K) L | R =>
+		                         L | R pers(N) torch(sd(K, N))
+	 if K >= N .
+
+	crl [bridge2] : pers(N) pers(M) torch(K) L | R =>
+		                                 L | R pers(N) pers(M) torch(sd(K, max(N, M)))
+	 if K >= max(N, M) .
+endm
+
+smod BRIDGE-STRAT is
+	protecting BRIDGE .
+
+	vars N M K : Nat .
+	vars G L R : Group .
+	var  B     : Bridge .
+
+	*** Hardcoded solution
+	strat solution @ Bridge .
+
+	sd solution := bridge2[N <- 1, M <- 2] ;
+	               bridge1[N <- 1] ;
+                       bridge2[N <- 5, M <- 8] ;
+	               bridge1[N <- 2] ;
+	               bridge2[N <- 1, M <- 2] .
+
+	*** Strategy that excessively limits the search (moves are pruned taking
+	*** into account the time that must be spent in the future to cross the
+	*** people from L to R, including moving the torch back to L)
+	strat wrong @ Bridge .
+
+	sd wrong := match (dest L | none) ? idle : (
+		(matchrew B s.t. pers(N) pers(M) torch(K) L | R dest := B
+			/\ *** max(N, M) is the cost of this move
+			   max(N, M)
+			   *** The minimum cost of taking the torch back
+			   *** to L (it is wrong, see wiser)
+			   + min(R pers(N) pers(M))
+			   *** max(L) must be spent for the people still
+			   *** in L to cross the bridge
+			   + max(L) <= K
+		by B using bridge2[N <- N, M <- M]) |
+		matchrew B s.t. L | R dest := B by B using bridge1[N <- min(R)]) ; wrong .
+
+	*** Wiser bounding strategy
+	strat wiser @ Bridge .
+
+	sd wiser := match (dest L | none) ? idle : (
+		(matchrew B s.t. pers(N) pers(M) torch(K) L | R dest := B
+			/\ max(N, M) 
+			   + if L == none then 0 else min(R pers(N) pers(M)) fi
+			   + max(L) <= K
+		by B using bridge2[N <- N, M <- M]) |
+		matchrew B s.t. L | R dest := B by B using bridge1[N <- min(R)]) ; wiser .
+
+	*** Start moving the two fastest (resp. slowest) people
+	strats fastest slowest @ Bridge .
+
+	sd fastest := matchrew B s.t. L | R dest := B
+			by B using bridge2[N <- min(L), M <- min(exclude(L, pers(min(L))))] ;
+			(bridge1 | bridge2) * ; match (none | dest R) .
+
+	sd slowest := matchrew B s.t. L | R dest := B
+			by B using bridge2[N <- max(L), M <- max(exclude(L, pers(max(L))))] ;
+			(bridge1 | bridge2) * ; match (none | dest R) .
+
+
+	*** All the solution given the other strategies coincide
+	*** Is there any other? No.
+	strat no-fastest @ Bridge .
+
+	sd no-fastest := matchrew B s.t. L | R dest := B by B using ((bridge1 | bridge2) ;
+	                   not(match G | pers(N) pers(M) dest torch(K) 
+	                         s.t. N := min(L) /\ M := min(exclude(L, pers(N))))) ;
+	                 (bridge1 | bridge2) * ; match (none | dest R) .
+
+	ops max min : Group -> Nat .
+	op  exclude : Group Group -> Group .
+	op contains : Group Group -> Bool .
+
+	eq max(none) = 0 .
+	eq max(torch(N) G) = max(G) .
+	eq max(dest G) = max(G) .
+	eq max(pers(N) G) = max(N, max(G)) .
+
+	eq min(none) = 0 .
+	eq min(torch(N) G) = min(G) .
+	eq min(dest G) = min(G) .
+	eq min(pers(N) G) = if min(G) == 0 then N else min(N, min(G)) fi .
+
+	eq exclude(G L, L) = G .
+	eq exclude(G, L) = G [owise] .
+
+	eq contains(G L, L) = true .
+	eq contains(G, L) = false [owise] .
+endsm
+
+sload model-checker
+
+mod BRIDGE-PREDS is
+	protecting BRIDGE .
+	including SATISFACTION .
+
+	subsort Bridge < State .
+
+	op goal : -> Prop [ctor] .
+
+	var B : Bridge .
+	var G : Group .
+
+	eq (none | dest G) |= goal = true .
+	eq B               |= goal = false [owise] .
+
+endm
+
+smod BRIDGE-SCHECK is
+	protecting BRIDGE-PREDS .
+	protecting BRIDGE-STRAT .
+	including MODEL-CHECKER .
+	including STRATEGY-MODEL-CHECKER .
+endsm
+
+eof
+
+set verbose on .
+
+search initial =>+ none | dest G:Group .
+show path 141 .
+red modelCheck(initial, [] ~ goal) .		*** false, 142 states
+
+*** srewrite is enough to check if a solution is possible with restrictions,
+*** but modelCheck and search-using return a solution satisfying these (if there is one)
+
+srewrite initial using wiser .
+search initial =>! B:Bridge using wiser .
+show path 5 .
+
+red modelCheck(initial, [] ~ goal, 'wrong) .		*** true, 15 states
+red modelCheck(initial, [] ~ goal, 'wiser) .		*** false, 6 states
+red modelCheck(initial, [] ~ goal, 'slowest) .		*** true, 7 states
+red modelCheck(initial, [] ~ goal, 'fastest) .		*** false, 106 states
+red modelCheck(initial, [] ~ goal, 'no-fastest) .	*** true, 161 states

@@ -1,0 +1,86 @@
+***
+*** Parametrized strategy module that acts as a map functor
+***
+*** The same as flatMap.maude, but without flattening.
+***
+*** Source: Adapted from Towards a Strategy Language for Maude. Section 5.2
+***
+
+sth STRIV is
+	including TRIV .
+
+	strat st @ Elt .
+endsth
+
+mod STRAT-LIST{X :: TRIV} is
+	protecting LIST{X} .
+
+	vars E E' : X$Elt .
+	vars L L' : List{X} .
+
+	rl [empty] : nil => nil .
+	crl [nonempty] : E L => E' L' if E => E' /\ L => L' .
+endm
+
+view Striv0 from TRIV to STRIV is
+	*** identity
+endv
+
+smod STRAT-MAP{X :: STRIV} is
+	protecting STRAT-LIST{Striv0}{X} * (sort List{Striv0}{X} to List) .
+
+	var L : List .
+	var E : X$Elt .
+
+	*** Using the application strategy with controlled rewriting conditions, and
+	*** ignoring errors if the list is empty and the rule pattern does not match
+	strat map : @ List .
+	sd map := try(top(nonempty{st, map})) .
+
+	*** Like map, but detecting the empty list with a conditional
+	strat map2 : @ List .
+	sd map2 := (match nil) ? idle : top(nonempty{st, map2}) .
+
+	*** The union of two disjoint strategies for the empty and nonempty case
+	strat map3 : @ List .
+	sd map3 := top(empty) | top(nonempty{st, map3}) .
+
+	*** Using the parameter strategy directly without auxiliary rules
+	strat map4 : @ List .
+	sd map4 := (match nil) or-else
+	           (matchrew E L by E using st, L using map4) .
+
+	*** The same but ignoring failures about the empty list instead of
+	*** considering them explicitly
+	strat map5 : @ List .
+	sd map5 := try(matchrew E L by E using st, L using map5) .
+endsm
+
+***
+*** An example
+
+mod LETTERS is
+	sort Letter .
+
+	ops a b c : -> Letter .
+
+	rl [ac] : a => c .
+	rl [ab] : b => c .
+endm
+
+view Letters from STRIV to LETTERS is
+	sort Elt to Letter .
+	strat st to expr ac .
+endv
+
+smod MAIN is
+	protecting STRAT-MAP{Letters} .
+endsm
+
+eof
+
+srew a a a a a using map .
+srew a a a a a using map2 .
+srew a a a a a using map3 .
+srew a a a a a using map4 .
+srew a a a a a using map5 .

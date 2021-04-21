@@ -1,0 +1,26 @@
+***
+*** Figure 3 of Introduction to Membrane Computing by Gheorghe Păun
+*** in Applications of Membrane Computing (DOI: 10.1007/3-540-29937-8_1)
+***
+*** It is another square number generator (without priorities).
+***
+
+membrane M1 is
+	ev r11 : e -> (e, out) .
+	ev r12 : f -> f .
+end
+
+membrane M2 is
+	ev r21 : b -> d .
+	ev r22 : d -> d e .
+	ev r23 : f f -> f .
+	ev r24 : c f -> c d delta .
+end
+
+membrane M3 is
+	ev r31 : a -> a b .
+	ev r32 : a -> b delta .
+	ev r33 : f -> f f .
+end
+
+compute [4] < M1 | < M2 | < M3 | a f c > > > .

@@ -1,0 +1,51 @@
+misc/feature-test
+
+select COMM .
+
+srew 'a 'b 'c using xmatchrew X Y by Y using mute .
+srew 'a 'b 'c using xmatchrew M s.t. X Y := M by M using comb .
+srew 'a 'b 'c using mute[X <- 'a] .
+
+select SEQ .
+
+srew 'a 'b 'a using amatchrew X Y s.t. true by X using rh .
+srew 'a 'b 'a 'a 'a using amatchrew X Y s.t. dist(X, Y) by Y using rh .
+
+select CONTEXTS .
+
+srew 8 using matchrew X by X using (matchrew Y by Y using (match Z s.t. Z = Y)) .
+srew 8 using matchrew X by X using (matchrew Y by Y using (match Z s.t. Z = X)) .
+srew 8 using matchrew X by X using (matchrew s(X) by X using (match Z s.t. X = 8)) .
+
+select SMODS .
+
+srew {'a % 'licante}, {'b % 'arcelona}, {'c % 'uenca} using matchrew A:Tree, S:Set{Tree} s.t. {'c % X:Qid} := A:Tree by A:Tree using swap .
+srew {'a % 'licante}, {'b % 'arcelona}, {'c % 'uenca} using matchrew A:Tree, B:Tree, S:Set{Tree} s.t. {'c % X:Qid } := A:Tree /\ {'b % C:Tree} := B:Tree by A:Tree using swap, B:Tree using swap .
+srew {'a % 'licante}, {'b % 'arcelona}, {'c % 'uenca} using matchrew A:Tree, B:Tree, S:Set{Tree} s.t. {'c % X:Qid } := A:Tree /\ {'b % X:Qid } := B:Tree by A:Tree using swap, B:Tree using swap .
+
+srew 'a using puths(12) .
+srew 'a using rhonly('a) .
+srew 'a using rhonly('b) .
+srew 'a using puths(7, 'a) .
+srew 'b using puths(7, 'a) .
+srew 'c using twohs ; threehs .
+srew 'o using hifeven(10) .
+srew 'o using hifeven(11) .
+
+select CALLS .
+
+srew 'a using cond .
+srew 'c using cond .
+srew 'd using cond .
+srew 'b using defs .
+srew 'e using args(('a, 'b)) .
+srew 'f using args(('f, 'g, 'h)) .
+srew 'a using cond ; defs ; args('hha) .
+
+select PUTH-MAIN .
+
+srew 'a using sqr-repeat(7) .
+srew 'a using sqr-repeat2(7) .
+srew 'a using sqr-repeat3(7) .
+
+srew 'a using sqr-repeat(7) .

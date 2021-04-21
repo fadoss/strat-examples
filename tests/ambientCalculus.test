@@ -1,0 +1,8 @@
+semantics/ambients/ambients-semantics
+
+srew M using norep .
+srew N using norep .
+srew R using norep .
+srew firewall(stop, stop) using cardellideco(4) .
+srew [1] fail(stop, stop) using ecd(3) .
+continue 1 .

@@ -1,0 +1,789 @@
+***
+*** The Eden programming language in Maude
+***
+*** Source: Using Maude and Its Strategies for Defining a Framework for Analyzing Eden Semantics
+***	    Mercedes Hidalgo-Herrero, Alberto Verdejo, and Yolanda Ortega-Mallén
+***	    http://maude.ucm.es/eden/
+***
+
+fmod EDEN-SYNTAX is
+	pr STRING .
+
+	sorts Std Cha Var Whnf NonWhnf Exp LetBinding LetBindings .
+	subsorts Std Cha < Var < NonWhnf .
+	subsorts Whnf NonWhnf < Exp .
+	subsort LetBinding < LetBindings .
+
+	op n : Nat -> Whnf .
+	op s : String -> Std .
+	op c : String -> Cha .
+	op \_._ : Std Exp -> Whnf [prec 19] .
+	op __ : Exp Exp -> NonWhnf [prec 15 gather (E e)] .
+	op let_in_ : LetBindings Exp -> NonWhnf [prec 20] .
+	op _#_ : Exp Exp -> NonWhnf [prec 15 gather (E e)] .
+	ops _+_ _-_ : Exp Exp -> NonWhnf [assoc prec 16] .
+	ops _*_ : Exp Exp -> NonWhnf [assoc prec 14] .
+	op if0 : Exp Exp Exp -> NonWhnf .
+	op if_==_then_else_endif : Exp Exp Exp Exp -> NonWhnf .
+	op if_=/=_then_else_endif : Exp Exp Exp Exp -> NonWhnf .
+	op if_<=_then_else_endif : Exp Exp Exp Exp -> NonWhnf .
+	op if_>=_then_else_endif : Exp Exp Exp Exp -> NonWhnf .
+	op if_<_then_else_endif : Exp Exp Exp Exp -> NonWhnf .
+	op if_>_then_else_endif : Exp Exp Exp Exp -> NonWhnf .
+
+	op _=_ : Std Exp -> LetBinding [prec 10] .
+	op nil : -> LetBindings .
+	op __ : LetBindings LetBindings -> LetBindings [assoc id: nil prec 14] .
+
+	--- Syntax sugar
+
+	vars E1 E2 E3 E4 : Exp .
+
+	eq if E1 == E2 then E3 else E4 endif = if0((E1 - E2) + (E2 - E1), E3, E4) .
+	eq if E1 <= E2 then E3 else E4 endif = if0(E1 - E2, E3, E4) .
+	eq if E1 =/= E2 then E3 else E4 endif = if E1 == E2 then E4 else E3 endif .
+	eq if E1 >= E2 then E3 else E4 endif = if E2 <= E1 then E3 else E4 endif .
+	eq if E1 < E2 then E3 else E4 endif = if E2 <= E1 then E4 else E3 endif .
+	eq if E1 > E2 then E3 else E4 endif = if E1 <= E2 then E4 else E3 endif .
+
+	sort ExpNat .
+	op <_`,_> : Exp Nat -> ExpNat .
+	sort LbsNat .
+	op <_`,_> : LetBindings Nat -> LbsNat .
+
+endfm
+
+fmod SUBST is
+	pr EDEN-SYNTAX .
+
+	op _`[_/_`] : Exp Std Std -> Exp [prec 20] .
+
+	op subst : Exp Std Std -> Exp .
+	op subst : LetBindings Std Std -> LetBindings .
+
+	var  N : Nat .
+	vars X Y X1 X2 : Std .
+	var  C : Cha .
+	vars E E' E1 E2 : Exp .
+	var  id : String .
+	var  LBS : LetBindings .
+
+	eq E [X2 / X1] = subst(E, X1, X2) .
+
+	eq subst(n(N), X1, X2) = n(N) .
+	eq subst(X, X1, X2) = if X == X1 then X2 else X fi .
+	eq subst(C, X1, X2) = C .
+	eq subst(\ X . E, X1, X2) = if X == X1 then \ X . E
+	                            else \ X . subst(E, X1, X2) fi .
+	eq subst(E1 E2, X1, X2) = subst(E1, X1, X2) subst(E2, X1, X2) .
+	eq subst(E + E', X1, X2) = subst(E, X1, X2) + subst(E', X1, X2) .
+	eq subst(E - E', X1, X2) = subst(E, X1, X2) - subst(E', X1, X2) .
+	eq subst(if0(E,E1,E2), X1, X2) = if0(subst(E, X1,X2),
+	                                       subst(E1, X1, X2), subst(E2, X1, X2)) .
+	eq subst(E1 # E2, X1, X2) = subst(E1, X1, X2) # subst(E2, X1, X2) .
+	eq subst(let LBS in E, X1, X2) = let subst(LBS, X1, X2) in subst(E, X1, X2) .
+
+	eq subst(X = E, X1, X2) = if X == X1 then X2 = subst(E, X1, X2)
+	                          else X =  subst(E, X1, X2) fi .
+	eq subst(X = E Y = E' LBS, X1, X2) =  subst(X = E, X1, X2)
+	                                        subst(Y = E' LBS, X1, X2) .
+
+endfm
+
+fmod SYNTAX-AUX-FUN is
+	pr EDEN-SYNTAX .
+
+	op whnf : Exp -> Bool .
+	op isInstan : Exp -> Bool .
+	op name : Exp -> String .
+
+	var  N : Nat .
+	var  id : String .
+	vars X Y Z : Std .
+	var  V : Var .
+	vars E E1 E2 : Exp .
+	var  LBS : LetBindings .
+
+	eq whnf(n(N)) = true .
+	eq whnf(\ X . E) = true .
+	eq whnf(E) = false [owise] .
+
+	eq isInstan(E1 # E2) = true .
+	eq isInstan(E) = false [owise] .
+
+	eq name(s(id)) = id .
+	eq name(c(id)) = id .
+	eq name(E) = "no variable" [owise] .
+
+	--- function to locate the var that blockes the expression
+
+	op blockedOn : Exp -> Exp .
+
+	eq blockedOn(V) = V .
+	eq blockedOn(V E) = V .
+	eq blockedOn(if0(X,Y,Z)) = X .
+	eq blockedOn(E) = s("NoEsExpreBlockedOn") [owise] .
+
+	op numvars : LetBindings -> Nat .
+	eq numvars(nil) = 0 .
+	eq numvars(X = E LBS) = 1 + numvars(LBS) .
+
+endfm
+
+fmod NEWVARS is
+	pr CONVERSION .
+
+	sort StringList .
+	subsort String < StringList .
+	op nil : -> StringList .
+	op _;_ : StringList StringList -> StringList [assoc id: nil] .
+
+	op newvar : String Nat -> String .
+	op newvars : String Nat Nat -> StringList .
+
+	var p : String .
+	vars N M : Nat .
+	eq newvar(p, N) = newvars(p, N, 1) .
+	eq newvars(p, N, 0) = nil .
+	eq newvars(p, N, s(M)) = p + "." + string(N + 1, 10) ; newvars(p, N + 1, M) .
+endfm
+
+in normalization.maude
+
+fmod SYSTEMS-SYNTAX is
+	pr EDEN-SYNTAX .
+	pr CONVERSION .
+
+	sorts TState Thread Heap Process System .
+	subsort Thread < Heap .
+	subsort Process < System .
+
+	op A : -> TState [format (g o)] .
+	op I : -> TState [format (b o)].
+	op B : -> TState [format (r o)].
+	op _|-_->_ : Var TState Exp -> Thread [prec 25 format (ni d d d d d)] .
+
+	op none : -> Heap .
+	op _+_ : Heap Heap -> Heap [assoc comm id: none prec 30] .
+
+	op _:_  : Heap Heap -> Heap [prec 80] .
+	op _&_  : Heap Heap -> Heap [prec 80] .
+
+	var T : Thread .
+	eq T + T = T .  --- + heap idempotence
+
+	op <_`,_`,_`,_> : String Heap Nat Nat -> Process [format (ni c! o ++ -- s d s d d)] .
+***  	op <_`,_`,_`,_`,_> : String Heap Heap Nat Nat -> Process .
+	op <_`,_`,_`,_`,_`,_`,_> : String Heap VarSet Heap Heap Nat Nat -> Process .
+
+	op empty : -> System .
+	op __ : System System -> System [assoc comm id: empty prec 40] .
+
+	sort VarSet .
+	subsort Var < VarSet .
+	op mt : -> VarSet .
+	op _._ : VarSet VarSet -> VarSet [assoc comm id: mt] .
+	eq V:Var . V:Var = V:Var .
+
+	var p : String .
+	var N : Nat .
+
+	op childName : String Nat -> String .
+	eq childName(p, N) = p + "." + string(N + 1, 10) .
+endfm
+
+fmod SYSTEMS-AUX-FUN is
+	pr SYSTEMS-SYNTAX .
+	pr NEWVARS .
+	pr SUBST .
+
+	ops md nmd : Thread -> Heap .
+
+	eq nmd(X |- I -> E) = none .         eq md(X |- I -> E) = X |- A -> E .
+	eq nmd(X |- A -> E) = X |- A -> E .  eq md(X |- A -> E) = none .
+	eq nmd(X |- B -> E) = X |- B -> E .  eq md(X |- B -> E) = none .
+
+	op int : Heap Heap -> Heap .
+	eq int(none, H) = none .
+	eq int(T + H, T + H') = T + int(H, H') .
+	eq int(T + H, H') = int(H, H') [owise] .
+
+	sort VarList .
+	subsort Var < VarList .
+	op nil : -> VarList .
+	op _;_ : VarList VarList -> VarList [assoc id: nil] .
+
+	sorts VarVar VarVarList .
+	subsort VarVar < VarVarList .
+	op <_`,_> : Var Var -> VarVar .
+	op nil : -> VarVarList .
+	op __ : VarVarList VarVarList -> VarVarList [assoc id: nil] .
+
+	vars N M N1 N2 N3 : Nat .
+	vars X Y Z : Std .
+	vars V V' V'' : Var .
+	var W : Whnf .
+	vars E E' E1 E2 E1' E2' : Exp .
+	vars LBS LBS' LBS'' : LetBindings .
+	vars H H' H'' : Heap .
+	var T : Thread .
+	var S : TState .
+	var P : Process .
+	var VS : VarSet .
+	var VL : VarList .
+	var VVL : VarVarList .
+	vars p id id' : String .
+	var SL : StringList .
+
+	op msubst : Exp VarVarList -> Exp .
+	eq msubst(E, nil) = E .
+	eq msubst(E, < X , Y >) = E [ Y / X ] .
+	eq msubst(E, < X , Y > VVL) = msubst(E [ Y / X ], VVL) .
+
+	op msubstLbs : LetBindings VarVarList -> LetBindings .
+	eq msubstLbs(nil , VVL) = nil .
+	eq msubstLbs(X = E LBS , VVL) = (msubst(X, VVL) = msubst(E, VVL)) msubstLbs(LBS, VVL) .
+
+	op msubstHeap : Heap VarVarList -> Heap .
+	eq msubstHeap(none, VVL) = none .
+	eq msubstHeap(X |- S -> E + H, VVL) = (msubst(X, VVL) |- S -> msubst(E, VVL)) +
+	                                      msubstHeap(H, VVL) .
+
+	op pairsVars : LetBindings VarList -> VarVarList .
+	eq pairsVars(X = E, Y) = < X , Y > .
+	ceq pairsVars(X = E LBS, Y ; VL) = < X , Y > pairsVars(LBS, VL) if LBS =/= nil .
+
+	op pairsVars : Heap VarList -> VarVarList .
+	eq pairsVars(none,(nil).VarList) = nil .
+	eq pairsVars(X |- S -> E, Y) = < X , Y > .
+	ceq pairsVars(X |- S -> E + H, Y ; VL) = < X , Y > pairsVars(H, VL) if H =/= none .
+
+	op letBindsToHeap : Var LetBindings Std StringList -> Heap .
+	eq letBindsToHeap(V, LBS, X, SL) =
+	   letBindsToHeap2(V, LBS, X, stringstostd(SL), pairsVars(LBS, stringstostd(SL))) .
+
+	op letBindsToHeap2 : Var LetBindings Std VarList VarVarList -> Heap .
+	eq letBindsToHeap2(V, nil, Z, nil, VVL) = V |- A -> msubst(Z, VVL) .
+	eq letBindsToHeap2(V, X = E LBS, Z, Y ; VL, VVL) =
+	    (Y |- I -> msubst(E, VVL)) + letBindsToHeap2(V, LBS, Z, VL, VVL) .
+
+	op numvars : Heap -> Nat .
+	eq numvars(none) = 0 .
+	eq numvars(X |- S -> E + H) = 1 + numvars(H) .
+
+	op searchVar : Var VarVarList -> Var .
+	eq searchVar(V, < V, V' > VVL) = V' .
+	eq searchVar(V, < V', V'' > VVL) = searchVar(V, VVL) [owise] .
+
+	op stringstostd : StringList -> VarList .
+	eq stringstostd(nil) = nil .
+	eq stringstostd(id ; SL) = s(id) ; stringstostd(SL) .
+
+	op filter : Var Heap -> Heap .
+
+	eq filter(V, V |- S -> E + H) = H .
+	eq filter(V, H) = H [owise] .
+
+***	sort BoolThread .
+*** 	op <_`,_> : Bool Thread -> BoolThread .
+
+	op lookUp : Var Heap ~> Thread .
+
+	eq lookUp(V, V |- S -> E + H) = V |- S -> E .
+***	eq lookUp(V, H) = < false, s("isnot") |- B -> s("isnot") > [owise] .
+
+	op inters : Process VarSet -> VarSet .
+	eq inters(< p, H + V |- S -> E, N, M >, V . VS) = V . inters(< p, H, N, M >, VS) .
+	eq inters(P, VS) = mt [owise] .
+
+endfm
+
+fmod RENAME is
+	pr SYNTAX-AUX-FUN .
+	pr SYSTEMS-AUX-FUN .
+
+	sort LbsVVListNat .
+	op <_`,_`,_> : LetBindings VarVarList Nat -> LbsVVListNat .
+
+	vars N M N1 N2 N3 : Nat .
+	vars X Y Z : Std .
+	vars V V' V'' : Var .
+	var W : Whnf .
+	vars E E' E1 E2 E1' E2' : Exp .
+	vars LBS LBS' LBS'' : LetBindings .
+	vars H H' H'' : Heap .
+	var T : Thread .
+	var S : TState .
+	var VS : VarList .
+	var VVL : VarVarList .
+	vars p id id' : String .
+	var SL : StringList .
+
+	op renameLocal : Exp String Nat -> ExpNat .
+
+	eq renameLocal(n(M), p, N) = < n(M), N > .
+	eq renameLocal(X, p, N) = < X, N > .
+	eq renameLocal(c(id), p, N) = < c(id), N > .
+	ceq renameLocal(\ X . E, p, N) = < \ Y . E1, M >
+	 if Y := stringstostd(newvars(p, N, 1)) /\
+	    < E1, M > := renameLocal(E [ Y / X], p, N + 1) .
+	ceq renameLocal(E E', p, N) = < E1 E2, N1 >
+	 if < E1, N1 > := renameLocal(E, p, N) /\
+	    < E2, N2 > := renameLocal(E', p, N1) .
+	ceq renameLocal(E + E', p, N) = < E1 + E2, N1 >
+	 if < E1, N1 > := renameLocal(E, p, N) /\
+	    < E2, N2 > := renameLocal(E', p, N1) .
+	ceq renameLocal(E - E', p, N) = < E1 - E2, N1 >
+	 if < E1, N1 > := renameLocal(E, p, N) /\
+	    < E2, N2 > := renameLocal(E', p, N1) .
+	ceq renameLocal(if0(E,E1,E2), p, N) =
+	    < if0(E', E1', E2'), N3 >
+	 if < E', N1 > := renameLocal(E, p, N) /\
+	    < E1', N2 > := renameLocal(E1, p, N1) /\
+	    < E2', N3 > := renameLocal(E2, p, N2) .
+	ceq renameLocal(let LBS in E, p, N) = < let LBS' in E', N2 >
+	 if < LBS', VVL, N1 > := renameLbs(LBS, p, N) /\
+	    < E', N2 > := renameLocal(msubst(E, VVL), p, N1) .
+	ceq renameLocal(E # E', p, N) = < E1 # E2, N2 >
+	 if < E1, N1 > := renameLocal(E, p, N) /\
+	    < E2, N2 > := renameLocal(E', p, N1) .
+
+	op renameLbs : LetBindings String Nat -> LbsVVListNat .
+
+	ceq renameLbs(LBS, p, N) = < LBS'', VVL , M >
+	 if N1 := numvars(LBS) /\
+	    SL := newvars(p, N, N1) /\
+	    VS := stringstostd(SL) /\
+	    VVL := pairsVars(LBS, VS) /\
+	    LBS' := msubstLbs(LBS, VVL) /\
+	    < LBS'', M > := renameLocalLbs(LBS', p, N + N1) .
+
+	op renameLocalLbs : LetBindings String Nat -> LbsNat .
+
+	eq renameLocalLbs(nil, p, N) = < nil, N > .
+	ceq renameLocalLbs(X = E LBS, p, N) = < X = E' LBS', N2 >
+	 if < E', N1 > := renameLocal(E, p, N) /\
+	    < LBS', N2 > := renameLocalLbs(LBS, p, N1) .
+
+	sort HeapVVListNat .
+	op <_`,_`,_> : Heap VarVarList Nat -> HeapVVListNat .
+	op renameHeap : Heap String Nat -> HeapVVListNat .
+
+	ceq renameHeap(H, p, N) = < H'', VVL , M >
+	 if N1 := numvars(H) /\
+	    SL := newvars(p, N, N1) /\
+	    VS := stringstostd(SL) /\
+	    VVL := pairsVars(H, VS) /\
+	    H' := msubstHeap(H, VVL) /\
+	    < H'', M > := renameLocalHeap(H', p, N + N1) .
+
+	sort HeapNat .
+	op <_`,_> : Heap Nat -> HeapNat .
+	op renameLocalHeap : Heap String Nat -> HeapNat .
+
+	eq renameLocalHeap(none, p, N) = < none, N > .
+	ceq renameLocalHeap(X |- S -> E + H, p, N) = < X |- S -> E' + H', N2 >
+	 if < E', N1 > := renameLocal(E, p, N) /\
+	    < H', N2 > := renameLocalHeap(H, p, N1) .
+
+endfm
+
+fmod NH is
+	pr SYSTEMS-AUX-FUN .
+
+	vars N M : Nat .
+	vars X Y : Std .
+	vars E E1 E2 : Exp .
+	vars LBS : LetBindings .
+	vars H : Heap .
+	vars p : String .
+	var S : TState .
+
+	op nh : Exp Process -> Process .
+	op nh : Exp Heap -> Heap .
+	op nhlb : LetBindings Heap -> Heap .
+
+	eq nh(E, < p, H, N, M >) = < p, nh(E, H), N, M > .
+
+	eq nh(E, none) = none .
+	eq nh(n(N), H) = none .
+	ceq nh(X, H) = X |- I -> E + nh(E, filter(X, H))
+	 if X |- S -> E := lookUp(X, H) .
+	eq nh(X, H) = none [owise] .
+	eq nh(E1 E2, H) = nh(E1, H) + nh(E2, H) .
+	eq nh(E1 + E2, H) = nh(E1, H) + nh(E2, H) .
+	eq nh(E1 - E2, H) = nh(E1, H) + nh(E2, H) .
+	eq nh(if0(E,E1,E2), H) = nh(E, H) + nh(E1, H) + nh(E2, H) .
+	eq nh(E1 # E2, H) = nh(E1, H) + nh(E2, H) .
+	eq nh(\ X . E, H) = nh(E, H) .
+	eq nh(let LBS in E, H) = nhlb(LBS, H) + nh(E, H) .
+
+	eq nhlb(nil, H) = none .
+	eq nhlb(X = E LBS, H) = nh(E, H) + nhlb(LBS, H) .
+
+endfm
+
+fth NF is
+	pr SYSTEMS-SYNTAX .
+	op nf : Exp Heap -> Heap .
+endfth
+
+fmod NF-EVAL is  *** one of the different possibilities
+	pr SYSTEMS-AUX-FUN .
+	pr SYNTAX-AUX-FUN .
+
+	vars N : Nat .
+	vars X Y : Std .
+	var C : Cha .
+	vars V V' V'' : Var .
+	var W : Whnf .
+	var NW : NonWhnf .
+	vars E E1 E2 : Exp .
+	vars LBS : LetBindings .
+	vars H  : Heap .
+	var S : TState .
+	var VS : VarList .
+	vars id id' : String .
+
+	op nfEval : Exp Heap -> Heap .
+	op nflbEval : LetBindings Heap -> Heap .
+
+	eq nfEval(E, none) = none .
+	eq nfEval(n(N), H) = none .
+	ceq nfEval(X, H) = nfEval(W, filter(X, H))
+	 if X |- S -> W := lookUp(X, H) .
+	ceq nfEval(X, H) = X |- B -> NW + nfEval(E1, filter(X, H))
+	 if X |- B -> NW := lookUp(X, H) /\ E1 # E2 := NW .
+	ceq nfEval(X, H) = X |- B -> NW + nfEval(E1, filter(X, H))
+	 if X |- B -> NW := lookUp(X, H) /\
+	    not(isInstan(NW)) /\ E1 := blockedOn(NW) .
+	ceq nfEval(X, H) = X |- S -> NW
+	 if X |- S -> NW := lookUp(X, H) /\ S =/= B .
+	ceq nfEval(X, H) = X |- S -> C
+	 if X |- S -> C := lookUp(X, H) .
+	eq nfEval(X, H) = none [owise] .
+	eq nfEval(C, H) = none .
+	eq nfEval(E1 E2, H) = nfEval(E1, H) + nfEval(E2, H) .
+	eq nfEval(E1 + E2, H) = nfEval(E1, H) + nfEval(E2, H) .
+	eq nfEval(E1 - E2, H) = nfEval(E1, H) + nfEval(E2, H) .
+	eq nfEval(if0(E,E1,E2), H) = nfEval(E, H) + nfEval(E1, H) + nfEval(E2, H) .
+	eq nfEval(E1 # E2, H) = nfEval(E1, H) .
+	eq nfEval(\ X . E, H) = nfEval(E, H) .
+	eq nfEval(let LBS in E, H) = nflbEval(LBS, H) + nfEval(E, H) .
+
+	eq nflbEval(nil, H) = none .
+	eq nflbEval(X = E LBS, H) = nfEval(E, H) + nflbEval(LBS, H) .
+
+endfm
+
+view NfEval from NF to NF-EVAL is
+	op nf to nfEval .
+endv
+
+mod LOCAL-SEMANTICS is
+	pr SYSTEMS-AUX-FUN .
+	pr SYNTAX-AUX-FUN .
+
+	vars X Y Z : Std .
+	var Theta : Var .
+	vars T T' : TState .
+	var W : Whnf .
+	vars NW NW' : NonWhnf .
+	vars E E' : Exp .
+	var LBS : LetBindings .
+	vars H H' K : Heap .
+	var VS : VarList .
+	var p : String .
+	vars N M N' M' Tr S : Nat .
+
+
+	******* local transition rules *******
+
+	rl [value] :
+	   H + X |- I -> W : Theta |- A -> X
+	=> H + X |- I -> W & Theta |- A -> W .
+
+	rl [demand] :
+	    H + X |- T -> NW : Theta |- A -> X
+	 => H + nmd(X |- T -> NW) & md(X |- T -> NW) + Theta |- B -> X .
+
+	rl [sum] :
+	   H + Y |- I -> n(N') + Z |- I -> n(M') : Theta |- A -> (Y + Z)
+	=> H + Y |- I -> n(N') + Z |- I -> n(M') & Theta |- A -> n(N' + M') .
+
+	rl [sum-demand] :
+	    H + Y |- I -> n(N') + Z |- T -> NW : Theta |- A -> (Y + Z)
+	 => H + Y |- I -> n(N') + nmd(Z |- T -> NW) &
+	         md(Z |- T -> NW) + Theta |- B -> (Y + Z) .
+
+	rl [sum-demand] :
+	    H + Y |- T -> NW + Z |- I -> n(M') : Theta |- A -> (Y + Z)
+	 => H + nmd(Y |- T -> NW) + Z |- I -> n(M') &
+	         md(Y |- T -> NW) + Theta |- B -> (Y + Z) .
+
+	rl [sum-demand] :
+	    H + Y |- T -> NW + Z |- T' -> NW' : Theta |- A -> (Y + Z)
+	 => H + nmd(Y |- T -> NW) + nmd(Z |- T' -> NW') &
+	         md(Y |- T -> NW) + md(Z |- T' -> NW') + Theta |- B -> (Y + Z) .
+
+	rl [sub] :
+	   H + Y |- I -> n(N') + Z |- I -> n(M') : Theta |- A -> (Y - Z)
+	=> H + Y |- I -> n(N') + Z |- I -> n(M') &
+	        Theta |- A -> n(if N' > M' then N' - M' else 0 fi) .
+
+	rl [sub-demand] :
+	    H + Y |- I -> n(N') + Z |- T -> NW : Theta |- A -> (Y - Z)
+	 => H + Y |- I -> n(N') + nmd(Z |- T -> NW) &
+	         md(Z |- T -> NW) + Theta |- B -> (Y - Z) .
+
+	rl [sub-demand] :
+	    H + Y |- T -> NW + Z |- I -> n(M') : Theta |- A -> (Y - Z)
+	 => H + nmd(Y |- T -> NW) + Z |- I -> n(M') &
+	         md(Y |- T -> NW) + Theta |- B -> (Y - Z) .
+
+	rl [sub-demand] :
+	    H + Y |- T -> NW + Z |- T' -> NW' : Theta |- A -> (Y - Z)
+	 => H + nmd(Y |- T -> NW) + nmd(Z |- T' -> NW') &
+	         md(Y |- T -> NW) + md(Z |- T' -> NW') + Theta |- B -> (Y - Z) .
+
+	rl [if0] :
+	   H + X |- I -> n(N') : Theta |- A -> if0(X,Y,Z)
+	=> H + X |- I -> n(N') & Theta |- A -> (if N' == 0 then Y else Z fi) .
+
+	rl [if0-demand] :
+	    H + X |- T -> NW : Theta |- A -> if0(X,Y,Z)
+	 => H + nmd(X |- T -> NW) & md(X |- T -> NW) + Theta |- B -> if0(X,Y,Z) .
+
+	rl [blackhole] :
+	   H : X |- A -> X
+	=> H & X |- B -> X .
+
+	rl [app-demand] :
+	    H + X |- T -> NW : Theta |- A -> X Y
+	 => H + nmd(X |- T -> NW) & md(X |- T -> NW) + Theta |- B -> X Y .
+
+	rl [beta-reduction] :
+	   H + X |- I -> \ Z . E : Theta |- A -> X Y
+	=> H + X |- I -> \ Z . E & Theta |- A -> E [Y / Z] .
+
+	rl [let] :
+	   < p, H : Theta |- A -> let LBS in X, N, M >
+	=> < p, H & letBindsToHeap(Theta, LBS, X,
+	                           newvars(p, M, numvars(LBS))), N, M + numvars(LBS) > .
+
+endm
+
+mod GLOBAL-SEMANTICS{X :: NF} is
+	pr RENAME .
+	pr NH .
+
+	vars P P' : Process .
+	vars S S' : System .
+	vars H H' H1-2 Hp Hc K H1 K1 : Heap .
+	vars X Y Z : Std .
+	vars Theta V : Var .
+	vars ch ch' o i : Cha .
+	vars p p' q c id id' id'' : String .
+	vars T T' : TState .
+	vars N M N' M' N1 N2 : Nat .
+	vars W W' : Whnf .
+	vars E E' : Exp .
+	var VVL : VarVarList .
+	var VS : VarSet .
+
+	--- parallel p (step by step)
+
+	rl [extend] :
+	   < p, H, N, M > => < p, H, VS, H, none, N, M > [nonexec] .
+
+	crl [parallelp-step] :
+	    < p, H, Theta . VS, H', K, N, M > => < p, H, VS, int(H',H1), K + K1, N', M' >
+	 if Theta |- T -> E := lookUp(Theta, H) /\
+	    H1-2 := filter(Theta, H) /\
+	    < p, H1-2 : Theta |- T -> E, N, M > => < p, H1 & K1, N', M' > .
+
+	rl [contract] :
+	   < p, H, mt, H', K, N, M > => < p, H' + K, N, M > .
+
+	--- process creation
+	crl [pc] :
+	    < p, H + Theta |- T -> X # Y, N, M >
+	 => < p, H + Theta |- B -> o + i |- A -> Y, N + 1, M + 1 >
+	    < q, H' + o |- A -> (searchVar(X, VVL) Z) + Z |- B -> i, 0, M' >
+	 if nf(X, H + Theta |- T -> X # Y) = none  /\
+	    q :=  childName(p, N) /\  i := c(newvar(p, M)) /\
+	    o := c(newvar(q, 0))  /\  Z := s(newvar(q, 1)) /\
+	    < H', VVL, M' > := renameHeap(nh(X, H), q, 2) .
+
+
+	--- value communication
+	crl [com] :
+	    < p, Hp + ch |- T -> W, N, M >
+	    < c, Hc + Theta |- B -> ch, N', M' >
+	 => < p, Hp, N, M >
+	    < c, Hc + H' + Theta |- A -> (msubst(W', VVL)), N', N2 >
+	 if nf(W, Hp) = none /\
+	    < H', VVL, N1 > := renameHeap(nh(W, Hp), c, M') /\
+	    < W' , N2 > := renameLocal(W, c, N') .
+
+	--- WHNF unblocking
+	crl [wUnbl] :
+	    < p, H + X |- A -> W + Theta |- B -> E, N, M >
+	 => < p, H + X |- A -> W + Theta |- A -> E, N, M >
+	 if X = blockedOn(E) .
+
+	rl [wUnbl] :
+	    < p, H + X |- T -> W + Y |- T' -> W' + Theta |- B -> (X + Y), N, M >
+	 => < p, H + X |- T -> W + Y |- T' -> W' + Theta |- A -> (X + Y), N, M > .
+
+	rl [wUnbl] :
+	    < p, H + X |- T -> W + Y |- T' -> W' + Theta |- B -> (X - Y), N, M >
+	 => < p, H + X |- T -> W + Y |- T' -> W' + Theta |- A -> (X - Y), N, M > .
+
+	--- WHNF deactivation
+	rl [deact] :
+	   < p, H + Theta |- A -> W, N, M >
+	=> < p, H + Theta |- I -> W, N, M > .
+
+	--- blocking process creation
+	rl [bpc] :
+	   < p, H + Theta |- I -> X # Y, N, M >
+	=> < p, H + Theta |- B -> X # Y, N, M > .
+
+	rl [bpc] :
+	   < p, H + Theta |- A -> X # Y, N, M >
+	=> < p, H + Theta |- B -> X # Y, N, M > .
+
+	--- process creation demand
+	crl [pcd] :
+	   < p, H + Theta |- B -> X # Y, N, M >
+	=> < p, H + Theta |- B -> X # Y + Z |- A -> E, N, M >
+	if  Z |- I -> E + H' := nf(X, H).
+
+	--- value communication demand
+	crl [vComd] :
+	   < p, H + ch |- I -> W, N, M >
+	=> < p, H + ch |- I -> W + X |- A -> E, N, M >
+	if  X |- I -> E + H' := nf(W, H) .
+
+endm
+
+fth ET is
+	pr SYSTEMS-SYNTAX .
+
+	op ET : System -> VarSet .
+endfth
+
+fmod ETMIN{X :: NF} is
+	pr SYNTAX-AUX-FUN .
+
+	vars P P' : Process .
+	vars S S' : System .
+	vars H H' : Heap .
+	vars X Y Z : Std .
+	vars ch ch' : Cha .
+	var V : Var .
+	var W : Whnf .
+	vars p p' : String .
+	vars T : TState .
+	vars N M N' M' : Nat .
+	vars E E' : Exp .
+	var VS : VarSet .
+
+	op pre : Var Process System -> VarSet .
+
+	ceq pre(X, P, S) = X
+	if < p, H + X |- A -> E, N, M > := P .
+	ceq pre(X, P, S) = pre(Y, P, S)
+	if < p, H + X |- B -> E, N, M > := P /\
+	   Y := blockedOn(E) .
+	ceq pre(X, P, S) = union(P,S,H')
+	if < p, H + X |- B -> E # E', N, M > := P /\
+	   H' := nf(E,H + X |- B -> E # E') .
+	ceq pre(X, P, S) = pre(ch, < p', H' + ch |- T -> E, N', M' >, S)
+	if < p, H + X |- B -> ch, N, M > := P /\
+	   < p', H' + ch |- T -> E, N', M' > S' := S .
+	eq pre(X, P, S) = mt [owise] .
+
+	ceq pre(ch, P, S) = ch
+	if < p, H + ch |- A -> E, N, M > := P .
+	ceq pre(ch, P, S) = pre(Y, P, S)
+	if < p, H + ch |- B -> E, N, M > := P /\
+	   Y := blockedOn(E) .
+	ceq pre(ch, P, S) = union(P,S,H')
+	if < p, H + ch |- B -> E # E', N, M > := P /\
+	   H' := nf(E,H + ch |- B -> E # E') .
+	ceq pre(ch, P, S) = pre(ch', < p', H' + ch' |- T -> E, N', M' >, S)
+	if < p, H + ch |- B -> ch', N, M > := P /\
+	   < p', H' + ch' |- T -> E, N', M' > P' := S .
+	ceq pre(ch, P, S) = union(P,S,H')
+	if < p, H + ch |- I -> W, N, M > := P /\
+	   H' := nf(W,H + ch |- I -> W) .
+	eq pre(ch, P, S) = mt [owise] .
+
+	op union : Process System Heap -> VarSet .
+	eq union(P, S, H + V |- T -> E) = pre(V,P,S) . union(P,S,H) .
+	eq union(P, S, none) = mt .
+
+	op pm : System -> VarSet .
+	ceq pm(S) = pre(s("main"), < p, s("main") |- T -> E, N, M >, S)
+	if < p, s("main") |- T -> E, N, M > S' := S .
+
+	op ETmin : System -> VarSet .
+	eq ETmin(S) = pm(S) .
+endfm
+
+fmod ETMAX is
+	pr SYSTEMS-SYNTAX .
+
+	vars P : Process .
+	vars S : System .
+	vars H : Heap .
+	var V : Var .
+	vars p : String .
+	vars N M : Nat .
+	vars E : Exp .
+
+	op ETmax : System -> VarSet .
+
+	ceq ETmax(P S) = ETmax(P) . ETmax(S) if S =/= empty .
+	eq ETmax(< p, V |- A -> E + H, N, M >) = V . ETmax(< p, H, N, M >) .
+	eq ETmax(< p, H, N, M >) = mt [owise] .
+endfm
+
+view EtMax from ET to ETMAX is
+	op ET to ETmax .
+endv
+
+view EtMinEval from ET to ETMIN{NfEval} is
+	op ET to ETmin .
+endv
+
+fmod RUNABLE is
+	pr SYSTEMS-SYNTAX .
+
+	vars S : System .
+	vars H : Heap .
+	var V : Var .
+	vars p : String .
+	vars N M : Nat .
+	vars E : Exp .
+
+	op runable : System -> Bool .
+
+	eq runable(< p, V |- A -> E + H, N, M > S) = true .
+	eq runable(S) = false [owise] .
+
+endfm
+
+mod EDEN{X :: NF, Y :: ET} is
+	pr NORMALIZATION * (
+		*** Interal symbol renamed to prevent conflicts
+		op __ : StdExpList StdExpList -> StdExpList to _^_
+	) .
+	pr LOCAL-SEMANTICS .
+	pr GLOBAL-SEMANTICS{X} .
+	pr RUNABLE .
+
+	subsort VarVar < StdExp .  subsort VarVarList < StdExpList . *** !!!!
+endm

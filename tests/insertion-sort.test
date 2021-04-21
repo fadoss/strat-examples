@@ -1,0 +1,5 @@
+algorithms/insertion-sort
+
+srew generate(1,20) using insort(2) .
+
+srew (1,8)(2,3)(3,15)(4,5)(5,2) using insort(2) .

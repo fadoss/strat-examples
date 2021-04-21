@@ -1,0 +1,73 @@
+***
+*** SAT solver by a membrane system with structured objects
+*** and promoters/inhibitors
+***
+
+signature is
+	import NAT .
+
+	*** Logical constant
+	ob const : Nat Bool .
+	*** Variable
+	ob var : Nat .
+	*** Negation
+	ob not : Nat Nat .
+	*** Binary operators
+	obs and or : Nat Nat Nat .
+
+	*** Object to limit splitting
+	ob splitoken .
+end
+
+membrane M1 is
+	var H : Nat .
+	var B : Bool .
+
+	ev cancel1 : splitoken -> empty .
+
+	*** A rule like ev cancel2 : const(s(H), B) -> empty will imply a costly
+	*** generation of intermediate states when some of these are canceled.
+
+***	cev cancel2 : const(s(H), B) -> empty without const(s(s(H)), B) .
+
+end
+
+membrane M2 is
+
+	var H M N : Nat .
+	var B     : Bool .
+
+	cev split : var(H) splitoken -> (const(H, true), const(H, false), div) splitoken
+	            without var(s(H)) .
+
+	cev not  : not(H, N) -> const(H, not B) with const(N, B) .
+
+	cev and1 : and(H, M, N) -> const(H, false) with const(M, false) .
+	cev and2 : and(H, M, N) -> const(H, false) with const(N, false) .
+	cev and3 : and(H, M, N) -> const(H, true) with const(M, true) const(N, true) .
+
+	cev or1  : or(H, M, N) -> const(H, true) with const(M, true) .
+	cev or2  : or(H, M, N) -> const(H, true) with const(N, true) .
+	cev or3  : or(H, M, N) -> const(H, false) with const(M, false) const(N, false) .
+
+	ev end   : const(0, B) -> const(0, B) delta .
+
+	*** Simplifying and concluding has higher priority than splitting
+	pr not and1 and2 and3 or1 or2 or3 end > split .
+end
+
+set priority weak .
+
+eof
+
+*** 'and' and 'or' with repeated arguments do not work: an additional rule
+*** should be added to handle this case
+
+*** p /\ not p
+compute < M1 | < M2 | splitoken and(0, 1, 2) var(1) not(2, 1) > > .
+*** p \/ not p
+compute < M1 | < M2 | splitoken or(0, 1, 2) var(1) not(2, 1) > > .
+*** (x1 \/ not x3) /\ (not x2 \/ x3 \/ x4) -- finish quickly without dfs if cancel2 is removed
+compute < M1 | < M2 | splitoken var(1) var(2) var(3) var(4) not(5, 3) not(6, 2) not(7, 4) or(8, 1, 5) or(9, 6, 3) or(10, 9, 7) and(0, 8, 10) > > .
+*** (x1 \/ x2) /\ (not x1 \/ not x2)
+compute < M1 | < M2 | splitoken and (0, 5, 6) var(1) var(2) not(3, 1) not(4, 2) or(5, 1, 2) or(6, 3, 4) > > .

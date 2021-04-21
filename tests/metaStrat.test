@@ -1,0 +1,9 @@
+metalevel/metaStrat
+
+red metaSrewrite(upModule('TEST, false), upTerm("deleveled"), repeat-until('palin[none]{empty}, 'C:Char, nil), breadthFirst, 0) .
+red metaSrewrite(upModule('TEST, false), upTerm("deleveled"), repeat-until('palin[none]{empty}, 'C:Char, nil), breadthFirst, 1) .
+red metaSrewrite(addRepeat(upModule('TEST, false), 'strip, 'palin[none]{empty}), upTerm("evitative"), 'strip[[upTerm(3)]], breadthFirst, 0) .
+red metaSrewrite(addRepeat(upModule('TEST, false), 'strip, 'palin[none]{empty}), upTerm("evitative"), 'strip[[upTerm(3)]], breadthFirst, 1) .
+red metaSrewrite(upModule('TEST, false), upTerm(bigPalindrome(100)), ('palin[none]{empty}) !, breadthFirst, 0) .
+red metaSrewrite(upModule('TEST, false), upTerm(bigPalindrome(100)), toBasis(('palin[none]{empty}) !), breadthFirst, 0) .
+red metaSrewrite(upModule('TEST, false), upTerm(bigPalindrome(100)), toBasis(('palin[none]{empty}) !), depthFirst, 0) .
