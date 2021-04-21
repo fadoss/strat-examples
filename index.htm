@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="index.css">
+	<script src="FileSaver.min.js"></script>
+	<script src="jszip.min.js"></script>
+	<script src="index.js"></script>
+	<script src="elasticlunr.min.js"></script>
+	<script src="searchindex.js"></script>
+	<title>Examples of the Maude strategy language</title>
+</head>
+<body>
+<header>
+<h1>Examples of the Maude strategy language</h1>
+<a href="https://github.com/fadoss/strat-examples"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyRpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoTWFjaW50b3NoKSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDpFNTE3OEEyQTk5QTAxMUUyOUExNUJDMTA0NkE4OTA0RCIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDpFNTE3OEEyQjk5QTAxMUUyOUExNUJDMTA0NkE4OTA0RCI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOkU1MTc4QTI4OTlBMDExRTI5QTE1QkMxMDQ2QTg5MDREIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOkU1MTc4QTI5OTlBMDExRTI5QTE1QkMxMDQ2QTg5MDREIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+m4QGuQAAAyRJREFUeNrEl21ojWEYx895TDPbMNlBK46IUiNmPvHBSUjaqc0H8pF5+aDUKPEBqU2NhRQpX5Rv5jWlDIWlMCv7MMSWsWwmb3tpXub4XXWdPHvc9/Gc41nu+nedc7/8r/99PffLdYdDPsvkwsgkTBwsA/PADJCnzX2gHTwBt8Hl7p537/3whn04XoDZDcpBlk+9P8AFcAghzRkJwPF4zGGw0Y9QS0mAM2AnQj77FqCzrtcwB1Hk81SYojHK4DyGuQ6mhIIrBWB9Xm7ug/6B/nZrBHBegrkFxoVGpnwBMSLR9EcEcC4qb8pP14BWcBcUgewMnF3T34VqhWMFkThLJAalwnENOAKiHpJq1FZgI2AT6HZtuxZwR9GidSHtI30jOrbawxlVX78/AbNfhHlomEUJJI89O2MqeE79T8/nk8nMBm/dK576hZgmA3cp/R4l9/UeSxiHLVIlNm4nFfT0bxyuIj7LHRTKai+zdJobwMKzcZSJb0ePV5PKN+BqAAKE47UlMnERELMM3EdYP/yrd+XYb2mOiYBiQ8OQnoRBlXrl9JZix7D1pHTazu4MoyBcnYamqAjIMTR8G4FT8LuhLsexXYYjICBiqhQBvYb6fLZIJCjPypVvaOoVAW2WcasCnL2Nq82xHJNSqlCeFcDshaPK0twkAhosjZL31QYw+1rlMpWGMArl23SBsZZO58F2tlJXmjOXS+s4WGvpMiBJT/I2PInZ6lIs9/hBsNS1hS6BG0DSqmYEDRlCXQrmy50P1oDRKTSegmNbUsA0zDMwRhPJXeCE3vWLPQMvan6X8AgIa1vcR4AkGZkDR4ejJ1UHpsaVI0g2LInpOsNFUud1rhxSV+fzC9Woz2EZkWQuja7/B+jUrgtIMpy9YCW4n4K41YfzRneW5E1KJTe4B2Zq1Q5EHEtj4U3AfEzR5SVY4l7QYQPJdN2as7RKBF0BPZqqH4VgMAMBL8Byxr7y8zCZiDlnOcEKIPmUpgB5Z2ww5RdOiiRiNajUmWda5IG6WbhsyY2fx6m8gLcoJDJFkH219M3We1+cnda93pfycZpIJEL/s/wSYADmOAwAQgdpBAAAAABJRU5ErkJggg==" alt="Source repository"/></a>
+</header>
+<div id="main">
+
+<nav>
+<h3>search</h3><input type="search" id="search" oninput="doSearch()" class="search">
+<h3>refine by category</h3><ul>
+<li title="Semantics of programming languages"><input type="checkbox" id="stag0" onclick="applyFilter()" checked><label for="stag0">Semantics</label> <span class="onlybtn" onclick="selectOnly(0, true)">(only)</span>
+<li title="Deductive procedures controlled by strategies"><input type="checkbox" id="stag1" onclick="applyFilter()" checked><label for="stag1">Deductive procedures</label> <span class="onlybtn" onclick="selectOnly(1, true)">(only)</span>
+<li title="Games"><input type="checkbox" id="stag2" onclick="applyFilter()" checked><label for="stag2">Games</label> <span class="onlybtn" onclick="selectOnly(2, true)">(only)</span>
+<li title="Model-checkeable example"><input type="checkbox" id="stag3" onclick="applyFilter()" checked><label for="stag3">Model checking</label> <span class="onlybtn" onclick="selectOnly(3, true)">(only)</span>
+<li title="Parameterized strategies"><input type="checkbox" id="stag4" onclick="applyFilter()" checked><label for="stag4">Parameterized</label> <span class="onlybtn" onclick="selectOnly(4, true)">(only)</span>
+<li title="Examples to be run with the Kleene-star semantics of the iteration"><input type="checkbox" id="stag5" onclick="applyFilter()" checked><label for="stag5">Kleene-star iteration</label> <span class="onlybtn" onclick="selectOnly(5, true)">(only)</span>
+<li title="Examples adapted from the Spin model checker distribution"><input type="checkbox" id="stag6" onclick="applyFilter()" checked><label for="stag6">Spin examples</label> <span class="onlybtn" onclick="selectOnly(6, true)">(only)</span>
+<li title="Examples including probabilities"><input type="checkbox" id="stag7" onclick="applyFilter()" checked><label for="stag7">Probabilistic examples</label> <span class="onlybtn" onclick="selectOnly(7, true)">(only)</span>
+<li title="Biologically-inspired examples and computation models"><input type="checkbox" id="stag8" onclick="applyFilter()" checked><label for="stag8">Biologically-inspired</label> <span class="onlybtn" onclick="selectOnly(8, true)">(only)</span>
+<li title="Metalanguage examples"><input type="checkbox" id="stag9" onclick="applyFilter()" checked><label for="stag9">Metaenvironments</label> <span class="onlybtn" onclick="selectOnly(9, true)">(only)</span>
+<li title="Communication and other protocols"><input type="checkbox" id="stag10" onclick="applyFilter()" checked><label for="stag10">Protocols</label> <span class="onlybtn" onclick="selectOnly(10, true)">(only)</span>
+<li title="Object-oriented specifications"><input type="checkbox" id="stag11" onclick="applyFilter()" checked><label for="stag11">Object-oriented</label> <span class="onlybtn" onclick="selectOnly(11, true)">(only)</span>
+<li title="Out of any other category"><input type="checkbox" id="stag12" onclick="applyFilter()" checked><label for="stag12">Miscellaneous</label> <span class="onlybtn" onclick="selectOnly(12, true)">(only)</span>
+</ul><h3>refine by publication</h3><ul>
+<li title="N. Martí-Oliet, J. Meseguer, A. Verdejo. Electronic Notes in Theoretical Computer Science. 2005"><input type="checkbox" id="spub0" onclick="applyFilter()" checked><label for="spub0"><a href="https://doi.org/10.1016/j.entcs.2004.06.020">Towards a Strategy Language for Maude</a></label> <span class="onlybtn" onclick="selectOnly(0, false)">(only)</span>
+<li title="S. Eker, N. Martí-Oliet, J. Meseguer, A. Verdejo. Electronic Notes in Theoretical Computer Science. 2007"><input type="checkbox" id="spub1" onclick="applyFilter()" checked><label for="spub1"><a href="https://doi.org/10.1016/j.entcs.2006.03.017">Deduction, Strategies, and Rewriting</a></label> <span class="onlybtn" onclick="selectOnly(1, false)">(only)</span>
+<li title="M. Hidalgo-Herrero, A. Verdejo, Y. Ortega-Mallén. Electronic Notes in Theoretical Computer Science. 2007"><input type="checkbox" id="spub2" onclick="applyFilter()" checked><label for="spub2"><a href="https://doi.org/10.1016/j.entcs.2007.02.051">Using Maude and Its Strategies for Defining a Framework for Analyzing Eden Semantics</a></label> <span class="onlybtn" onclick="selectOnly(2, false)">(only)</span>
+<li title="N. Martí-Oliet, J. Meseguer, A. Verdejo. Electronic Notes in Theoretical Computer Science. 2009"><input type="checkbox" id="spub3" onclick="applyFilter()" checked><label for="spub3"><a href="https://doi.org/10.1016/j.entcs.2009.05.022">A Rewriting Semantics for Maude Strategies</a></label> <span class="onlybtn" onclick="selectOnly(3, false)">(only)</span>
+<li title="A. Verdejo, N. Martí-Oliet. Electronic Proceedings in Theoretical Computer Science. 2012"><input type="checkbox" id="spub4" onclick="applyFilter()" checked><label for="spub4"><a href="https://doi.org/10.4204/EPTCS.82.2">Basic completion strategies as another application of the Maude strategy language</a></label> <span class="onlybtn" onclick="selectOnly(4, false)">(only)</span>
+<li title="R. Rubio, N. Martí-Oliet, I. Pita, A. Verdejo. Recent Trends in Algebraic Development Techniques. Lecture Notes in Computer Science. 2019"><input type="checkbox" id="spub5" onclick="applyFilter()" checked><label for="spub5"><a href="https://doi.org/10.1007/978-3-030-23220-7_2">Parameterized Strategies Specification in Maude</a></label> <span class="onlybtn" onclick="selectOnly(5, false)">(only)</span>
+<li title="R. Rubio, N. Martí-Oliet, I. Pita, A. Verdejo. FSCD 2019. LIPIcs. 2019"><input type="checkbox" id="spub6" onclick="applyFilter()" checked><label for="spub6"><a href="https://doi.org/10.4230/LIPIcs.FSCD.2019.34">Model Checking Strategy-Controlled Rewriting Systems</a></label> <span class="onlybtn" onclick="selectOnly(6, false)">(only)</span>
+<li title="R. Rubio, N. Martí-Oliet, I. Pita, A. Verdejo. Rewriting Logic and Its Applications. Lecture Notes in Computer Science. 2020"><input type="checkbox" id="spub7" onclick="applyFilter()" checked><label for="spub7"><a href="https://doi.org/10.1007/978-3-030-63595-4_9">Strategies, Model Checking and Branching-Time Properties in Maude</a></label> <span class="onlybtn" onclick="selectOnly(7, false)">(only)</span>
+<li title="R. Rubio, N. Martí-Oliet, I. Pita, A. Verdejo. Journal of Logical and Algebraic Methods in Programming. 2021"><input type="checkbox" id="spub8" onclick="applyFilter()" checked><label for="spub8"><a href="https://doi.org/10.1016/j.jlamp.2021.100700">Strategies, model checking and branching-time properties in Maude</a></label> <span class="onlybtn" onclick="selectOnly(8, false)">(only)</span>
+<li title="F. Durán, S. Eker, S. Escobar, N. Martí-Oliet, J. Meseguer, R. Rubio, C. Talcott. Journal of Logical and Algebraic Methods in Programming. 2020"><input type="checkbox" id="spub9" onclick="applyFilter()" checked><label for="spub9"><a href="https://doi.org/10.1016/j.jlamp.2019.100497">Programming and symbolic computation in Maude</a></label> <span class="onlybtn" onclick="selectOnly(9, false)">(only)</span>
+<li><input type="checkbox" id="spub10" onclick="applyFilter()" checked><label for="spub10"><a href="https://maude.lcc.uma.es/maude-manual/">Maude manual v3.5</a></label> <span class="onlybtn" onclick="selectOnly(10, false)">(only)</span>
+<li title="R. Rubio, N. Martí-Oliet, I. Pita, A. Verdejo. Journal of Logical and Algebraic Methods in Programming. 2022"><input type="checkbox" id="spub11" onclick="applyFilter()" checked><label for="spub11"><a href="https://doi.org/10.1016/j.jlamp.2021.100727">Simulating and model checking membrane systems using strategies in Maude</a></label> <span class="onlybtn" onclick="selectOnly(11, false)">(only)</span>
+<li title="R. Rubio, N. Martí-Oliet, I. Pita, A. Verdejo. Journal of Logical and Algebraic Methods in Programming. 2022"><input type="checkbox" id="spub12" onclick="applyFilter()" checked><label for="spub12"><a href="https://doi.org/10.1016/j.jlamp.2021.100728">Metalevel transformation of strategies</a></label> <span class="onlybtn" onclick="selectOnly(12, false)">(only)</span>
+<li title="G. Santos-García, M. Palomino. Electronic Notes in Theoretical Computer Science. 2007"><input type="checkbox" id="spub13" onclick="applyFilter()" checked><label for="spub13"><a href="https://doi.org/10.1016/j.entcs.2007.06.009">Solving Sudoku Puzzles with Rewriting Rules</a></label> <span class="onlybtn" onclick="selectOnly(13, false)">(only)</span>
+<li title="G. Santos-García, M. Palomino, A. Verdejo. Advances in Soft Computing. International Symposium on Distributed Computing and Artificial Intelligence 2008 (DCAI 2008). 2008"><input type="checkbox" id="spub14" onclick="applyFilter()" checked><label for="spub14"><a href="https://doi.org/10.1007/978-3-540-85863-8_50">Rewriting Logic Using Strategies for Neural Networks: An Implementation in Maude</a></label> <span class="onlybtn" onclick="selectOnly(14, false)">(only)</span>
+<li title="R. Rubio. Rewriting Logic and Its Applications. Lecture Notes in Computer Science. 2022"><input type="checkbox" id="spub15" onclick="applyFilter()" checked><label for="spub15"><a href="https://doi.org/10.1007/978-3-031-12441-9_4">An Overview of the Maude Strategy Language and its Applications</a></label> <span class="onlybtn" onclick="selectOnly(15, false)">(only)</span>
+<li title="R. Rubio, N. Martí-Oliet, I. Pita, A. Verdejo. Formal Methods. Lecture Notes in Computer Science. 2023"><input type="checkbox" id="spub16" onclick="applyFilter()" checked><label for="spub16"><a href="https://doi.org/10.1007/978-3-031-27481-7_15">QMaude: Quantitative Specification and Verification in Rewriting Logic</a></label> <span class="onlybtn" onclick="selectOnly(16, false)">(only)</span>
+<li title="S. Eker, N. Martí-Oliet, J. Meseguer, R. Rubio, A. Verdejo. Journal of Logical and Algebraic Methods in Programming. 2023"><input type="checkbox" id="spub17" onclick="applyFilter()" checked><label for="spub17"><a href="https://doi.org/10.1016/j.jlamp.2023.100887">The Maude strategy language</a></label> <span class="onlybtn" onclick="selectOnly(17, false)">(only)</span>
+<li><input type="checkbox" id="spub18" onclick="applyFilter()" checked><label for="spub18">PMaude revisited through probabilistic strategies (submitted)</label> <span class="onlybtn" onclick="selectOnly(18, false)">(only)</span>
+<li><input type="checkbox" id="spub19" onclick="applyFilter()" checked><label for="spub19">Unpublished</label> <span class="onlybtn" onclick="selectOnly(19, false)">(only)</span>
+</ul></nav>
+<article><ul>
+<li class="result" id="exm0">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/games/blackboard.maude" class="ename">Blackboard</a>
+<span class="exsize">1.47 Kb</span>
+<div class="exseen">Seen in <span title="N. Martí-Oliet, J. Meseguer, A. Verdejo. Electronic Notes in Theoretical Computer Science. 2005"><a href="https://doi.org/10.1016/j.entcs.2004.06.020">Towards a Strategy Language for Maude</a></span></span> · <span title="S. Eker, N. Martí-Oliet, J. Meseguer, A. Verdejo. Electronic Notes in Theoretical Computer Science. 2007"><a href="https://doi.org/10.1016/j.entcs.2006.03.017">Deduction, Strategies, and Rewriting</a></span></span> · <span title="S. Eker, N. Martí-Oliet, J. Meseguer, R. Rubio, A. Verdejo. Journal of Logical and Algebraic Methods in Programming. 2023"><a href="https://doi.org/10.1016/j.jlamp.2023.100887">The Maude strategy language</a></span></span></div>
+<div class="extags">Tags: Games</div>
+</li>
+<li class="result" id="exm1">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/params/map.maude" class="ename">Map (functorial application of strategies)</a>
+<span class="exsize">1.93 Kb</span>
+<div class="exseen">Seen in <span title="N. Martí-Oliet, J. Meseguer, A. Verdejo. Electronic Notes in Theoretical Computer Science. 2005"><a href="https://doi.org/10.1016/j.entcs.2004.06.020">Towards a Strategy Language for Maude</a></span></span></div>
+<div class="extags">Tags: Parameterized</div>
+</li>
+<li class="result" id="exm2">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/semantics/ccs2.maude" class="ename">CCS operational semantics</a>
+<span class="exsize">5.33 Kb</span>
+<div class="exseen">Seen in <span title="N. Martí-Oliet, J. Meseguer, A. Verdejo. Electronic Notes in Theoretical Computer Science. 2005"><a href="https://doi.org/10.1016/j.entcs.2004.06.020">Towards a Strategy Language for Maude</a></span></span></div>
+<div class="extags">Tags: Semantics</div>
+<div class="exchildren">Children: <a href="#exm3">Model checking for CCS</a></div>
+</li>
+<li class="result" id="exm3">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/semantics/ccs-mc.maude" class="ename">Model checking for CCS</a>
+<a class="zip" href="javascript:downloadZip(3)">(zip)</a>
+<span class="exsize">4.69 Kb</span>
+<div class="extags">Tags: Model checking · Semantics</div>
+</li>
+<li class="result" id="exm4">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/params/backtracking.maude" class="ename">Backtracking scheme</a>
+<span class="exsize">542 B</span>
+<div class="exseen">Seen in <span title="N. Martí-Oliet, J. Meseguer, A. Verdejo. Electronic Notes in Theoretical Computer Science. 2005"><a href="https://doi.org/10.1016/j.entcs.2004.06.020">Towards a Strategy Language for Maude</a></span></span> · <span title="S. Eker, N. Martí-Oliet, J. Meseguer, A. Verdejo. Electronic Notes in Theoretical Computer Science. 2007"><a href="https://doi.org/10.1016/j.entcs.2006.03.017">Deduction, Strategies, and Rewriting</a></span></span> · <span title="R. Rubio, N. Martí-Oliet, I. Pita, A. Verdejo. Recent Trends in Algebraic Development Techniques. Lecture Notes in Computer Science. 2019"><a href="https://doi.org/10.1007/978-3-030-23220-7_2">Parameterized Strategies Specification in Maude</a></span></span></div>
+<div class="extags">Tags: Parameterized</div>
+<div class="exchildren">Children: <a href="#exm5">Labyrinth</a> · <a href="#exm10">Graph m-coloring and Hamiltonian cycle search</a> · <a href="#exm18">8-Queens</a> · <a href="#exm72">15-puzzle by backtracking</a></div>
+</li>
+<li class="result" id="exm5">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/params/bt-labyrinth.maude" class="ename">Labyrinth</a>
+<a class="zip" href="javascript:downloadZip(5)">(zip)</a>
+<span class="exsize">1.4 Kb</span>
+<div class="exseen">Seen in <span title="N. Martí-Oliet, J. Meseguer, A. Verdejo. Electronic Notes in Theoretical Computer Science. 2005"><a href="https://doi.org/10.1016/j.entcs.2004.06.020">Towards a Strategy Language for Maude</a></span></span></div>
+<div class="extags">Tags: Parameterized</div>
+</li>
+<li class="result" id="exm6">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/protocols/ATMNetwork.maude" class="ename">Telecommunication networks</a>
+<span class="exsize">8.98 Kb</span>
+<div class="exseen">Seen in <span title="N. Martí-Oliet, J. Meseguer, A. Verdejo. Electronic Notes in Theoretical Computer Science. 2005"><a href="https://doi.org/10.1016/j.entcs.2004.06.020">Towards a Strategy Language for Maude</a></span></span></div>
+<div class="extags">Tags: Object-oriented · Protocols</div>
+</li>
+<li class="result" id="exm7">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/algorithms/insertion-sort.maude" class="ename">Insertion sort</a>
+<span class="exsize">1.52 Kb</span>
+<div class="exseen">Seen in <span title="N. Martí-Oliet, J. Meseguer, A. Verdejo. Electronic Notes in Theoretical Computer Science. 2005"><a href="https://doi.org/10.1016/j.entcs.2004.06.020">Towards a Strategy Language for Maude</a></span></span> · <span title="S. Eker, N. Martí-Oliet, J. Meseguer, A. Verdejo. Electronic Notes in Theoretical Computer Science. 2007"><a href="https://doi.org/10.1016/j.entcs.2006.03.017">Deduction, Strategies, and Rewriting</a></span></span> · <a href="https://maude.lcc.uma.es/maude-manual/">Maude manual v3.5</a></span></div>
+</li>
+<li class="result" id="exm8">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/deduction/congruence.maude" class="ename">Abstract congruence closure</a>
+<span class="exsize">5.49 Kb</span>
+<div class="exseen">Seen in <span title="S. Eker, N. Martí-Oliet, J. Meseguer, A. Verdejo. Electronic Notes in Theoretical Computer Science. 2007"><a href="https://doi.org/10.1016/j.entcs.2006.03.017">Deduction, Strategies, and Rewriting</a></span></span></div>
+<div class="extags">Tags: Deductive procedures</div>
+<div class="exchildren">Children: <a href="#exm22">Lazy list with generic traversals</a></div>
+</li>
+<li class="result" id="exm9">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/metalevel/semtrans.maude" class="ename">Rewriting semantics of the strategy language</a>
+<a class="zip" href="javascript:downloadZip(9)">(zip)</a>
+<span class="exsize">41.09 Kb, 2 files</span>
+<div class="exseen">Seen in <span title="N. Martí-Oliet, J. Meseguer, A. Verdejo. Electronic Notes in Theoretical Computer Science. 2009"><a href="https://doi.org/10.1016/j.entcs.2009.05.022">A Rewriting Semantics for Maude Strategies</a></span></span></div>
+<div class="extags">Tags: Semantics</div>
+</li>
+<li class="result" id="exm10">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/params/bt-graphs.maude" class="ename">Graph m-coloring and Hamiltonian cycle search</a>
+<a class="zip" href="javascript:downloadZip(10)">(zip)</a>
+<span class="exsize">3.74 Kb</span>
+<div class="exseen">Seen in <span title="R. Rubio, N. Martí-Oliet, I. Pita, A. Verdejo. Recent Trends in Algebraic Development Techniques. Lecture Notes in Computer Science. 2019"><a href="https://doi.org/10.1007/978-3-030-23220-7_2">Parameterized Strategies Specification in Maude</a></span></span></div>
+<div class="extags">Tags: Parameterized</div>
+</li>
+<li class="result" id="exm11">
+<a href="https://github.com/fadoss/strat-examples/tree/master/params/linprog" class="ename">The Simplex algorithm</a>
+<a class="zip" href="javascript:downloadZip(11)">(zip)</a>
+<span class="exsize">33.14 Kb, 4 files</span>
+<div class="exseen">Seen in <span title="R. Rubio, N. Martí-Oliet, I. Pita, A. Verdejo. Recent Trends in Algebraic Development Techniques. Lecture Notes in Computer Science. 2019"><a href="https://doi.org/10.1007/978-3-030-23220-7_2">Parameterized Strategies Specification in Maude</a></span></span></div>
+<div class="extags">Tags: Model checking · Parameterized</div>
+</li>
+<li class="result" id="exm12">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/semantics/lambda.maude" class="ename">The λ-calculus</a>
+<span class="exsize">4.11 Kb</span>
+<div class="exseen">Seen in <span title="R. Rubio, N. Martí-Oliet, I. Pita, A. Verdejo. Recent Trends in Algebraic Development Techniques. Lecture Notes in Computer Science. 2019"><a href="https://doi.org/10.1007/978-3-030-23220-7_2">Parameterized Strategies Specification in Maude</a></span></span> · <span title="R. Rubio. Rewriting Logic and Its Applications. Lecture Notes in Computer Science. 2022"><a href="https://doi.org/10.1007/978-3-031-12441-9_4">An Overview of the Maude Strategy Language and its Applications</a></span></span></div>
+<div class="extags">Tags: Parameterized · Semantics</div>
+</li>
+<li class="result" id="exm13">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/semantics/recfns.maude" class="ename">The REC language</a>
+<span class="exsize">7.65 Kb</span>
+<div class="extags">Tags: Parameterized · Semantics</div>
+<div class="exchildren">Children: <a href="#exm14">Model checking of REC programs</a></div>
+</li>
+<li class="result" id="exm14">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/semantics/recfns-mc.maude" class="ename">Model checking of REC programs</a>
+<a class="zip" href="javascript:downloadZip(14)">(zip)</a>
+<span class="exsize">2.13 Kb</span>
+<div class="extags">Tags: Model checking · Semantics</div>
+</li>
+<li class="result" id="exm15">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/modelChecking/philosophers.maude" class="ename">Dining philosophers</a>
+<span class="exsize">5.06 Kb</span>
+<div class="exseen">Seen in <span title="R. Rubio, N. Martí-Oliet, I. Pita, A. Verdejo. FSCD 2019. LIPIcs. 2019"><a href="https://doi.org/10.4230/LIPIcs.FSCD.2019.34">Model Checking Strategy-Controlled Rewriting Systems</a></span></span></div>
+<div class="extags">Tags: Model checking</div>
+</li>
+<li class="result" id="exm16">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/games/hanoi.maude" class="ename">Hanoi tower</a>
+<span class="exsize">1.97 Kb</span>
+<div class="exseen">Seen in <span title="F. Durán, S. Eker, S. Escobar, N. Martí-Oliet, J. Meseguer, R. Rubio, C. Talcott. Journal of Logical and Algebraic Methods in Programming. 2020"><a href="https://doi.org/10.1016/j.jlamp.2019.100497">Programming and symbolic computation in Maude</a></span></span> · <a href="https://maude.lcc.uma.es/maude-manual/">Maude manual v3.5</a></span></div>
+<div class="extags">Tags: Games</div>
+</li>
+<li class="result" id="exm17">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/semantics/prolog.maude" class="ename">Logic programming with negation and cuts as in Prolog</a>
+<span class="exsize">16.32 Kb</span>
+<div class="exseen">Seen in <span title="F. Durán, S. Eker, S. Escobar, N. Martí-Oliet, J. Meseguer, R. Rubio, C. Talcott. Journal of Logical and Algebraic Methods in Programming. 2020"><a href="https://doi.org/10.1016/j.jlamp.2019.100497">Programming and symbolic computation in Maude</a></span></span> · <a href="https://maude.lcc.uma.es/maude-manual/">Maude manual v3.5</a></span></div>
+<div class="extags">Tags: Semantics</div>
+</li>
+<li class="result" id="exm18">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/params/bt-queens.maude" class="ename">8-Queens</a>
+<a class="zip" href="javascript:downloadZip(18)">(zip)</a>
+<span class="exsize">1.05 Kb</span>
+<div class="exseen">Seen in <a href="https://maude.lcc.uma.es/maude-manual/">Maude manual v3.5</a></span> · <span title="S. Eker, N. Martí-Oliet, J. Meseguer, R. Rubio, A. Verdejo. Journal of Logical and Algebraic Methods in Programming. 2023"><a href="https://doi.org/10.1016/j.jlamp.2023.100887">The Maude strategy language</a></span></span></div>
+<div class="extags">Tags: Parameterized</div>
+</li>
+<li class="result" id="exm19">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/metalevel/munorm.maude" class="ename">Context-sensitive rewriting</a>
+<span class="exsize">6.05 Kb</span>
+<div class="exseen">Seen in <span title="R. Rubio, N. Martí-Oliet, I. Pita, A. Verdejo. Journal of Logical and Algebraic Methods in Programming. 2022"><a href="https://doi.org/10.1016/j.jlamp.2021.100728">Metalevel transformation of strategies</a></span></span></div>
+</li>
+<li class="result" id="exm20">
+<a href="https://github.com/fadoss/strat-examples/tree/master/metalevel/slangExtension" class="ename">Strategy-language extension skeleton</a>
+<a class="zip" href="javascript:downloadZip(20)">(zip)</a>
+<span class="exsize">74.95 Kb, 7 files</span>
+<div class="exseen">Seen in <span title="R. Rubio, N. Martí-Oliet, I. Pita, A. Verdejo. Journal of Logical and Algebraic Methods in Programming. 2022"><a href="https://doi.org/10.1016/j.jlamp.2021.100728">Metalevel transformation of strategies</a></span></span></div>
+<div class="extags">Tags: Model checking</div>
+<div class="exchildren">Children: <a href="#exm21">Congruence operators and generic traversals (language extension)</a></div>
+</li>
+<li class="result" id="exm21">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/metalevel/slangExtension/congruenceOpsExt.maude" class="ename">Congruence operators and generic traversals (language extension)</a>
+<a class="zip" href="javascript:downloadZip(21)">(zip)</a>
+<span class="exsize">11.54 Kb</span>
+<div class="exseen">Seen in <span title="R. Rubio, N. Martí-Oliet, I. Pita, A. Verdejo. Journal of Logical and Algebraic Methods in Programming. 2022"><a href="https://doi.org/10.1016/j.jlamp.2021.100728">Metalevel transformation of strategies</a></span></span></div>
+</li>
+<li class="result" id="exm22">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/metalevel/slangExtension/congruence-lazylist.maude" class="ename">Lazy list with generic traversals</a>
+<a class="zip" href="javascript:downloadZip(22)">(zip)</a>
+<span class="exsize">1.14 Kb</span>
+</li>
+<li class="result" id="exm23">
+<a href="https://github.com/fadoss/strat-examples/tree/master/metalevel/multistrategies" class="ename">Multistrategies</a>
+<a class="zip" href="javascript:downloadZip(23)">(zip)</a>
+<span class="exsize">57.59 Kb, 5 files</span>
+<div class="exseen">Seen in <span title="R. Rubio, N. Martí-Oliet, I. Pita, A. Verdejo. Journal of Logical and Algebraic Methods in Programming. 2022"><a href="https://doi.org/10.1016/j.jlamp.2021.100728">Metalevel transformation of strategies</a></span></span></div>
+<div class="extags">Tags: Metaenvironments · Model checking</div>
+<div class="exchildren">Children: <a href="#exm24">Tic-Tac-Toe</a></div>
+</li>
+<li class="result" id="exm24">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/metalevel/multistrategies/tictactoe.maude" class="ename">Tic-Tac-Toe</a>
+<a class="zip" href="javascript:downloadZip(24)">(zip)</a>
+<span class="exsize">8.8 Kb</span>
+<div class="extags">Tags: Games · Model checking</div>
+</li>
+<li class="result" id="exm25">
+<a href="https://github.com/fadoss/strat-examples/tree/master/biology/membranes" class="ename">Membrane system simulator and model checker</a>
+<a class="zip" href="javascript:downloadZip(25)">(zip)</a>
+<span class="exsize">108.15 Kb, 20 files</span>
+<div class="exseen">Seen in <span title="R. Rubio, N. Martí-Oliet, I. Pita, A. Verdejo. Journal of Logical and Algebraic Methods in Programming. 2022"><a href="https://doi.org/10.1016/j.jlamp.2021.100727">Simulating and model checking membrane systems using strategies in Maude</a></span></span></div>
+<div class="extags">Tags: Biologically-inspired · Metaenvironments · Model checking</div>
+</li>
+<li class="result" id="exm26">
+<a href="https://github.com/fadoss/strat-examples/tree/master/deduction/completion" class="ename">Equational completion procedure</a>
+<a class="zip" href="javascript:downloadZip(26)">(zip)</a>
+<span class="exsize">51.14 Kb, 20 files</span>
+<div class="exseen">Seen in <span title="S. Eker, N. Martí-Oliet, J. Meseguer, R. Rubio, A. Verdejo. Journal of Logical and Algebraic Methods in Programming. 2023"><a href="https://doi.org/10.1016/j.jlamp.2023.100887">The Maude strategy language</a></span></span></div>
+<div class="extags">Tags: Deductive procedures</div>
+</li>
+<li class="result" id="exm27">
+<a href="https://github.com/fadoss/strat-examples/tree/master/deduction/completion/old" class="ename">Equational completion procedure (old version)</a>
+<a class="zip" href="javascript:downloadZip(27)">(zip)</a>
+<span class="exsize">10.04 Kb, 4 files</span>
+<div class="exseen">Seen in <span title="A. Verdejo, N. Martí-Oliet. Electronic Proceedings in Theoretical Computer Science. 2012"><a href="https://doi.org/10.4204/EPTCS.82.2">Basic completion strategies as another application of the Maude strategy language</a></span></span> · <span title="R. Rubio. Rewriting Logic and Its Applications. Lecture Notes in Computer Science. 2022"><a href="https://doi.org/10.1007/978-3-031-12441-9_4">An Overview of the Maude Strategy Language and its Applications</a></span></span></div>
+<div class="extags">Tags: Deductive procedures</div>
+</li>
+<li class="result" id="exm28">
+<a href="https://github.com/fadoss/strat-examples/tree/master/semantics/eden" class="ename">Eden</a>
+<a class="zip" href="javascript:downloadZip(28)">(zip)</a>
+<span class="exsize">58.42 Kb, 4 files</span>
+<div class="exseen">Seen in <span title="M. Hidalgo-Herrero, A. Verdejo, Y. Ortega-Mallén. Electronic Notes in Theoretical Computer Science. 2007"><a href="https://doi.org/10.1016/j.entcs.2007.02.051">Using Maude and Its Strategies for Defining a Framework for Analyzing Eden Semantics</a></span></span></div>
+<div class="extags">Tags: Semantics</div>
+</li>
+<li class="result" id="exm29">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/games/15puzzle.maude" class="ename">15-puzzle</a>
+<span class="exsize">7.41 Kb</span>
+<div class="exseen">Seen in <span title="S. Eker, N. Martí-Oliet, J. Meseguer, R. Rubio, A. Verdejo. Journal of Logical and Algebraic Methods in Programming. 2023"><a href="https://doi.org/10.1016/j.jlamp.2023.100887">The Maude strategy language</a></span></span></div>
+<div class="extags">Tags: Games</div>
+</li>
+<li class="result" id="exm30">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/games/bridgeTorch.maude" class="ename">Bridge and torch</a>
+<span class="exsize">5.14 Kb</span>
+<div class="extags">Tags: Games · Model checking</div>
+</li>
+<li class="result" id="exm31">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/games/sudoku.maude" class="ename">Sudoku solver</a>
+<span class="exsize">14.14 Kb</span>
+<div class="exseen">Seen in <span title="G. Santos-García, M. Palomino. Electronic Notes in Theoretical Computer Science. 2007"><a href="https://doi.org/10.1016/j.entcs.2007.06.009">Solving Sudoku Puzzles with Rewriting Rules</a></span></span></div>
+<div class="extags">Tags: Games</div>
+</li>
+<li class="result" id="exm32">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/metalevel/opsem/opsem.maude" class="ename">Operational semantics of the strategy language</a>
+<a class="zip" href="javascript:downloadZip(32)">(zip)</a>
+<span class="exsize">26.73 Kb, 2 files</span>
+<div class="extags">Tags: Model checking · Semantics</div>
+<div class="exchildren">Children: <a href="#exm33">Kleene-star iteration</a> · <a href="#exm34">Synchronized and until strategies</a> · <a href="#exm35">Synchronized strategy combinator (simpler implementation)</a> · <a href="#exm36">Instance of the operational semantics with the rivercrossing puzzle</a> · <a href="#exm37">Instance of the operational semantics with the cups and balls game</a> · <a href="#exm38">Instance of the operational semantics with the rivercrossing puzzle</a></div>
+</li>
+<li class="result" id="exm33">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/metalevel/opsem/opsem-kleene.maude" class="ename">Kleene-star iteration</a>
+<a class="zip" href="javascript:downloadZip(33)">(zip)</a>
+<span class="exsize">4.68 Kb</span>
+<div class="extags">Tags: Model checking</div>
+<div class="exchildren">Children: <a href="#exm39">Cups and balls</a></div>
+</li>
+<li class="result" id="exm34">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/metalevel/opsem/opsem-tlr.maude" class="ename">Synchronized and until strategies</a>
+<a class="zip" href="javascript:downloadZip(34)">(zip)</a>
+<span class="exsize">4.71 Kb</span>
+<div class="extags">Tags: Model checking</div>
+</li>
+<li class="result" id="exm35">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/metalevel/opsem/opsem-sync.maude" class="ename">Synchronized strategy combinator (simpler implementation)</a>
+<a class="zip" href="javascript:downloadZip(35)">(zip)</a>
+<span class="exsize">1.82 Kb</span>
+<div class="extags">Tags: Model checking</div>
+</li>
+<li class="result" id="exm36">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/metalevel/opsem/opsem-river.maude" class="ename">Instance of the operational semantics with the rivercrossing puzzle</a>
+<a class="zip" href="javascript:downloadZip(36)">(zip)</a>
+<span class="exsize">989 B</span>
+<div class="extags">Tags: Model checking</div>
+</li>
+<li class="result" id="exm37">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/metalevel/opsem/opsem-cupsballs.maude" class="ename">Instance of the operational semantics with the cups and balls game</a>
+<a class="zip" href="javascript:downloadZip(37)">(zip)</a>
+<span class="exsize">1.07 Kb</span>
+<div class="extags">Tags: Model checking</div>
+</li>
+<li class="result" id="exm38">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/metalevel/opsem/opsem-philosophers.maude" class="ename">Instance of the operational semantics with the rivercrossing puzzle</a>
+<a class="zip" href="javascript:downloadZip(38)">(zip)</a>
+<span class="exsize">1.22 Kb</span>
+<div class="extags">Tags: Model checking</div>
+</li>
+<li class="result" id="exm39">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/games/cupsballs.maude" class="ename">Cups and balls</a>
+<span class="exsize">1.66 Kb</span>
+<div class="extags">Tags: Games · Kleene-star iteration · Model checking</div>
+</li>
+<li class="result" id="exm40">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/metalevel/stratKit.maude" class="ename">Strategist kit</a>
+<span class="exsize">8.29 Kb</span>
+</li>
+<li class="result" id="exm41">
+<a href="https://github.com/fadoss/strat-examples/tree/master/biology/neuralNetworks" class="ename">Neural networks</a>
+<a class="zip" href="javascript:downloadZip(41)">(zip)</a>
+<span class="exsize">41.72 Kb, 3 files</span>
+<div class="exseen">Seen in <span title="G. Santos-García, M. Palomino, A. Verdejo. Advances in Soft Computing. International Symposium on Distributed Computing and Artificial Intelligence 2008 (DCAI 2008). 2008"><a href="https://doi.org/10.1007/978-3-540-85863-8_50">Rewriting Logic Using Strategies for Neural Networks: An Implementation in Maude</a></span></span></div>
+<div class="extags">Tags: Biologically-inspired</div>
+</li>
+<li class="result" id="exm42">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/protocols/RIP.maude" class="ename">RIP protocol</a>
+<span class="exsize">22.45 Kb</span>
+<div class="exseen">Seen in <span title="S. Eker, N. Martí-Oliet, J. Meseguer, R. Rubio, A. Verdejo. Journal of Logical and Algebraic Methods in Programming. 2023"><a href="https://doi.org/10.1016/j.jlamp.2023.100887">The Maude strategy language</a></span></span></div>
+<div class="extags">Tags: Model checking · Object-oriented · Protocols</div>
+</li>
+<li class="result" id="exm43">
+<a href="https://github.com/fadoss/strat-examples/tree/master/semantics/ambients" class="ename">Ambient calculus</a>
+<a class="zip" href="javascript:downloadZip(43)">(zip)</a>
+<span class="exsize">22.04 Kb, 4 files</span>
+<div class="extags">Tags: Semantics</div>
+</li>
+<li class="result" id="exm44">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/algorithms/dynprog.maude" class="ename">Dynamic programming scheme</a>
+<span class="exsize">6.24 Kb</span>
+</li>
+<li class="result" id="exm45">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/games/cards.maude" class="ename">Traditional card games</a>
+<span class="exsize">11.87 Kb</span>
+<div class="extags">Tags: Games</div>
+</li>
+<li class="result" id="exm46">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/deduction/martelliMontanari.maude" class="ename">Martelli-Montanari unification algorithm</a>
+<span class="exsize">6.69 Kb</span>
+<div class="extags">Tags: Deductive procedures</div>
+</li>
+<li class="result" id="exm47">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/algorithms/relations.maude" class="ename">Simple strategies operating on relations</a>
+<span class="exsize">1.79 Kb</span>
+</li>
+<li class="result" id="exm48">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/metalevel/metaStrat.maude" class="ename">Simple strategy manipulation at the metalevel</a>
+<span class="exsize">4.86 Kb</span>
+</li>
+<li class="result" id="exm49">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/modelChecking/river-v2.maude" class="ename">River crossing puzzle (second version)</a>
+<span class="exsize">3.98 Kb</span>
+<div class="exseen">Seen in <span title="R. Rubio, N. Martí-Oliet, I. Pita, A. Verdejo. Rewriting Logic and Its Applications. Lecture Notes in Computer Science. 2020"><a href="https://doi.org/10.1007/978-3-030-63595-4_9">Strategies, Model Checking and Branching-Time Properties in Maude</a></span></span> · <span title="R. Rubio. Rewriting Logic and Its Applications. Lecture Notes in Computer Science. 2022"><a href="https://doi.org/10.1007/978-3-031-12441-9_4">An Overview of the Maude Strategy Language and its Applications</a></span></span></div>
+<div class="extags">Tags: Model checking</div>
+</li>
+<li class="result" id="exm50">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/modelChecking/river.maude" class="ename">River crossing puzzle</a>
+<span class="exsize">2.35 Kb</span>
+<div class="exseen">Seen in <span title="R. Rubio, N. Martí-Oliet, I. Pita, A. Verdejo. Journal of Logical and Algebraic Methods in Programming. 2021"><a href="https://doi.org/10.1016/j.jlamp.2021.100700">Strategies, model checking and branching-time properties in Maude</a></span></span></div>
+<div class="extags">Tags: Model checking</div>
+</li>
+<li class="result" id="exm51">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/games/rivercrossing.maude" class="ename">River crossing puzzle (original version)</a>
+<span class="exsize">1.07 Kb</span>
+<div class="extags">Tags: Games</div>
+</li>
+<li class="result" id="exm52">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/probabilistic/river-choice.maude" class="ename">River crossing puzzle (played at random)</a>
+<a class="zip" href="javascript:downloadZip(52)">(zip)</a>
+<span class="exsize">2.4 Kb</span>
+<div class="extags">Tags: Model checking · Probabilistic examples</div>
+</li>
+<li class="result" id="exm53">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/modelChecking/semaphore.maude" class="ename">Semaphores and scheduling policies</a>
+<span class="exsize">11.16 Kb</span>
+<div class="extags">Tags: Model checking</div>
+</li>
+<li class="result" id="exm54">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/modelChecking/mutex.maude" class="ename">Mutual exclusion</a>
+<span class="exsize">1.55 Kb</span>
+<div class="extags">Tags: Model checking</div>
+</li>
+<li class="result" id="exm55">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/modelChecking/vending.maude" class="ename">Vending machine</a>
+<span class="exsize">1.65 Kb</span>
+<div class="exseen">Seen in <span title="R. Rubio, N. Martí-Oliet, I. Pita, A. Verdejo. Rewriting Logic and Its Applications. Lecture Notes in Computer Science. 2020"><a href="https://doi.org/10.1007/978-3-030-63595-4_9">Strategies, Model Checking and Branching-Time Properties in Maude</a></span></span></div>
+<div class="extags">Tags: Model checking</div>
+</li>
+<li class="result" id="exm56">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/modelChecking/roundabout.maude" class="ename">Roundabout</a>
+<span class="exsize">4.6 Kb</span>
+<div class="extags">Tags: Model checking</div>
+</li>
+<li class="result" id="exm57">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/modelChecking/train.maude" class="ename">Train crossing</a>
+<span class="exsize">6.28 Kb</span>
+<div class="extags">Tags: Model checking · Object-oriented · Spin examples</div>
+</li>
+<li class="result" id="exm58">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/modelChecking/zune.maude" class="ename">Zune's lap year bug</a>
+<span class="exsize">2.51 Kb</span>
+<div class="extags">Tags: Model checking · Object-oriented · Spin examples</div>
+</li>
+<li class="result" id="exm59">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/params/wordWrap.maude" class="ename">Word wrap algorithm</a>
+<a class="zip" href="javascript:downloadZip(59)">(zip)</a>
+<span class="exsize">13.05 Kb, 2 files</span>
+<div class="extags">Tags: Parameterized</div>
+</li>
+<li class="result" id="exm60">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/params/fractals.maude" class="ename">Fractals</a>
+<a class="zip" href="javascript:downloadZip(60)">(zip)</a>
+<span class="exsize">10.39 Kb, 3 files</span>
+<div class="extags">Tags: Parameterized</div>
+</li>
+<li class="result" id="exm61">
+<a href="https://github.com/fadoss/strat-examples/tree/master/params/branchBound" class="ename">Generic branch and bound scheme</a>
+<a class="zip" href="javascript:downloadZip(61)">(zip)</a>
+<span class="exsize">37.51 Kb, 9 files</span>
+<div class="extags">Tags: Parameterized</div>
+</li>
+<li class="result" id="exm62">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/params/branchBound/traveler.maude" class="ename">Traveling salesperson B&B instance</a>
+<span class="exsize">2.99 Kb</span>
+<div class="extags">Tags: Parameterized</div>
+</li>
+<li class="result" id="exm63">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/params/branchBound/bb-15puzzle.maude" class="ename">15-puzzle B&B instance</a>
+<a class="zip" href="javascript:downloadZip(63)">(zip)</a>
+<span class="exsize">5.42 Kb</span>
+<div class="extags">Tags: Parameterized</div>
+</li>
+<li class="result" id="exm64">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/probabilistic/ninjas.maude" class="ename">Ninjas' consensus protocols</a>
+<span class="exsize">2.49 Kb</span>
+<div class="extags">Tags: Model checking · Probabilistic examples · Protocols</div>
+</li>
+<li class="result" id="exm65">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/probabilistic/ninjas-tuple.maude" class="ename">Ninjas' consensus protocol (tuple encoding)</a>
+<span class="exsize">2.94 Kb</span>
+<div class="extags">Tags: Model checking · Probabilistic examples · Protocols</div>
+</li>
+<li class="result" id="exm66">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/probabilistic/ninjas-choice.maude" class="ename">Ninjas' consensus protocol (choice operator)</a>
+<a class="zip" href="javascript:downloadZip(66)">(zip)</a>
+<span class="exsize">1.53 Kb</span>
+<div class="extags">Tags: Model checking · Probabilistic examples · Protocols</div>
+</li>
+<li class="result" id="exm67">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/probabilistic/ninjas-ct.maude" class="ename">Ninjas' consensus protocol (continuous-time semantics)</a>
+<span class="exsize">2.08 Kb</span>
+<div class="extags">Tags: Probabilistic examples · Protocols</div>
+</li>
+<li class="result" id="exm68">
+<a href="https://github.com/alexcere/SAT-Maude" class="ename">A comparison of DPLL and other SAT-solving strategies</a>
+<span class="exsize">external</span>
+<div class="extags">Tags: Deductive procedures</div>
+</li>
+<li class="result" id="exm69">
+<a href="https://github.com/bitml-lang/bitml-maude" class="ename">Developing secure bitcoin contracts with BitML</a>
+<span class="exsize">external</span>
+<div class="extags">Tags: Model checking · Protocols</div>
+</li>
+<li class="result" id="exm70">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/misc/feature-test.maude" class="ename">Feature tests</a>
+<span class="exsize">5.36 Kb</span>
+</li>
+<li class="result" id="exm71">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/modelChecking/bakery.maude" class="ename">Lamport's bakery algorithm</a>
+<a class="zip" href="javascript:downloadZip(71)">(zip)</a>
+<span class="exsize">4.9 Kb</span>
+<div class="extags">Tags: Model checking · Object-oriented · Spin examples</div>
+</li>
+<li class="result" id="exm72">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/params/bt-15puzzle.maude" class="ename">15-puzzle by backtracking</a>
+<a class="zip" href="javascript:downloadZip(72)">(zip)</a>
+<span class="exsize">1.69 Kb</span>
+<div class="extags">Tags: Parameterized</div>
+</li>
+<li class="result" id="exm73">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/probabilistic/posthouse.maude" class="ename">Posthouses in a road</a>
+<span class="exsize">2.56 Kb</span>
+<div class="extags">Tags: Model checking · Probabilistic examples</div>
+</li>
+<li class="result" id="exm74">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/probabilistic/message-relay.maude" class="ename">Message relay</a>
+<span class="exsize">2.07 Kb</span>
+<div class="extags">Tags: Model checking · Object-oriented · Probabilistic examples</div>
+</li>
+<li class="result" id="exm75">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/biology/ecosystem.maude" class="ename">Unrealistic ecosystem</a>
+<span class="exsize">9.61 Kb</span>
+<div class="extags">Tags: Biologically-inspired</div>
+</li>
+<li class="result" id="exm76">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/misc/turing.maude" class="ename">Turing machine recognizing strategies</a>
+<span class="exsize">5.62 Kb</span>
+</li>
+<li class="result" id="exm77">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/probabilistic/coin.maude" class="ename">Tossing a coin</a>
+<a class="zip" href="javascript:downloadZip(77)">(zip)</a>
+<span class="exsize">2.0 Kb, 2 files</span>
+<div class="exseen">Seen in <span title="R. Rubio. Rewriting Logic and Its Applications. Lecture Notes in Computer Science. 2022"><a href="https://doi.org/10.1007/978-3-031-12441-9_4">An Overview of the Maude Strategy Language and its Applications</a></span></span></div>
+<div class="extags">Tags: Model checking · Probabilistic examples</div>
+</li>
+<li class="result" id="exm78">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/probabilistic/clock.maude" class="ename">PMaude's exponential clock (adapted)</a>
+<span class="exsize">1.23 Kb</span>
+<div class="extags">Tags: Probabilistic examples</div>
+</li>
+<li class="result" id="exm79">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/probabilistic/mychoice.maude" class="ename">Implementation of the choice operator in the standard language</a>
+<span class="exsize">1.52 Kb</span>
+<div class="extags">Tags: Probabilistic examples</div>
+</li>
+<li class="result" id="exm80">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/probabilistic/pred-prey.maude" class="ename">Predator-prey model (chemical reaction network)</a>
+<a class="zip" href="javascript:downloadZip(80)">(zip)</a>
+<span class="exsize">3.75 Kb, 2 files</span>
+<div class="extags">Tags: Probabilistic examples</div>
+</li>
+<li class="result" id="exm81">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/probabilistic/lokta.maude" class="ename">Lokta-Volterra CRN with three species</a>
+<a class="zip" href="javascript:downloadZip(81)">(zip)</a>
+<span class="exsize">5.54 Kb, 2 files</span>
+<div class="extags">Tags: Probabilistic examples</div>
+</li>
+<li class="result" id="exm82">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/probabilistic/clock-crn.maude" class="ename">Clock module (chemical reaction network)</a>
+<span class="exsize">1.95 Kb</span>
+<div class="extags">Tags: Probabilistic examples</div>
+</li>
+<li class="result" id="exm83">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/probabilistic/metaflock.maude" class="ename">Flock of birds (population protocol)</a>
+<span class="exsize">4.21 Kb</span>
+<div class="extags">Tags: Probabilistic examples</div>
+</li>
+<li class="result" id="exm84">
+<a href="https://github.com/fadoss/strat-examples/tree/master/metalevel/crn-complete" class="ename">Strategy generation for chemical reaction networks</a>
+<a class="zip" href="javascript:downloadZip(84)">(zip)</a>
+<span class="exsize">25.34 Kb, 5 files</span>
+<div class="extags">Tags: Probabilistic examples</div>
+</li>
+<li class="result" id="exm85">
+<a href="https://github.com/fadoss/strat-examples/tree/master/probabilistic/crn-generator" class="ename">Generator of Maude (or C/C++) CRN simulators from SeQuaiA files</a>
+<a class="zip" href="javascript:downloadZip(85)">(zip)</a>
+<span class="exsize">47.83 Kb, 7 files</span>
+<div class="extags">Tags: Probabilistic examples</div>
+</li>
+<li class="result" id="exm86">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/probabilistic/brp.maude" class="ename">Bounded Retransmission Protocol</a>
+<a class="zip" href="javascript:downloadZip(86)">(zip)</a>
+<span class="exsize">18.12 Kb, 3 files</span>
+<div class="extags">Tags: Model checking · Object-oriented · Probabilistic examples · Protocols</div>
+</li>
+<li class="result" id="exm87">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/probabilistic/client-server.maude" class="ename">PMaude's client-server (adapted)</a>
+<a class="zip" href="javascript:downloadZip(87)">(zip)</a>
+<span class="exsize">3.75 Kb, 3 files</span>
+<div class="extags">Tags: Object-oriented · Probabilistic examples</div>
+</li>
+<li class="result" id="exm88">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/probabilistic/symmetric-polling.maude" class="ename">PMaude's symmetric polling (adapted)</a>
+<a class="zip" href="javascript:downloadZip(88)">(zip)</a>
+<span class="exsize">5.04 Kb, 3 files</span>
+<div class="extags">Tags: Object-oriented · Probabilistic examples</div>
+</li>
+<li class="result" id="exm89">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/probabilistic/prob-lang.maude" class="ename">The statistical programming language Prob</a>
+<a class="zip" href="javascript:downloadZip(89)">(zip)</a>
+<span class="exsize">16.86 Kb, 3 files</span>
+<div class="exseen">Seen in <span title="R. Rubio, N. Martí-Oliet, I. Pita, A. Verdejo. Formal Methods. Lecture Notes in Computer Science. 2023"><a href="https://doi.org/10.1007/978-3-031-27481-7_15">QMaude: Quantitative Specification and Verification in Rewriting Logic</a></span></span></div>
+<div class="extags">Tags: Probabilistic examples · Semantics</div>
+</li>
+<li class="result" id="exm90">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/probabilistic/knuthYao6.maude" class="ename">Knuth-Yao sampler</a>
+<a class="zip" href="javascript:downloadZip(90)">(zip)</a>
+<span class="exsize">3.42 Kb, 2 files</span>
+<div class="exseen">Seen in <span title="R. Rubio, N. Martí-Oliet, I. Pita, A. Verdejo. Formal Methods. Lecture Notes in Computer Science. 2023"><a href="https://doi.org/10.1007/978-3-031-27481-7_15">QMaude: Quantitative Specification and Verification in Rewriting Logic</a></span></span></div>
+<div class="extags">Tags: Model checking · Probabilistic examples</div>
+</li>
+<li class="result" id="exm91">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/probabilistic/cryptographers.maude" class="ename">Dining cryptographers</a>
+<span class="exsize">4.11 Kb</span>
+<div class="extags">Tags: Model checking · Probabilistic examples</div>
+</li>
+<li class="result" id="exm92">
+<a href="https://github.com/fadoss/multivesta-maude" class="ename">PMaude's coin example (adapted)</a>
+<span class="exsize">external</span>
+<div class="extags">Tags: Probabilistic examples</div>
+</li>
+<li class="result" id="exm93">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/probabilistic/stpetri-tmpl.maude" class="ename">Simple stochastic Petri net</a>
+<a class="zip" href="javascript:downloadZip(93)">(zip)</a>
+<span class="exsize">6.41 Kb, 2 files</span>
+<div class="extags">Tags: Model checking · Probabilistic examples</div>
+</li>
+<li class="result" id="exm94">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/probabilistic/stpetri-tt.maude" class="ename">Simple stochastic Petri net (with transitions as terms)</a>
+<a class="zip" href="javascript:downloadZip(94)">(zip)</a>
+<span class="exsize">7.95 Kb, 2 files</span>
+<div class="extags">Tags: Model checking · Probabilistic examples</div>
+</li>
+<li class="result" id="exm95">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/probabilistic/bogosort.maude" class="ename">Bogosort</a>
+<a class="zip" href="javascript:downloadZip(95)">(zip)</a>
+<span class="exsize">2.59 Kb, 2 files</span>
+<div class="extags">Tags: Model checking · Probabilistic examples</div>
+</li>
+<li class="result" id="exm96">
+<a href="https://raw.githubusercontent.com/fadoss/strat-examples/master/probabilistic/quic.maude" class="ename">Simple experiment on transmission delays in HTTP versions 2 and 3</a>
+<a class="zip" href="javascript:downloadZip(96)">(zip)</a>
+<span class="exsize">16.33 Kb, 4 files</span>
+<div class="exseen">Seen in <span title="R. Rubio, N. Martí-Oliet, I. Pita, A. Verdejo. Formal Methods. Lecture Notes in Computer Science. 2023"><a href="https://doi.org/10.1007/978-3-031-27481-7_15">QMaude: Quantitative Specification and Verification in Rewriting Logic</a></span></span></div>
+<div class="extags">Tags: Model checking · Probabilistic examples</div>
+</li>
+<li class="result" id="exm97">
+<a href="https://github.com/fadoss/strat-examples/tree/master/probabilistic/pmaude" class="ename">Translation from (actor) PMaude to probabilistic strategies and its examples</a>
+<a class="zip" href="javascript:downloadZip(97)">(zip)</a>
+<span class="exsize">35.4 Kb, 10 files</span>
+<div class="exseen">Seen in PMaude revisited through probabilistic strategies (submitted)</div>
+<div class="extags">Tags: Model checking · Probabilistic examples</div>
+</li>
+</article></ul>
+</div><script>applyFilter();</script></body>
+</html>
