@@ -1,0 +1,60 @@
+***
+*** Specification of predator/prey model as a chemical reaction network
+***
+
+mod PRED-PREY is
+	protecting NAT .
+	protecting FLOAT .
+
+	sort System .
+
+	*** Multiplicities of the species and time
+	op <_,_,_> : Nat Nat Float -> System [ctor] .
+
+	vars Prey Pred : Nat .
+	var  T DT : Float .
+
+	rl [prey]      : <   s Prey,     Pred, T      >
+	              => < s s Prey,     Pred, T + DT > [nonexec metadata "10.0"] .
+	rl [prey_pred] : <   s Prey,   s Pred, T      >
+	              => <     Prey, s s Pred, T + DT > [nonexec metadata "0.01"] .
+	rl [pred]      : <     Prey,   s Pred, T      >
+	              => <     Prey,     Pred, T + DT > [nonexec metadata "10.0"] .
+
+	op initial : -> System .
+	eq initial = < 1000, 1000, 0.0 > .
+endm
+
+smod PRED-PREY-STRAT is
+	protecting PRED-PREY .
+	protecting CONVERSION .
+
+	*** A single reaction
+	strat step @ System .
+
+	var  S           : System .
+	vars Prey Pred N : Nat .
+	vars T DT        : Float .
+
+	sd step := matchrew S s.t. < Prey, Pred, T > := S
+	             /\ DT := 1.0 / (float(10 * Prey) + 0.01 * float(Prey * Pred)
+	                             + float(10 * Pred))
+	           by S using choice(
+	                10 * Prey                 : prey[DT <- DT],
+	                0.01 * float(Prey * Pred) : prey_pred[DT <- DT],
+	                10 * Pred                 : pred[DT <- DT]
+	           ) .
+
+	*** Execute the given number of steps
+	strat repeat : Nat @ System .
+
+	sd repeat(0) := idle .
+	sd repeat(s N) := step ? repeat(N) : idle .
+endsm
+
+eof
+
+*** More interesting results can be obtained by executing many steps
+*** and plotting the trajectory
+srew initial using step .
+srew initial using repeat(100) .

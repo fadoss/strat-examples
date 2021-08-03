@@ -1,0 +1,64 @@
+***
+*** Implementation of the choice operator in the standard strategy language
+***
+
+smod MY-CHOICE is
+	protecting NAT .
+	protecting LIST{Float} * (sort List{Float} to FloatList) .
+	protecting CONVERSION .
+	protecting RANDOM .
+
+	vars RE N : Nat .
+	vars F W  : Float .
+	var  WL   : FloatList .
+
+	sort State .
+
+	strat my-choice : Nat FloatList @ State .
+	sd my-choice(RE, WL) := option(s RE,
+		 choice(0, (sum(WL) * float(random(RE))) / (_-_(2.0 ^ 32.0, 1.0)), WL)) .
+
+	op choice : Nat Float FloatList -> Nat .
+	eq choice(N, F, W) = N .
+	eq choice(N, F, W WL) = if F < W then N
+		                         else choice(s N, _-_(F, W), WL) fi [owise] .
+
+	op sum : FloatList -> Float .
+	eq sum(nil) = 0.0 .
+	eq sum(W WL) = W + sum(WL) .
+
+	strat option : Nat Nat @ State .
+endsm
+
+smod CHOICE-EXAMPLE is
+	extending MY-CHOICE .
+
+	sort Foo .
+	subsort State < Foo .
+	ops a b c : -> Foo [ctor] .
+
+	rl [ab] : a => b .
+	rl [ac] : a => c .
+
+	var RE : Nat .
+	var W  : Float .
+
+	sd option(RE, 0) := ab .
+	sd option(RE, 1) := ac .
+
+	strat uniform : Nat @ Foo .
+	strat first : Nat Float @ Foo .
+
+	sd uniform(RE) := my-choice(RE, 1.0 1.0) .
+	sd first(RE, W) := my-choice(RE, W 1.0) .
+endsm
+
+eof
+
+*** It can be checked that the probabilities are respected by executing the
+*** strategies with many initial seeds. For example, using the Python library:
+***	collections.Counter((result for seed in range(1000)
+***	  for result, _ in a.srewrite(m.parseStrategy(f'first({seed}, 4.0)'))))
+
+srew a using uniform(0) .
+srew a using first(0, 4.0) .

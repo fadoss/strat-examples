@@ -1,0 +1,64 @@
+***
+*** Clock module (chemical reaction network) as in "Probability 1 computation
+*** with chemical reaction networks" (DOI, 10.1007/s11047-015-9501-x)
+***
+
+***
+*** Specify the data representation and rules in a system module (mod)
+
+mod CLOCK is
+	*** Peano numbers (sort Nat, 0 constant  and s : Nat -> Nat for successor)
+	protecting NAT .
+
+	sort System .
+
+	*** The number of C1, C2, C3, C4, A species (Cn is clock time, A promotes going back)
+	op <_,_,_,_,_> : Nat Nat Nat Nat Nat -> System [ctor] .
+
+	vars C1 C2 C3 C4 A : Nat .
+
+	rl [c12] : < s C1, C2, C3, C4, A > => < C1, s C2, C3, C4, A > .
+	rl [c23] : < C1, s C2, C3, C4, A > => < C1, C2, s C3, C4, A > .
+	rl [c34] : < C1, C2, s C3, C4, A > => < C1, C2, C3, s C4, A > .
+
+	rl [a43] : < C1, C2, C3, s C4, s A > => < C1, C2, s C3, C4, s A > .
+	rl [a32] : < C1, C2, s C3, C4, s A > => < C1, s C2, C3, C4, s A > .
+	rl [a21] : < C1, s C2, C3, C4, s A > => < s C1, C2, C3, C4, s A > .
+endm
+
+***
+*** Specify the strategies in a strategy module (smod)
+*** (this is only for clarity, everything could have been done in a single module)
+
+smod CLOCK-STRAT is
+	protecting CLOCK .
+
+	*** A single reaction
+	strats step @ System .
+	*** As many iterations of the procotols as indicated in the argument
+	strats repeat repeat* : Nat @ System .
+
+	var  S               : System .
+	vars C1 C2 C3 C4 A N : Nat .
+
+	*** Select each rule depending on the number of reactants
+	sd step := matchrew S s.t. < C1, C2, C3, C4, A > := S by S using choice(
+			C1     : c12,
+			C2     : c23,
+			C3     : c34,
+			C2 * A : a21,
+			C3 * A : a32,
+			C4 * A : a43
+		   ) .
+
+	*** Repeat the step many times
+	sd repeat(0) := idle .
+	sd repeat(s(N)) := step ? repeat(N) : idle .
+
+	*** Repeat the step many times, but finishing when desired
+	sd repeat*(N) := idle .
+	sd repeat*(s(N)) := step ; repeat*(N) .
+endsm
+
+*** simaude clock-crn.maude '< 1, 0, 0, 0, 1 >' 'repeat*(100)'
+*** simaude clock-crn.maude '< 1, 0, 0, 0, 100 >' 'repeat*(100)'

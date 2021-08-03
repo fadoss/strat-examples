@@ -4,6 +4,8 @@
 ***
 
 mod NINJAS is
+	protecting NAT .
+
 	sorts Mode Vote Ninja Garden .
 	subsort Ninja < Garden .
 
@@ -16,68 +18,41 @@ mod NINJAS is
 	op __    : Garden Garden -> Garden [ctor assoc comm id: empty] .
 
 	vars V W : Vote .
+	vars K L : Nat .
 
-	rl [r1] : {A, Y} {A, N} => {P, N} {P, N} .
-	rl [r2] : {A, V} {P, W} => {A, V} {P, V} .
-	rl [r3] : {P, Y} {P, N} => {P, N} {P, N} .
+	rl [ay&an] : {A, Y} {A, N} => {P, N} {P, N} .
+	crl [a&p]  : {A, V} {P, W} => {A, V} {P, V} if V =/= W .
+	rl [py&pn] : {P, Y} {P, N} => {P, N} {P, N} .
+
+	op initial : Nat Nat -> Garden .
+	eq initial(0, 0) = empty .
+	eq initial(0, s K) = {A, N} initial(0, K) .
+	eq initial(s K, L) = {A, Y} initial(K, L) .
 endm
 
 mod NINJAS-SENSEIII is
 	extending NINJAS .
 
-	op T : -> Vote .	*** tie
+	op T : -> Vote [ctor] .	*** tie
 
-	rl [r31] : {A, Y} {A, T} => {A, Y} {P, Y} .
-	rl [r32] : {A, Y} {A, N} => {A, T} {P, T} .
-	rl [r33] : {A, T} {A, N} => {A, N} {P, N} .
-	rl [r34] : {A, T} {A, T} => {A, T} {P, T} .
+	rl [ay&at] : {A, Y} {A, T} => {A, Y} {P, Y} .
+	rl [aytan] : {A, Y} {A, N} => {A, T} {P, T} .
+	rl [at&an] : {A, T} {A, N} => {A, N} {P, N} .
+	rl [at&at] : {A, T} {A, T} => {A, T} {P, T} .
 
-	*** and r2
-endm
-
-mod NINJAS-MAIN is
-	protecting NINJAS .
-	protecting NAT .
-
-	*** Initial garden with the given number of voters
-	op initial : Nat Nat -> Garden .
-	*** Repeat a garden many times
-	op repeat : Garden Nat -> Garden .
-
-	var  G   : Garden .
-	vars M N : Nat .
-
-	eq initial(M, N) = repeat({A, Y}, M) repeat({A, N}, N) .
-
-	eq repeat(G, 0) = empty .
-	eq repeat(G, s(N)) = G repeat(G, N) .
+	*** and a&p
 endm
 
 smod NINJAS-STRAT is
-	extending NINJAS-MAIN .
+	protecting NINJAS .
 	protecting NINJAS-SENSEIII .
 
-	strats sensei sensei-bis senseii senseiii senseiii-v2 @ Garden .
+	strats sensei sensei-bis senseii senseiii @ Garden .
 
-	vars G G' : Garden .
-	vars V W  : Vote .
-
-	*** The votes of r2 are fixed to avoid indempotent applications
-	sd sensei := (r1 | r2[V <- Y, W <- N] | r2[V <- N, W <- Y]) ? sensei : idle .
-
-	*** r1 is applied before r2 (solves the tie problem)
-	sd sensei-bis := (r1 or-else (r2[V <- Y, W <- N] | r2[V <- N, W <- Y])) ! .
-
-	*** Slow protocol of Sensei II
-	sd senseii := (r1 | r2[V <- Y, W <- N] | r2[V <- N, W <- Y] | r3) ? senseii : idle .
-
-	*** Faster protocol of Sensei III
-	sd senseiii := (r31 | r32 | r33 | r34 | matchrew G s.t. {A, V} {P, W} G' := G /\ V =/= W by G using r2[V <- V, W <- W]) ? senseiii : idle .
-
-	**** Faster strategy for the protocol of Sensei III
-	sd senseiii-v2 := (r31 | r32 | r33 | r34 | r2[V <- Y, W <- T] | r2[V <- Y, W <- N]
-	                                         | r2[V <- T, W <- Y] | r2[V <- T, W <- N]
-	                                         | r2[V <- N, W <- Y] | r2[V <- N, W <- T]) ? senseiii-v2 : idle .
+	sd sensei     := (ay&an | a&p) ! .
+	sd sensei-bis := (ay&an or-else a&p) ! .
+	sd senseii    := (ay&an | a&p | py&pn) ! .
+	sd senseiii   := (ay&at | aytan | at&an | at&at | a&p) ! .
 endsm
 
 sload model-checker
@@ -121,6 +96,7 @@ endm
 smod NINJAS-CHECK is
 	protecting NINJAS-PREDS .
 	protecting NINJAS-STRAT .
+	including MODEL-CHECKER .
 	including STRATEGY-MODEL-CHECKER .
 
 	vars V W : Vote .

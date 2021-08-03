@@ -1,0 +1,187 @@
+***
+*** Reflective completion of CRN specifications with a step strategy
+***
+*** The proposed procedure is the following:
+***
+*** 1. Write a specification of a CRN in Maude extending CRN-BASE and
+***    defining its species as elements of the Species sort and its
+***    reactions as rewrite rules. The rates of the reactions should be
+***    written in the metadata attribute of the rule.
+*** 2. Use makeStepModule with that module to generate a new module with
+***    a step strategy that executes a random step of the CRN, accelerated
+***    or not. This can be used to simulate the CRN.
+***
+*** For the second step, we can run "maude <source file> complete-script"
+*** and then fill the name of the module to be completed to obtain its
+*** completion on the standard output.
+***
+
+fmod CRN-COMPLETE is
+	protecting META-MODULE .
+	protecting CONVERSION .
+
+	*** Make the strategy module with the steps
+	op makeStepModule : Module -> StratModule .
+
+	var  Rl        : Rule .
+	var  Rls       : RuleSet .
+	vars L R T     : Term .
+	var  M         : Module .
+	var  Attrs     : AttrSet .
+	var  S         : String .
+	var  Q         : Qid .
+	var  Qs        : QidSet .
+	var  N         : Nat .
+	vars V W SV RV : Variable .
+	var  TL        : TermList .
+	var  NeTL      : NeTermList .
+
+	*** Important: we are assuming that M is in the database and we do not flatten the module
+	ceq makeStepModule(M) = smod qid(string(getName(M)) + "-STEP") is
+		(protecting getName(M) .)
+		(protecting 'CONVERSION .)
+		sorts none .
+		none
+		none
+		none
+		none
+		none
+		(strat 'step : nil @ 'System [none] .)
+		(strat 'step : 'Nat @ 'System [none] .)
+		declareRepeatStrats(gatherLabels(Rls))
+		makeStep(Rls)
+		makeStepAccel(Rls)
+		defineRepeatStrats(gatherLabels(Rls))
+	endsm
+	if Rls := filterRules(getRls(M)) .
+
+	*** Filter rules that are reactions (at the moment we assume they
+	*** are the unconditional ones with a label and a metadata attribute
+	*** that can be parsed to a float or natural)
+	op filterRules : RuleSet -> RuleSet .
+
+	eq filterRules(none) = none .
+	eq filterRules(rl L => R [label(Q) metadata(S) Attrs] . Rls) =
+		if float(S) :: Float or rat(S, 10) :: Nat then
+			rl L => R [label(Q) metadata(S) Attrs] .
+		else
+			none
+		fi
+		filterRules(Rls) .
+	eq filterRules(Rl Rls) = filterRules(Rls) [owise] .
+
+	*** Gather labels of a set of rules
+	op gatherLabels : RuleSet -> QidSet .
+
+	eq gatherLabels(none) = none .
+	eq gatherLabels(rl L => R [label(Q) Attrs] . Rls) = Q ; gatherLabels(Rls) .
+	eq gatherLabels(Rl Rls) = gatherLabels(Rls) [owise] .
+
+	*** Make the step strategy definitions
+	op makeStep : RuleSet -> StratDefinition .
+	op makeStepAccel : RuleSet -> StratDefinition .
+
+	eq makeStep(Rls) = sd 'step[[empty]] := matchrew 'S:System s.t. nil by 'S:System using (makeChoice(Rls, 'S:System) ;
+	                    'inctime['TP:Float <- '_/_['1.0.FiniteFloat, makeTotalPropensity(Rls, 'S:System)]]{empty}) [none] . .
+
+	eq makeStepAccel(Rls) = sd 'step[['N:Nat]] := matchrew 'S:System s.t. nil by 'S:System using (makeChoiceAccel(Rls, 'S:System, 'N:Nat) ;
+	                    'inctime['TP:Float <- '_/_['float['N:Nat], makeTotalPropensity(Rls, 'S:System)]]{empty}) [none] . .
+
+	*** Make the choice operator (accelerated or not)
+	op makeChoice : RuleSet Variable -> Strategy .
+	op makeChoiceAccel : RuleSet Variable Variable -> Strategy .
+
+	eq makeChoice(Rls, SV) = choice(makeChoiceMap(Rls, SV)) .
+	eq makeChoiceAccel(Rls, SV, RV) = choice(makeChoiceMapAccel(Rls, SV, RV)) .
+
+
+	*** Make the entries of the choice operator (accelerated or not)
+	op makeChoiceMap : RuleSet Variable -> ChoiceMap .
+	op makeChoiceMapAccel : RuleSet Variable Variable -> ChoiceMap .
+
+	eq makeChoiceMap(rl L => R [metadata(S) label(Q) Attrs] . Rls, SV) = if Rls =/= none then
+			(makePropensity(L, S, SV) : Q[none]{empty}), makeChoiceMap(Rls, SV)
+		else
+			(makePropensity(L, S, SV) : Q[none]{empty})
+		fi .
+
+	eq makeChoiceMapAccel(rl L => R [metadata(S) label(Q) Attrs] . Rls, SV, RV) = if Rls =/= none then
+			(makePropensity(L, S, SV) : makeRepeatName(Q)[[RV]]), makeChoiceMapAccel(Rls, SV, RV)
+		else
+			(makePropensity(L, S, SV) : makeRepeatName(Q)[[RV]])
+		fi .
+
+	*** Generate the term for the propensity of a reaction
+	op makePropensity : Term String Variable -> Term .
+
+	eq makePropensity('none.Soup, S, SV) = upNumLiteral(S) .
+	eq makePropensity('__[TL], S, SV) = '_*_[upNumLiteral(S), 'float['_*_[makeVPropensity(TL, SV)]]] .
+	eq makePropensity(T, S, SV) = '_*_[upNumLiteral(S), 'float[makeVPropensity(T, SV)]] [owise] .
+
+	*** Generate the factors of the variable part of the propensity for a reaction
+	op makeVPropensity : TermList Variable -> TermList .
+	op makeVPropensity : TermList Variable Term Nat -> TermList .
+
+	eq makeVPropensity(empty, SV) = empty .
+	eq makeVPropensity('__[TL], SV) = makeVPropensity(TL, SV) .
+	eq makeVPropensity(T, SV) = '_`[_`][SV, T] [owise] .
+	eq makeVPropensity((T, NeTL), SV) = '_`[_`][SV, T], makeVPropensity(NeTL, SV, T, 1) .
+
+	*** Important: we are assuming that species appear together if they are many
+	*** (we can visit the whole list to avoid assuming it)
+	eq makeVPropensity((T, TL), SV, T, N) = 'sd['_`[_`][SV, T], upNatLiteral(N)], makeVPropensity(TL, SV, T, s N) .
+	eq makeVPropensity(TL, SV, T, N) = makeVPropensity(TL, SV) [owise] .
+
+	*** Generate the sum of the propensities of all reactions
+	op makeTotalPropensity : RuleSet Variable -> Term .
+
+	eq makeTotalPropensity(none, SV) = '0.0.FiniteFloat .
+	eq makeTotalPropensity(rl L => R [metadata(S) Attrs] ., SV) = makePropensity(L, S, SV) .
+	eq makeTotalPropensity(rl L => R [metadata(S) Attrs] . Rls, SV) =
+		'_+_[makePropensity(L, S, SV), makeTotalPropensity(Rls, SV)] [owise] .
+
+	*** Make a name for the strategy that repeats the given rule
+	op makeRepeatName : Qid -> Qid .
+
+	eq makeRepeatName(Q) = qid(string(Q) + "-repeat") .
+
+	*** Make a declaration for some repeat rules
+	op declareRepeatStrats : QidSet -> StratDeclSet .
+
+	eq declareRepeatStrats(none) = none .
+	eq declareRepeatStrats(Q ; Qs) = strat makeRepeatName(Q) : 'Nat @ 'System [none] . declareRepeatStrats(Qs) .
+
+	*** Make the definitions for the repeat rules
+	op defineRepeatStrats : QidSet -> StratDefSet .
+
+	eq defineRepeatStrats(none) = none .
+	eq defineRepeatStrats(Q ; Qs) =
+		(sd makeRepeatName(Q)[['0.Zero]] := idle [none] .)
+		(sd makeRepeatName(Q)[['s_['N:Nat]]] := Q[none]{empty} ; makeRepeatName(Q)[['N:Nat]] [none] .)
+		defineRepeatStrats(Qs)
+	.
+
+	*** Convert a numeric literal into the metarepresentation of a Float
+	op upNumLiteral : String -> Constant .
+
+	eq upNumLiteral(S) = qid(if find(S, ".", 0) == notFound then S + ".0" else S fi + ".FiniteFloat") .
+
+	*** Convert a natural number literal to its metarepresentation
+	op upNatLiteral : Nat -> Term .
+
+	eq upNatLiteral(0) = '0.Zero .
+	eq upNatLiteral(1) = 's_['0.Zero] .
+	eq upNatLiteral(s s N) = qid("s_^" + string(s s N, 10))['0.Zero] .
+endfm
+
+eof
+
+sload pred-prey
+
+fmod CRN-MAIN is
+	protecting CRN-COMPLETE .
+	protecting META-LEVEL .
+	protecting FLOAT .
+endfm
+
+red makeStepModule(upModule('PRED-PREY, false)) .

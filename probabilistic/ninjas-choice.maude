@@ -1,0 +1,50 @@
+***
+*** Implementation of the ninja's protocols in «Black Ninjas in the Dark:
+*** Formal Analysis of Population Protocols» (10.1145/3209108.3209110).
+***
+*** Specifying that agents are picked uniformly at random with the choice
+*** strategy on top of the tuple representation
+***
+
+sload ninjas-tuple
+
+smod NINJAS-STRAT is
+	protecting NINJAS .
+
+	strats step step2 @ Garden .
+	strats repeat repeat2 : Nat @ Garden .
+
+	var  G             : Garden .
+	vars AY AN PY PN N : Nat .
+
+	*** The weight of each rule is the number of pairs of agents involved
+	*** in it that can be picked from the configuration
+	sd step := matchrew G s.t. < AY, AN, PY, PN > := G by G using choice(
+			AY * AN : ay&an,
+			AY * PN : ay&pn,
+			AN * PY : an&py,
+			PY * PN : py&pn
+		   ) .
+
+	*** This is the same as the previous, but two nested choice operators
+	*** are used to choose one agent first and then the other
+	sd step2 := matchrew G s.t. < AY, AN, PY, PN > := G by G using choice(
+			AY : choice(AN : ay&an, PN : ay&pn),
+			AN : choice(AY : ay&an, PY : an&py),
+			PY : choice(AN : an&py, PN : py&pn),
+			PN : choice(AY : ay&pn, PY : py&pn)
+		    ) .
+
+	*** Execute the given number of steps of the protocol
+	sd repeat(0) := idle .
+	sd repeat(s(N)) := step ? repeat(N) : idle .
+
+	sd repeat2(0) := idle .
+	sd repeat2(s(N)) := step2 ? repeat2(N) : idle .
+endsm
+
+***
+*** Quantitative properties can be checked by simulation:
+***
+*** simaude ninjas-choice.maude '< 4, 2, 0, 0 >' 'repeat(20)'
+*** simaude ninjas-tuple.maude '< 4, 2, 0, 0 >' 'repeat(100)'

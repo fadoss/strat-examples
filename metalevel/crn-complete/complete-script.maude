@@ -1,0 +1,47 @@
+***
+*** Script to obtain the completion of a given module in the terminal
+***
+
+sload file
+sload crn-complete
+sload print-module
+
+mod COMPLETE-SCRIPT is
+	protecting STD-STREAM .
+	protecting CRN-COMPLETE .
+	protecting META-LEVEL .
+	protecting LEXICAL .
+	protecting PRETTY-PRINT-MODULE .
+
+	op Writer : -> Cid [ctor] .
+	op writer : -> Oid [ctor] .
+
+	op phase:_ : Nat -> Attribute [ctor] .
+
+	var MN : String .
+
+	rl
+		< writer : Writer | phase: 0 >
+	=>
+		< writer : Writer | phase: 1 >
+		write(stdout, writer, "The original file should have been loaded before complete-script.maude.\n\n")
+	.
+
+	rl
+		< writer : Writer | phase: 1 >
+		wrote(writer, stdout)
+	=>
+		< writer : Writer | phase: 2 >
+		getLine(stdin, writer, "Name of the module to complete: ")
+	.
+
+	rl
+		< writer : Writer | phase: 2 >
+		gotLine(writer, stdin, MN)
+	=>
+		< writer : Writer | phase: 2 >
+		write(stdout, writer, printTokens(printModule(makeStepModule(upModule(qid(MN), false))) '\n))
+	.
+endm
+
+erew <> < writer : Writer | phase: 0 > .

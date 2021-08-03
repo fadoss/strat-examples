@@ -1,0 +1,174 @@
+***
+*** Multiple alternative Maude specifications of the Lokta-Volterra chemical
+*** reaction network as in https://classicdsd.azurewebsites.net/
+***
+
+fmod CRN-AC is
+	protecting NAT .
+
+	*** With the multiset of species as an associative and commutative operator
+
+	sorts Species Soup .
+	subsort Species < Soup .
+
+	op none : -> Soup [ctor] .
+	op _+_  : Soup Soup -> Soup [ctor assoc comm id: none] .
+endfm
+
+fmod CRN-LP is
+	protecting NAT .
+
+	*** With the multiset of species as a linear polynomial on the species
+	*** using an associative and commutative operator
+
+	sorts Species Soup .
+
+	op __ : Nat Species -> Soup [ctor gather (e e) prec 10] .
+
+	op none : -> Soup [ctor] .
+	op _+_  : Soup Soup -> Soup [ctor assoc comm id: none] .
+
+	vars N M : Nat .
+	vars S   : Species .
+
+	*** Collapse multipliers
+	eq N S + M S = (N + M) S .
+endfm
+
+mod LOKTA-AC is
+	extending CRN-AC .
+
+	ops x y1 y2 : -> Species [ctor] .
+
+	vars N M : Nat .
+	var  S   : Soup .
+
+	rl [xy1] :  x + y1 =>  x + y1 + y1 [metadata "10"] .
+	rl [y12] : y1 + y2 => y2 + y2      [metadata "0.01"] .
+	rl [y20] :      y2 => none         [metadata "10"] .
+
+	op initial : -> Soup .
+	eq initial = x + repeat(y1, 1000) + repeat(y2, 1000) .
+
+	op repeat : Soup Nat -> Soup .
+	eq repeat(S, 0) = none .
+	eq repeat(S, s N) = S + repeat(S, N) .
+endm
+
+mod LOKTA-LP is
+	extending CRN-LP .
+
+	ops x y1 y2 : -> Species [ctor] .
+
+	vars N M : Nat .
+
+	rl [xy1] : (s N) x  +     M y1 => (s N) x +   (s M) y1 [metadata "10"] .
+	rl [y12] : (s N) y1 + (s M) y2 =>    N y1 + (s s M) y2 [metadata "0.01"] .
+	rl [y20] : (s N) y2            =>                 N y2 [metadata "10"] .
+
+	op initial : -> Soup .
+	eq initial = 1 x + 1000 y1 + 1000 y2 .
+endm
+
+mod LOKTA-TUPLE is
+	protecting NAT .
+	protecting FLOAT .
+
+	*** With the multiset of species as a tuple and with time
+
+	sort System .
+
+	op <_,_,_,_> : Nat Nat Nat Float -> System [ctor] .
+
+	vars X Y1 Y2 : Nat .
+	var  T TP    : Float .
+
+	rl [xy1] : < s X,   Y1,   Y2, T > => < s X, s Y1,     Y2, T > [metadata "10"] .
+	rl [y12] : <   X, s Y1, s Y2, T > => <   X,   Y1, s s Y2, T > [metadata "0.01"] .
+	rl [y20] : <   X,   Y1, s Y2, T > => <   X,   Y1,     Y2, T > [metadata "10"] .
+
+	*** Rule to increment time according to the total propensity TP
+	rl [inctime] : < X, Y1, Y2, T > => < X, Y1, Y2, T + 1.0 / TP > [nonexec] .
+
+	op initial : -> System .
+	eq initial = < 1, 1000, 1000, 0.0 > .
+endm
+
+smod LOKTA-AC-STRAT is
+	protecting LOKTA-AC .
+	protecting CONVERSION .
+
+	strat step @ Soup .
+	strat repeat : Nat @ Soup .
+
+	vars X Y1 Y2 N : Nat .
+	var  S S'      : Soup .
+
+	sd step := matchrew S s.t. X := count(S, x) /\ Y1 := count(S, y1)
+	                       /\ Y2 := count(S, y2) by S using choice(
+		X  * Y1 * 10           : xy1,
+		float(Y1 * Y2) / 100.0 : y12,
+		Y2 * 10                : y20
+	) .
+
+	sd repeat(0) := idle .
+	sd repeat(s N) := step ? repeat(N) : idle .
+
+	*** Count the multiplicity of the second soup in the first one
+	op count : Soup Soup -> Nat .
+	eq count(S + S', S') = s count(S, S') .
+	eq count(S, S') = 0 [owise] .
+endsm
+
+smod LOKTA-LP-STRAT is
+	protecting LOKTA-LP .
+	protecting CONVERSION .
+
+	strat step @ Soup .
+	strat repeat : Nat @ Soup .
+
+	vars X Y1 Y2 N : Nat .
+	var  S S'      : Soup .
+
+	sd step := matchrew S s.t. X x + Y1 y1 + Y2 y2 := S by S using choice(
+		X  * Y1 * 10          : xy1,
+		float(Y1 * Y2) * 0.01 : y12,
+		Y2 * 10               : y20
+	) .
+
+	sd repeat(0) := idle .
+	sd repeat(s N) := step ? repeat(N) : idle .
+endsm
+
+smod LOKTA-TUPLE-STRAT is
+	protecting LOKTA-TUPLE .
+	protecting CONVERSION .
+
+	strat step @ System .
+	strat repeat : Nat @ System .
+
+	vars X Y1 Y2 N : Nat .
+	var  T TP      : Float .
+	var  S         : System .
+
+	sd step := matchrew S s.t. < X, Y1, Y2, T > := S by S using (choice(
+			X  * Y1 * 10          : xy1,
+			float(Y1 * Y2) * 0.01 : y12,
+			Y2 * 10               : y20
+		) ;
+		inctime[TP <- float((X  * Y1 + Y2) * 10) + float(Y1 * Y2) * 0.01]
+	) .
+
+	sd repeat(0) := idle .
+	sd repeat(s N) := step ? repeat(N) : idle .
+endsm
+
+eof
+
+srew in LOKTA-AC-STRAT : initial using step .
+srew in LOKTA-LP-STRAT : initial using step .
+srew in LOKTA-TUPLE-STRAT : initial using step .
+
+srew in LOKTA-AC-STRAT : initial using repeat(100) .
+srew in LOKTA-LP-STRAT : initial using repeat(100) .
+srew in LOKTA-TUPLE-STRAT : initial using repeat(100) .

@@ -1,0 +1,48 @@
+***
+*** PMaude clock example
+***
+
+mod EXPONENTIAL-CLOCK is
+	protecting FLOAT .
+
+	sort Clock .
+
+	op clock  : Float Float -> Clock [ctor] .
+	op broken : Float Float -> Clock [ctor] .
+
+	vars T C P : Float .
+	var  B     : Bool .
+
+	rl [advance] : clock(T, C) => if B then
+						clock(T + P, C - C / 1000.0)
+	                              else
+	                              		broken(T, C - C / 1000.0)
+	                              fi [nonexec] .
+	*** with probability B := bernoulli(C / 1000.0) /\ P := exponential(1.0) .
+
+	rl [reset] : clock(T, C) => clock(0.0, C) .
+endm
+
+smod EXPONENTIAL-CLOCK-STRAT is
+	protecting EXPONENTIAL-CLOCK .
+
+	strat p-advance p-all @ Clock .
+
+	var  Clk      : Clock .
+	var  B        : Bool .
+	vars T P BF C : Float .
+
+	sd p-advance := matchrew Clk s.t. clock(T, C) := Clk by Clk using (
+	                    sample BF := bernoulli(C / 1000.0) in
+	                    sample P  := exp(1.0) in
+	                    advance[B <- BF == 1.0, P <- P]) .
+
+	sd p-all := reset | p-advance .
+endsm
+
+eof
+
+*** A step mixing nondeterministic and probabilistic behavior
+srew clock(0.0, 5000.0) using p-all .
+*** Search for a broken clock configuration
+search [1] clock(0.0, 5000.0) =>+ broken(T, C) using p-all * .

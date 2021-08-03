@@ -1,0 +1,86 @@
+***
+*** Implementation of the ninja's protocols in «Black Ninjas in the Dark:
+*** Formal Analysis of Population Protocols» (10.1145/3209108.3209110).
+***
+*** Multisets of agents are represented as vectors of their multiplicities
+***
+
+mod NINJAS is
+	*** Peano numbers (sort Nat, 0 constant  and s : Nat -> Nat for successor)
+	protecting NAT .
+
+	sort Garden .
+
+	*** The number of AY, AN, PY, PN agents (A=active, P=passive, Y=yes, N=no)
+	op <_,_,_,_> : Nat Nat Nat Nat -> Garden [ctor] .
+
+	vars AY AN PY PN : Nat .
+
+	rl [ay&an] : < s(AY), s(AN), PY, PN > => < AY, AN, PY, s(s(PN)) > .
+
+	rl [ay&pn] : < s(AY), AN, PY, s(PN) > => < s(AY), AN, s(PY), PN > .
+	rl [an&py] : < AY, s(AN), s(PY), PN > => < AY, s(AN), PY, s(PN) > .
+
+	rl [py&pn] : < AY, AN, s(PY), s(PN) > => < AY, AN, PY, s(s(PN)) > .
+endm
+
+sload model-checker
+
+mod NINJAS-PREDS is
+	protecting NINJAS .
+	*** Short circuit disjunction (or-else)
+	protecting EXT-BOOL .
+	*** Part of the model checker infraestructure:
+	*** declares State, Prop and the _|=_ symbol
+	including SATISFACTION .
+
+	sort Vote .
+	subsort Garden < State .
+
+	var  G : Garden .
+	var  V : Vote .
+	vars AY AN PY PN : Nat .
+
+	ops Y N : -> Vote [ctor] .
+
+	*** There is a consensus for a given vote
+	op consensus : Vote -> Prop [ctor] .
+	*** There is a consensus (whatever it is)
+	op consensus : -> Prop .
+
+	eq < AY, 0, PY, 0 > |= consensus(Y) = true .
+	eq < 0, AN, 0, PN > |= consensus(N) = true .
+	eq G |= consensus(V) = false .
+
+	eq G |= consensus = G |= consensus(Y) or-else G |= consensus(N) .
+endm
+
+smod NINJAS-WEIGHT is
+	protecting NINJAS-PREDS .
+	including MODEL-CHECKER .
+	including STRATEGY-MODEL-CHECKER .
+
+	strats sensei senseii @ Garden .
+
+	sd sensei := (ay&an | ay&pn | an&py) ! .
+	sd senseii := (ay&an | ay&pn | an&py | py&pn) ! .
+
+	*** Weight function for the transitions so that agents
+	*** are picked uniformly at random
+	op weight : Garden Qid -> Nat .
+
+	vars AY AN PY PN : Nat .
+
+	eq weight(< AY, AN, PY, PN >, 'ay&an) = AY * AN .
+	eq weight(< AY, AN, PY, PN >, 'ay&pn) = AY * PN .
+	eq weight(< AY, AN, PY, PN >, 'an&py) = AN * PY .
+	eq weight(< AY, AN, PY, PN >, 'py&pn) = PY * PN .
+endsm
+
+***
+*** Quantitative properties can be checked with the umaudemc tool:
+***
+*** umaudemc pcheck ninjas-tuple '< 4, 4, 0, 0 >' '<> [] consensus(N)' sensei --assign 'term(weight(L:Garden, A:Qid))'
+*** umaudemc pcheck ninjas-tuple '< 4, 4, 0, 0 >' 'P >= 1 <> [] consensus(N)' senseii --assign 'term(weight(L:Garden, A:Qid))'
+*** umaudemc pcheck ninjas-tuple '< 4, 3, 0, 0 >' '<> consensus(Y)' sensei --assign 'term(weight(L:Garden, A:Qid))' --steps
+*** umaudemc pcheck ninjas-tuple '< 4, 3, 0, 0 >' '<> consensus(Y)' senseii --assign 'term(weight(L:Garden, A:Qid))' --steps

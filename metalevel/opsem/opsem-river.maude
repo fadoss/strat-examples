@@ -5,7 +5,7 @@
 ***
 
 sload opsem
-sload ../../modelChecking/river
+sload ../../modelChecking/river-v2
 
 view RiverModule from MODULE to META-LEVEL is
 	op M to term upModule('RIVER-CROSSING-SCHECK, true) .

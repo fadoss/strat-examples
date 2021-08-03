@@ -1,0 +1,53 @@
+***
+*** Base definitions for specifying CRNs in Maude
+***
+
+mod CRN-BASE is
+	protecting NAT .
+	protecting FLOAT .
+
+	sorts Species Soup System .
+	subsort Species < Soup .
+
+	*** Soup is a multiset with none as empty multiset
+	op none : -> Soup [ctor] .
+	op __ : Soup Soup -> Soup [ctor assoc comm id: none] .
+
+	*** System is a multiset together with a time
+	op sys : Soup Float -> System [ctor] .
+
+	*** Defined operators to facilitate writing
+
+	*** Get the count of a given species
+	op _[_] : Soup Species -> Nat .
+	op _[_] : System Species -> Nat .
+
+	*** A soup with many copies of the species
+	op __ : Nat Species -> Soup [gather (e e)] .
+
+	vars A B  : Species .
+	var  N    : Nat .
+	var  S    : Soup .
+	vars T DT : Float .
+
+	eq sys(S, T)[A] = S[A] .
+	eq none[A] = 0 .
+	eq (A S)[A] = s(S[A]) .
+	eq (B S)[A] = S[A] [owise] .
+
+	eq 0 A = none .
+	eq (s N) A = A (N A) .
+
+	*** Rule to advance time
+
+	rl [inctime] : sys(S, T) => sys(S, T + DT) [nonexec] .
+endm
+
+sth CRN-STEP is
+	protecting CRN-BASE .
+
+	*** Simulate a single reaction on the CRN
+	strat step @ System .
+	*** Simulate an accelerated reaction at the given speed on the CRN
+	strat step : Nat @ System .
+endsth

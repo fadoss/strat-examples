@@ -1,122 +1,87 @@
 ***
-*** River crossing example (version 2)
+*** River crossing example (version 3)
 ***
-*** No changes are made except a simplified term signature
-*** and more strategies
+*** Essentially a renaming of the previous version
 ***
 
-fmod RIVER is
-	sort River Side Group .
-	subsort Side < Group .
+fmod RIVER-DATA is
+	sorts Being Side Group River .
+	subsorts Being Side < Group .
 
-	op  _|_ : Group Group -> River [ctor comm] .
+	ops shepherd wolf goat cabbage : -> Being [ctor] .
 	ops left right : -> Side [ctor] .
-	ops shepherd wolf goat cabbage : -> Group [ctor] .
-	ops __ : Group Group -> Group [ctor assoc comm prec 40] .
+	op __  : Group Group -> Group [ctor assoc comm prec 40] .
+	op _|_ : Group Group -> River [ctor comm] .
+
+	vars G1 G2 : Group .
 
 	op initial : -> River .
 	eq initial = left shepherd wolf goat cabbage | right .
+
+	op risky : River -> Bool .
+	eq risky(shepherd G1 | G2 wolf goat ) = true .
+	eq risky(shepherd G1 | G2 goat cabbage) = true .
+	eq risky(G1 | G2) = false [owise] .
 endfm
 
-mod RIVER-CROSSING is
-	protecting RIVER .
+mod RIVER is
+	protecting RIVER-DATA .
 
-	vars G G' : Group .
+	vars L R : Group .
 
-	rl [wolf-eats] : wolf goat G | shepherd G' => wolf G | shepherd G' .
-	rl [goat-eats] : cabbage goat G | shepherd G' => goat G | shepherd G' .
+	rl [alone]   :         shepherd L | R => L | R shepherd .
+	rl [wolf]    :    shepherd wolf L | R => L | R shepherd wolf .
+	rl [goat]    :    shepherd goat L | R => L | R shepherd goat .
+	rl [cabbage] : shepherd cabbage L | R => L | R shepherd cabbage .
 
-	rl [alone] : shepherd G | G' => G | shepherd G' .
-	rl [wolf] : shepherd wolf G | G' => G | shepherd wolf G' .
-	rl [goat] : shepherd goat G | G' => G | shepherd goat G' .
-	rl [cabbage] : shepherd cabbage G | G' => G | shepherd cabbage G'  .
+	rl [wolf-eats] :    wolf goat L | R shepherd => wolf L | R shepherd .
+	rl [goat-eats] : goat cabbage L | R shepherd => goat L | R shepherd .
 endm
 
-smod RIVER-CROSSING-STRAT is
-	protecting RIVER-CROSSING .
-
-	strats safe safe-nt solution eagerEating eagerEating-nt @ River .
+smod RIVER-STRAT is
+	protecting RIVER .
 
 	var G : Group .
 
-	*** A well-known solution to the problem
-	sd solution := goat ; alone ; cabbage ; goat ; wolf ; alone ; goat .
-
-	*** Bad states (in which an animal can be eaten) are avoided
-	sd safe := match left | G ? idle : (oneCrossing ; not(eating) ; safe) .
-	*** Eating happens eagerly, always before moving
-	sd eagerEating := match left | G cabbage goat ? idle : ((eating or-else oneCrossing) ; eagerEating) .
-
-	*** Non-terminating versions of the safe and eagerEating strategies
-	sd safe-nt := oneCrossing ; not(eating) ; safe-nt .
-	sd eagerEating-nt := (eating or-else oneCrossing) ; eagerEating-nt .
-
-	strats oneCrossing eating @ River .
+	strats oneCrossing eating eatb4cross cross&eat solved @ River .
 
 	sd oneCrossing := alone | wolf | goat | cabbage .
-	sd eating := wolf-eats | goat-eats .
-	sd cross&eat := oneCrossing ; eating ! .
+	sd eating      := wolf-eats | goat-eats .
+	sd eatb4cross  := eating or-else oneCrossing .
+	sd cross&eat   := oneCrossing ; eating ! .
+	sd solved      := match left | right shepherd wolf cabbage goat .
 
-	*** eagerEating, but it is exhaustively done after crossing
-	strat eagerEating2 cross&eat @ River .
-	sd eagerEating2 := match left | G cabbage goat ? idle : (cross&eat ; eagerEating2) .
+	strats eagerEating eagerEating2 safe @ River .
+
+	sd eagerEating := solved ? idle : (eatb4cross ; eagerEating) .
+	sd eagerEating2 := solved ? idle : (cross&eat ; eagerEating2) .
+	sd safe := solved ? idle : (oneCrossing ; not(eating) ; safe) .
 endsm
 
 sload model-checker
 
-mod RIVER-CROSSING-PREDS is
-	protecting RIVER-CROSSING .
+mod RIVER-PREDS is
+	protecting RIVER .
 	including SATISFACTION .
 
 	subsort River < State .
-
-	ops goal death bad : -> Prop [ctor] .
+	ops goal risky death : -> Prop [ctor] .
 
 	var  R    : River .
+	var  B    : Being .
 	vars G G' : Group .
 
 	eq left | right shepherd wolf goat cabbage |= goal = true .
 	eq R |= goal = false [owise] .
-
-	*** One or more characters are dead
 	eq G cabbage | G' goat |= death = false .
 	eq G cabbage goat | G' |= death = false .
 	eq R |= death = true [owise] .
-
-	*** A character (wolf or cabbage) can eat another character
-	eq G wolf goat | G' shepherd |= bad = true .
-	eq G goat cabbage | G' shepherd |= bad = true .
-	eq R |= bad = false [owise] .
+	eq R |= risky = risky(R) .
 endm
 
-smod RIVER-CROSSING-SCHECK is
-	protecting RIVER-CROSSING-STRAT .
-	protecting RIVER-CROSSING-PREDS .
-	including MODEL-CHECKER .
+smod RIVER-CHECK is
+	protecting RIVER-PREDS .
+	protecting RIVER-STRAT .
 	including STRATEGY-MODEL-CHECKER .
+	including MODEL-CHECKER .
 endsm
-
-eof
-
-*** Check whether the goal is reachable in the unrestricted system
-*** (the counterexample solution is not admissible)
-red modelCheck(initial, [] ~ goal) .
-*** This counterexample is an admissible solution
-red modelCheck(initial, [] ~ goal, 'eagerEating) .
-red modelCheck(initial, [] ~ goal, 'safe) .
-*** No bad state is ever visited with safe
-red modelCheck(initial, [] ~ bad, 'safe) .
-*** If cross&eat is seen as an atomic action, they are also avoided with eagerEating2
-red modelCheck(initial, [] ~ bad, 'eagerEating2, 'cross&eat) .
-red modelCheck(initial, [] ~ bad, 'eagerEating2) .
-*** Bad states are not resolved to deaths in the unrestricted system
-red modelCheck(initial, [] (bad -> <> death)) .
-red modelCheck(initial, [] (bad -> <> death), 'eagerEating) .
-red modelCheck(initial, [] (bad -> O death), 'eagerEating) .
-
-*** Branching-time properties can be checked with umaudemc
-
-*** Finding a way to the goal is always possible
-*** umaudemc check river initial 'A [] E <> goal'
-*** umaudemc check river initial 'A [] E <> goal' eagerEating
-*** umaudemc check river initial 'A [] E <> goal' safe

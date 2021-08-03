@@ -1,0 +1,15 @@
+***
+*** Predator-prey CRN specified directly in Maude
+***
+
+sload crn-base
+
+mod PRED-PREY is
+	extending CRN-BASE .
+
+	ops Pred Prey : -> Species [ctor] .
+
+	rl [prey]      : Prey      => 2 Prey [metadata "10.0"] .
+	rl [prey_pred] : Prey Pred => 2 Pred [metadata "0.01"] .
+	rl [pred]      : Pred      => none   [metadata "10.0"] .
+endm

@@ -1,0 +1,135 @@
+***
+*** Flock of birds (parametric at the metalevel) as described in "Computation
+*** in networks of passively mobile finite-state sensors"
+*** (DOI: 10.1145/1011767.1011810)
+***
+*** This module provides the function flock that generates a module
+*** for the flock protocol of a given size
+
+fmod META-FLOCK is
+	protecting META-MODULE .
+	protecting CONVERSION .
+
+	op flock : Nat -> Module .
+	op initial : Nat Nat Nat -> Term .
+
+	vars N M K : Nat .
+	var  Ty    : Type .
+	var  T     : Term .
+	var  TL    : TermList .
+	var  Q     : Qid .
+
+	eq flock(N) = smod 'FLOCK is
+		(protecting 'NAT .)
+		sorts 'Flock .
+		none	*** subsort
+		(op makeTuple(N) : repeatType('Nat, s(N)) -> 'Flock [ctor] .)
+		(op 'initial : 'Nat 'Nat -> 'Flock [none] .)
+		none	*** membership axioms
+		(eq 'initial['H:Nat, 'S:Nat] = makeTuple(N)['H:Nat, 'S:Nat, repeatTerm('0.Zero, sd(N, 1))] [none] .)
+		makeRules(N)
+		(strat 'step : nil @ 'Flock [none] .)
+		(strat 'repeat : 'Nat @ 'Flock [none] .)
+		(sd 'step[[empty]] := makeStrategy(N) [none] .)
+		(sd 'repeat[['0.Zero]] := idle [none] .)
+		(sd 'repeat[['s_['N:Nat]]] := 'step[[empty]] ? 'repeat[['N:Nat]] : idle [none] .)
+	endsm .
+
+	*** Initial state with M healthy birds and sick bird to decide whether there are N sick birds
+	eq initial(N, M, K) = makeTuple(N)[makeNat(M), makeNat(K), repeatTerm('0.Zero, sd(N, 1))] .
+
+	*** Make a tuple symbol
+	op makeTuple : Nat -> Qid .
+	op makeTupleArgs : Nat -> String .
+
+	eq makeTuple(N) = qid("<" + makeTupleArgs(N) + ">") .
+
+	eq makeTupleArgs(0) = "_" .
+	eq makeTupleArgs(s(N)) = "_," + makeTupleArgs(N) .
+
+	*** A list repeating a type
+	op repeatType : Type Nat -> TypeList .
+
+	eq repeatType(Ty, 0) = nil .
+	eq repeatType(Ty, s(N)) = Ty repeatType(Ty, N) .
+
+	*** A list of repeated terms
+	op repeatTerm : Term Nat -> TermList .
+	eq repeatTerm(T, 0) = empty .
+	eq repeatTerm(T, s(N)) = T, repeatTerm(T, N) .
+
+	*** Make a natural number at the metalevel
+	op makeNat : Nat -> Term .
+	eq makeNat(0) = '0.Zero .
+	eq makeNat(N) = qid("s_^" + string(N, 10))['0.Zero] [owise] .
+
+	*** A Nat variable
+	op makeVar : Nat -> Variable .
+	eq makeVar(N) = qid("S" + string(N, 10) + ":Nat") .
+
+	*** A list of Nat variables
+	op varList : Nat -> TermList .
+	eq varList(0) = 'S0:Nat .
+	eq varList(s(N)) = varList(N), makeVar(s(N)) .
+
+	*** Make rules
+	op makeRules : Nat -> RuleSet .
+	op makeRules : Term Nat Nat Nat -> RuleSet .
+
+	ceq makeRules(N) =
+		(rl addSucc(addSucc(T, 0), N) => addSucc(addSucc(T, N), N) [label(makeLabel(0, N))] .)
+		makeRules(T, N, N, N)
+	if T := makeTuple(N)[varList(N)] .
+
+	eq makeRules(T, N, 0, K) = none .
+	eq makeRules(T, N, s(M), 0) = makeRules(T, N, M, M) .
+	eq makeRules(T, N, M, s(K)) =
+		if M + s(K) >= N then
+			(rl addSucc(addSucc(T, M), s(K)) => addSucc(addSucc(T, N), N) [label(makeLabel(M, s(K)))] .)
+		else
+			(rl addSucc(addSucc(T, M), s(K)) => addSucc(addSucc(T, M + s(K)), 0) [label(makeLabel(M, s(K)))] .)
+		fi
+		makeRules(T, N, M, K)
+	.
+
+	*** Add a successor to a given position
+	op addSucc : Term Nat -> Term .
+	op addSuccAux : TermList Nat -> TermList .
+
+	eq addSucc(Q[TL], N) = Q[addSuccAux(TL, N)] .
+	eq addSuccAux((T, TL), 0) = 's_[T], TL .
+	eq addSuccAux((T, TL), s(N)) = T, addSuccAux(TL, N) .
+
+	*** Make a label for the rule
+	op makeLabel : Nat Nat -> Qid .
+	eq makeLabel(N, M) = qid("r" + string(N, 10) + "a" + string(M, 10)) .
+
+	*** Make a probabilistic strategy
+	op makeStrategy : Nat -> Strategy .
+	op makeChoices : Nat Nat Nat -> ChoiceMap .
+
+	eq makeStrategy(N) = matchrew 'F:Flock s.t. makeTuple(N)[varList(N)] := 'F:Flock by 'F:Flock using choice(
+		makeChoices(N, N, N)
+	) .
+
+	eq makeChoices(N, 0, K) = ('_*_[makeVar(0), makeVar(N)]) : makeLabel(0, N)[none]{empty} .
+	eq makeChoices(N, s(M), 0) = makeChoices(N, M, M) .
+	eq makeChoices(N, M, s(K)) =
+		if M == s(K) then '_*_[makeVar(M), 'sd[makeVar(s(K)), 's_['0.Zero]]]
+		             else '_*_[makeVar(M), makeVar(s(K))] fi
+		: makeLabel(M, s(K))[none]{empty},
+		makeChoices(N, M, K)
+	.
+endfm
+
+fmod FLOCK-MAIN is
+	protecting META-FLOCK .
+	protecting META-LEVEL .
+endfm
+
+eof
+
+red flock(5) .
+red metaSrewrite(flock(5), initial(5, 4, 8), 'repeat[['s_^30['0.Zero]]], breadthFirst, 0) .
+
+*** simaude metaflock.maude -M 'flock(5)' 'initial(5, 8)' 'repeat(100)'

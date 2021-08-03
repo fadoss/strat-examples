@@ -1,0 +1,71 @@
+***
+*** River crossing example (version 3 with the choice operator)
+***
+
+sload ../modelChecking/river
+
+smod RIVER-CHOICE is
+	protecting RIVER-STRAT .
+	protecting RIVER-PREDS .
+	protecting NAT .
+
+	*** State of the puzzle with a counter for the number of steps
+	op <_,_> : State Nat -> State [ctor] .
+	*** Simplified state to project whether the puzzle is solved or not
+	op result : Bool -> State [ctor] .
+
+	var  B    : Being .
+	vars G G' : Group .
+	var  R R' : River .
+	var  N    : Nat .
+
+	*** To be called by the strategies when the puzzle is solved or not
+	rl [is_solved]  : R => result(true) .
+	rl [not_solved] : R => result(false) .
+
+	*** Increment the step counter while the puzzle is advanced
+	crl [step] : < R, N > => < R', N + 1 > if R => R' .
+
+	strats uniformStep uniformStep2 @ River .
+
+	*** Take a move uniformly at random among the possible ones
+	sd uniformStep := matchrew R by R using choice(1 : alone,
+	                               sameSide(R, wolf) : wolf,
+	                               sameSide(R, goat) : goat,
+	                            sameSide(R, cabbage) : cabbage) .
+
+	*** Take a move uniformly at random,
+	*** but some of them may not be applicable
+	sd uniformStep2 := choice(1 : alone, 1 : wolf, 1 : goat, 1 : cabbage) .
+
+	*** Whether the given being and the shepherd are in
+	*** the same side of the river
+	op sameSide : River Being -> Nat .
+	eq sameSide(shepherd B G | G', B) = 1 .
+	eq sameSide(R, B) = 0 [owise] .
+
+	*** Search the puzzle space at random by uniform steps
+	strats randomSearch randomSafeSearch : Nat @ River .
+
+	sd randomSearch(0) := solved ? is_solved : not_solved .
+	sd randomSearch(s N) := solved ? is_solved : ((eating or-else uniformStep) ; randomSearch(N)) .
+
+	sd randomSafeSearch(0) := solved ? is_solved : not_solved .
+	sd randomSafeSearch(s N) := solved ? is_solved : (safeStep ; randomSafeSearch(N)) .
+
+	*** Keep taking uniform steps until a safe one is found
+	strat safeStep @ River .
+	sd safeStep := (uniformStep ; not(eating)) ? idle : safeStep .
+
+	*** Count the number of steps until the solution is found
+	strat randomCountSearch @ River .
+	sd randomCountSearch := (matchrew < R, N > by R using solved) or-else
+	                          (step{safeStep} ; randomCountSearch) .
+endsm
+
+eof
+
+srew initial using uniformStep .
+srew < initial, 0 > using randomCountSearch .
+
+*** simaude river-choice.maude initial 'randomSearch(100)' -n 2000

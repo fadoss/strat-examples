@@ -11,4 +11,4 @@ Most examples can be run with the latest official version of Maude, but the mode
 Testing
 -------
 
-In the `tests` directory, some tests are available along with their expected outputs for most of the examples, which can be checked with the `test.sh` script. The `modelChecking.yaml` file contains many model-checking test cases that should be run with the `test` subcommand of the [`umaudemc`](https://github.com/fadoss/umaudemc) tool.
+In the `tests` directory, some tests are available for most of the examples along with their expected outputs, which can be checked with the `test.sh` script. The `modelChecking.yaml` file contains many model-checking test cases that should be run with the `test` subcommand of the [`umaudemc`](https://github.com/fadoss/umaudemc) tool.

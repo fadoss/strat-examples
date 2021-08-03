@@ -1,0 +1,381 @@
+***
+*** Auxiliary function to print Maude metamodules
+***
+
+fmod PRETTY-PRINT-MODULE is
+	protecting META-LEVEL .
+	protecting CONVERSION .
+
+	*** Pretty print a module
+	op printModule : Module -> QidList .
+	*** The second argument activates printing variable declarations
+	*** instead of inline variables (absence of conflicts is assumed)
+	op printModule : Module Bool -> QidList .
+
+	var  M       : Module .
+	var  H       : Header .
+	var  IL      : ImportList .
+	var  Ss      : SortSet .
+	var  Sbs     : SubsortDeclSet .
+	var  Ops     : OpDeclSet .
+	var  Mbs     : MembAxSet .
+	var  Eqs     : EquationSet .
+	var  Rls     : RuleSet .
+	var  Strats  : StratDeclSet .
+	var  Sds     : StratDefSet .
+	var  PL      : ParameterList .
+	var  PDL     : ParameterDeclList .
+	vars ME ME'  : ModuleExpression .
+	var  RS      : RenamingSet .
+	vars Q Q1 Q2 : Qid .
+	var  QL      : QidList .
+	var  Attr    : Attr .
+	var  Attrs   : AttrSet .
+	var  TyL     : TypeList .
+	var  Ty      : Type .
+	vars T L R   : Term .
+	var  TL      : TermList .
+	var  NeTL    : NeTermList .
+	var  V       : Variable .
+	var  VS VS'  : VariableSet .
+	var  Ct      : Constant .
+	var  Sb      : Substitution .
+	var  N       : Nat .
+	var  NL      : NatList .
+	vars C C1 C2 : Condition .
+	var  S       : String .
+	vars St1 St2
+	     St3 St  : Strategy .
+	var  SL      : StrategyList .
+	var  UPS     : UsingPairSet .
+	var  CM      : ChoiceMap .
+	var  B       : Bool .
+
+	eq printModule(M) = printModule(M, true) .
+
+	ceq printModule(M, B) =
+		'fmod printHeader(H) 'is '\n
+			printImports(IL)
+			printSorts(Ss)
+			printSubsorts(Sbs)
+			printOpDecls(Ops)
+			printVariables(VS)
+			printMembAxs(M, VS, Mbs)
+			printEquations(M, VS, Eqs)
+		'endfm
+
+	if fmod H is IL sorts Ss . Sbs Ops Mbs Eqs endfm := M
+	/\ VS := if B then getVariables(M) else none fi .
+
+	ceq printModule(M, B) =
+		'mod printHeader(H) 'is '\n
+			printImports(IL)
+			printSorts(Ss)
+			printSubsorts(Sbs)
+			printOpDecls(Ops)
+			printVariables(VS)
+			printMembAxs(M, VS, Mbs)
+			printEquations(M, VS, Eqs)
+			printRules(M, VS, Rls)
+		'endm
+
+	if mod H is IL sorts Ss . Sbs Ops Mbs Eqs Rls endm := M
+	/\ VS := if B then getVariables(M) else none fi .
+
+	ceq printModule(M, B) =
+		'smod printHeader(H) 'is '\n
+			printImports(IL)
+			printSorts(Ss)
+			printSubsorts(Sbs)
+			printOpDecls(Ops)
+			printVariables(VS)
+			printMembAxs(M, VS, Mbs)
+			printEquations(M, VS, Eqs)
+			printRules(M, VS, Rls)
+			printStratDecls(Strats)
+			printStratDefs(M, VS, Sds)
+		'endsm
+
+	if smod H is IL sorts Ss . Sbs Ops Mbs Eqs Rls Strats Sds endsm := M
+	/\ VS := if B then getVariables(M) else none fi .
+
+	ceq printModule(M, B) =
+		'fth printHeader(H) 'is '\n
+			printImports(IL)
+			printSorts(Ss)
+			printSubsorts(Sbs)
+			printOpDecls(Ops)
+			printVariables(VS)
+			printMembAxs(M, VS, Mbs)
+			printEquations(M, VS, Eqs)
+		'endfth
+
+	if fth H is IL sorts Ss . Sbs Ops Mbs Eqs endfth := M
+	/\ VS := if B then getVariables(M) else none fi .
+
+	ceq printModule(M, B)  =
+		'th printHeader(H) 'is '\n
+			printImports(IL)
+			printSorts(Ss)
+			printSubsorts(Sbs)
+			printOpDecls(Ops)
+			printVariables(VS)
+			printMembAxs(M, VS, Mbs)
+			printEquations(M, VS, Eqs)
+			printRules(M, VS, Rls)
+		'endth
+
+	if th H is IL sorts Ss . Sbs Ops Mbs Eqs Rls endth := M
+	/\ VS := if B then getVariables(M) else none fi .
+
+	ceq printModule(M, B) =
+		'sth printHeader(H) 'is '\n
+			printImports(IL)
+			printSorts(Ss)
+			printSubsorts(Sbs)
+			printOpDecls(Ops)
+			printVariables(VS)
+			printMembAxs(M, VS, Mbs)
+			printEquations(M, VS, Eqs)
+			printRules(M, VS, Rls)
+			printStratDecls(Strats)
+			printStratDefs(M, VS, Sds)
+		'endsth
+
+	if sth H is IL sorts Ss . Sbs Ops Mbs Eqs Rls Strats Sds endsth := M
+	/\ VS := if B then getVariables(M) else none fi .
+
+	op printHeader : Header -> QidList .
+	eq printHeader(Q) = Q .
+	eq printHeader(Q{PDL}) = Q '`{ printParameterDeclList(PDL)  '`} .
+
+	op printImports : ImportList -> QidList .
+	eq printImports(nil) = nil .
+	eq printImports(protecting ME . IL) = '\t 'protecting printModuleExpression(ME) '. '\n printImports(IL) .
+	eq printImports(extending ME . IL) = '\t 'extending printModuleExpression(ME) '. '\n printImports(IL) .
+	eq printImports(including ME . IL) = '\t 'including printModuleExpression(ME) '. '\n printImports(IL) .
+
+	op printSorts : SortSet -> QidList .
+	eq printSorts(none) = nil .
+	eq printSorts(Q) = '\t 'sort Q '. '\n .
+	eq printSorts(Ss) = '\t 'sorts printSort2(Ss) '. '\n .
+
+	op printSort2 : SortSet -> QidList . *** clearly non-confluent
+	eq printSort2(none) = nil .
+	eq printSort2(Q ; Ss) = Q printSort2(Ss) .
+
+	*** Subsort relations can be explained more succintly
+	op printSubsorts : SubsortDeclSet -> QidList .
+	eq printSubsorts(none) = nil .
+	eq printSubsorts(subsort Q1 < Q2 . Sbs) = '\t 'subsort Q1 '< Q2 '. '\n printSubsorts(Sbs) .
+
+	op printOpDecls : OpDeclSet -> QidList .
+	eq printOpDecls(none) = nil .
+	eq printOpDecls(op Q : TyL -> Ty [Attrs] . Ops) = '\t 'op Q ': TyL '-> Ty printAttrSet(Attrs) '. '\n printOpDecls(Ops) .
+
+	op getVariables : Module -> VariableSet .
+	op getVariables : MembAxSet -> VariableSet .
+	op getVariables : EquationSet -> VariableSet .
+	op getVariables : RuleSet -> VariableSet .
+	op getVariables : StratDefSet -> VariableSet .
+	op getVariables : Condition -> VariableSet .
+	op getVariables : TermList -> VariableSet .
+	op getVariables : Strategy -> VariableSet .
+	op getVariables : UsingPairSet -> VariableSet .
+	op getVariables : StrategyList -> VariableSet .
+	op getVariables : Substitution -> VariableSet .
+	op getVariables : ChoiceMap -> VariableSet .
+
+	eq getVariables(M) = getVariables(getMbs(M)) ; getVariables(getEqs(M)) ;
+	                     getVariables(getRls(M)) ; getVariables(getSds(M)) .
+
+	eq getVariables((none).MembAxSet) = none .
+	eq getVariables(mb L : Q [Attrs] . Mbs) = getVariables(L) ; getVariables(Mbs) .
+	eq getVariables(cmb L : Q if C [Attrs] . Mbs) = getVariables(L) ; getVariables(C) ; getVariables(Mbs) .
+	eq getVariables((none).EquationSet) = none .
+	eq getVariables(eq L = R [Attrs] . Eqs) = getVariables(L) ; getVariables(R) ; getVariables(Eqs) .
+	eq getVariables(ceq L = R if C [Attrs] . Eqs) = getVariables(L) ; getVariables(R) ; getVariables(C) ; getVariables(Eqs) .
+	eq getVariables((none).RuleSet) = none .
+	eq getVariables(rl L => R [Attrs] . Rls) = getVariables(L) ; getVariables(R) ; getVariables(Rls) .
+	eq getVariables(crl L => R if C [Attrs] . Rls) = getVariables(L) ; getVariables(R) ; getVariables(C) ; getVariables(Rls) .
+	eq getVariables((none).StratDefSet) = none .
+	eq getVariables(sd St1 := St2 [Attrs] . Sds) = getVariables(St1) ; getVariables(St2) ; getVariables(Sds) .
+	eq getVariables(csd St1 := St2 if C [Attrs] . Sds) = getVariables(St1) ; getVariables(St2) ; getVariables(C) ; getVariables(Sds) .
+
+	eq getVariables((nil).Condition) = none .
+	eq getVariables(L = R /\ C) = getVariables(L) ; getVariables(R) ; getVariables(C) .
+	eq getVariables(L := R /\ C) = getVariables(L) ; getVariables(R) ; getVariables(C) .
+	eq getVariables(L : Q /\ C) = getVariables(L) ; getVariables(C) .
+	eq getVariables(L => R /\ C) = getVariables(L) ; getVariables(R) ; getVariables(C) .
+
+	eq getVariables(fail) = none .
+	eq getVariables(idle) = none .
+	eq getVariables(all) = none .
+	eq getVariables(Q[Sb]{SL}) = getVariables(Sb) ; getVariables(SL) .
+	eq getVariables(top(St)) = getVariables(St) .
+	eq getVariables(match T s.t. C) = getVariables(T) ; getVariables(C) .
+	eq getVariables(xmatch T s.t. C) = getVariables(T) ; getVariables(C) .
+	eq getVariables(amatch T s.t. C) = getVariables(T) ; getVariables(C) .
+	ceq getVariables(St1 | St2) = getVariables(St1) ; getVariables(St2) if St1 =/= fail and St2 =/= fail .
+	ceq getVariables(St1 ; St2) = getVariables(St1) ; getVariables(St2) if St1 =/= idle and St2 =/= idle .
+	eq getVariables(St1 or-else St2) = getVariables(St1) ; getVariables(St2) .
+	eq getVariables(St +) = getVariables(St) .
+	eq getVariables(St1 ? St2 : St3) = getVariables(St1) ; getVariables(St2) ; getVariables(St3) .
+	eq getVariables(matchrew T s.t. C by UPS) = getVariables(T) ; getVariables(C) ; getVariables(UPS) .
+	eq getVariables(xmatchrew T s.t. C by UPS) = getVariables(T) ; getVariables(C) ; getVariables(UPS) .
+	eq getVariables(amatchrew T s.t. C by UPS) = getVariables(T) ; getVariables(C) ; getVariables(UPS) .
+	eq getVariables(Q[[TL]]) = getVariables(TL) .
+	eq getVariables(one(St)) = getVariables(St) .
+
+	*** Probabilistic extension of the Maude strategy language
+	eq getVariables(sample V := T in St) = V ; getVariables(T) ; getVariables(St) .
+	eq getVariables(choice(CM)) = getVariables(CM) .
+	eq getVariables(T : St) = getVariables(T) ; getVariables(St) .
+	eq getVariables((T : St, CM)) = getVariables(T) ; getVariables(St) ; getVariables(CM) .
+
+	eq getVariables(V using St) = V ; getVariables(St) .
+	eq getVariables((V using St, UPS)) = V ; getVariables(St) ; getVariables(UPS) .
+	eq getVariables((empty).StrategyList) = none .
+	eq getVariables((St, SL)) = getVariables(St) ; if SL =/= empty then getVariables(SL) else none fi .
+	eq getVariables((none).Substitution) = none .
+	eq getVariables(V <- T ; Sb) = V ; getVariables(T) ; getVariables(Sb) .
+
+	eq getVariables(V) = V .
+	eq getVariables(Ct) = none .
+	eq getVariables(Q[NeTL]) = getVariables(NeTL) .
+	eq getVariables((empty).TermList) = none .
+	eq getVariables((T, NeTL)) = getVariables(T) ; getVariables(NeTL) .
+
+	op printVariables : VariableSet -> QidList .
+	op printVariables : VariableSet VariableSet Type -> QidList .
+
+	eq printVariables(none) = nil .
+	eq printVariables(V ; VS) = '\t 'vars getName(V) printVariables(VS, none, getType(V)) .
+
+	eq printVariables(none, VS', Ty) = ': Ty '. '\n printVariables(VS') .
+	eq printVariables(V ; VS, VS', Ty) = if getType(V) == Ty
+		then getName(V) printVariables(VS, VS', Ty)
+		else printVariables(VS, V ; VS', Ty)
+	fi .
+
+	op printMembAxs : Module VariableSet MembAxSet -> QidList .
+	eq printMembAxs(M, VS, none) = nil .
+	eq printMembAxs(M, VS, mb L : Q [Attrs] . Mbs) =
+		'\t 'mb metaPrettyPrint(M, VS, L) ': Q printAttrSet(Attrs) '. '\n
+		printMembAxs(M, VS, Mbs) .
+	eq printMembAxs(M, VS, cmb L : Q if C [Attrs] . Mbs) =
+		'\t 'mb metaPrettyPrint(M, VS, L) ': Q printAttrSet(Attrs) 'if printCondition(M, VS, C) '. '\n
+		printMembAxs(M, VS, Mbs) .
+
+	op printEquations : Module VariableSet EquationSet -> QidList .
+	eq printEquations(M, VS, none) = nil .
+	eq printEquations(M, VS, eq L = R [Attrs] . Eqs) =
+		'\t 'eq metaPrettyPrint(M, VS, L) '= metaPrettyPrint(M, VS, R) printAttrSet(Attrs) '. '\n
+		printEquations(M, VS, Eqs) .
+	eq printEquations(M, VS, ceq L = R if C [Attrs] . Eqs) =
+		'\t 'ceq metaPrettyPrint(M, VS, L) '= metaPrettyPrint(M, VS, R) 'if printCondition(M, VS, C) printAttrSet(Attrs) '. '\n
+		printEquations(M, VS, Eqs) .
+
+	op printRules : Module VariableSet RuleSet -> QidList .
+	eq printRules(M, VS, none) = nil .
+	eq printRules(M, VS, rl L => R [Attrs] . Rls) =
+		'\t 'rl metaPrettyPrint(M, VS, L) '=> metaPrettyPrint(M, VS, R) printAttrSet(Attrs) '. '\n
+		printRules(M, VS, Rls) .
+	eq printRules(M, VS, crl L => R if C [Attrs] . Rls) =
+		'\t 'crl metaPrettyPrint(M, VS, L) '=> metaPrettyPrint(M, VS, R)
+			'if printCondition(M, VS, C) printAttrSet(Attrs) '. '\n
+		printRules(M, VS, Rls) .
+
+	op printStratDecls : StratDeclSet -> QidList .
+	eq printStratDecls(none) = nil .
+	eq printStratDecls(strat Q : TyL @ Ty [Attrs] . Strats) =
+		'\t 'strat Q (if TyL == nil then nil else ': TyL fi) '@ Ty printAttrSet(Attrs) '. '\n
+		printStratDecls(Strats) .
+
+	op printStratDefs : Module VariableSet StratDefSet -> QidList .
+	eq printStratDefs(M, VS, none) = nil .
+	eq printStratDefs(M, VS, sd St1 := St2 [Attrs] . Sds) =
+		'\t 'sd metaPrettyPrintStrategy(M, VS, St1, mixfix flat format number rat)
+			':= metaPrettyPrintStrategy(M, VS, St2, mixfix flat format number rat) printAttrSet(Attrs) '. '\n
+		printStratDefs(M, VS, Sds) .
+	eq printStratDefs(M, VS, csd St1 := St2 if C [Attrs] . Sds) =
+		'\t 'csd metaPrettyPrintStrategy(M, VS, St1, mixfix flat format number rat)
+			':= metaPrettyPrintStrategy(M, VS, St2, mixfix flat format number rat)
+			'if printCondition(M, VS, C) printAttrSet(Attrs) '. '\n
+		printStratDefs(M, VS, Sds) .
+
+	op printParameterDeclList : ParameterDeclList -> QidList .
+	eq printParameterDeclList(nil) = nil .
+	eq printParameterDeclList((Q :: ME, PDL)) = Q '::  '`, printParameterDeclList(PDL) .
+
+	op printModuleExpression : ModuleExpression -> QidList .
+	eq printModuleExpression(Q) = Q .
+	eq printModuleExpression(ME{PL}) = printModuleExpression(ME) '`{ printParameterList(PL) '`} .
+	eq printModuleExpression(ME + ME') = printModuleExpression(ME) '+ printModuleExpression(ME') .
+	eq printModuleExpression(ME *(RS)) = printModuleExpression(ME) '* '`( printRenaming(RS) '`) .
+
+	op printAttrSet : AttrSet -> QidList .
+	op printAttrSet2 : AttrSet -> QidList .
+	eq printAttrSet(none) = nil .
+	eq printAttrSet(Attrs) = '`[ printAttrSet2(Attrs) '`] .
+
+	eq printAttrSet2(none) = nil .
+	eq printAttrSet2(assoc) = 'assoc .
+	eq printAttrSet2(comm) = 'comm .
+	eq printAttrSet2(idem) = 'idem .
+	eq printAttrSet2(iter) = 'iter .
+	eq printAttrSet2(id(T)) = 'id: getName(T) .
+	eq printAttrSet2(left-id(T)) = 'left-id: getName(T) .
+	eq printAttrSet2(right-id(T)) = 'right-id: getName(T) .
+	eq printAttrSet2(strat(NL)) = 'strat '`( printNatList(NL) '`) .
+	eq printAttrSet2(memo) = 'memo .
+	eq printAttrSet2(prec(N)) = 'prec printNat(N) .
+	eq printAttrSet2(gather(QL)) = 'gather '`( QL '`) .
+	eq printAttrSet2(format(QL)) = 'format '`( QL '`) .
+	eq printAttrSet2(ctor) = 'ctor .
+	eq printAttrSet2(config) = 'config .
+	eq printAttrSet2(object) = 'object .
+	eq printAttrSet2(msg) = 'msg .
+	eq printAttrSet2(frozen(NL)) = 'frozen '`( printNatList(NL) '`) .
+	eq printAttrSet2(poly(NL)) = 'poly '`( printNatList(NL) '`) .
+	eq printAttrSet2(special(HL:NeHookList)) = 'special '`( 'not-printing-specials '`) .	*** do not care about specials
+	eq printAttrSet2(label(Q)) = 'label Q .
+	eq printAttrSet2(metadata(S)) = 'metadata qid("'\"" + S + "\"") .
+	eq printAttrSet2(owise) = 'owise .
+	eq printAttrSet2(nonexec) = 'nonexec .
+	eq printAttrSet2(variant) = 'variant .
+	eq printAttrSet2(narrowing) = 'narrowing .
+	eq printAttrSet2(print(QL)) = 'print QL .
+	eq printAttrSet2(Attr Attrs) = printAttrSet2(Attr) printAttrSet2(Attrs) [owise] .
+
+	op printCondition : Module VariableSet Condition -> QidList .
+
+	eq printCondition(M, VS, L = R) = metaPrettyPrint(M, VS, L) '= metaPrettyPrint(M, VS, R) .
+	eq printCondition(M, VS, L := R) = metaPrettyPrint(M, VS, L) ':= metaPrettyPrint(M, VS, R) .
+	eq printCondition(M, VS, L => R) = metaPrettyPrint(M, VS, L) '=> metaPrettyPrint(M, VS, R) .
+	eq printCondition(M, VS, L : Q) = metaPrettyPrint(M, VS, L) ': Q .
+	eq printCondition(M, VS, C1 /\ C2) = printCondition(M, VS, C1) '/\ printCondition(M, VS, C2) [owise] .
+
+	op printNatList : NatList -> QidList .
+	eq printNatList(nil) = nil .
+	eq printNatList(N NL) = printNat(N) printNatList(NL) .
+
+	op printNat : Nat -> QidList .
+	eq printNat(N) = qid(string(N, 10)) .
+
+	op printParameterList : ParameterList -> QidList .
+	eq printParameterList(nil) = nil .
+
+	op printRenaming : RenamingSet -> QidList .
+	eq printRenaming((sort Q1 to Q2, RS)) = 'op 'sort Q1 'to Q2 '`, printRenaming(RS) .
+	eq printRenaming((op Q1 to Q2 [Attrs], RS)) = 'op Q1 'to Q2 printAttrSet(Attrs) '`, printRenaming(RS) .
+	eq printRenaming((op Q1 : TyL -> Ty to Q2 [Attrs], RS)) = 'op Q1 ': TyL '-> Ty 'to Q2 printAttrSet(Attrs) '`, printRenaming(RS) .
+	eq printRenaming((label Q1 to Q2, RS)) = 'label Q1 'to Q2 '`, printRenaming(RS) .
+	eq printRenaming((strat Q1 to Q2, RS)) = 'strat Q1 'to Q2 '`, printRenaming(RS) .
+	eq printRenaming((strat Q1 : TyL @ Ty to Q2, RS)) = 'strat Q1 ': TyL '-> Ty 'to Q2 '`, printRenaming(RS) .
+
+	op metaPrettyPrint : Module VariableSet Term ~> QidList .
+	eq metaPrettyPrint(M, VS, T) = metaPrettyPrint(M, VS, T, mixfix flat format number rat) .
+endfm
+
+set print color on .

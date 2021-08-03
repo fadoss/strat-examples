@@ -1,0 +1,68 @@
+***
+*** Implementation of some ninja's protocols in «Black Ninjas in the Dark:
+*** Formal Analysis of Population Protocols» (10.1145/3209108.3209110).
+***
+*** Continuous-time version
+***
+
+mod NINJAS is
+	protecting NAT .
+	protecting FLOAT .
+
+	sort Garden .
+
+	op <_,_,_,_,_> : Nat Nat Nat Nat Float -> Garden [ctor] .
+
+	vars AY AN PY PN N : Nat .
+	vars T  DT         : Float .
+
+	rl [ay&an] : < s(AY), s(AN), PY, PN, T > => < AY, AN, PY, PN + 2, T > .
+
+	rl [ay&pn] : < s(AY), AN, PY, s(PN), T > => < s(AY), AN, s(PY), PN, T > .
+	rl [an&py] : < AY, s(AN), s(PY), PN, T > => < AY, s(AN), PY, s(PN), T > .
+
+	rl [py&pn] : < AY, AN, s(PY), s(PN), T > => < AY, AN, PY, s(s(PN)), T > .
+
+	rl [tick] : < AY, AN, PY, PN, T > => < AY, AN, PY, PN, T + DT > [nonexec] .
+endm
+
+smod NINJAS-STRAT is
+	protecting NINJAS .
+
+	strats step step2 @ Garden .
+	strats repeat repeat2 : Float Nat @ Garden .
+
+	var  G             : Garden .
+	vars AY AN PY PN N : Nat .
+	vars T  DT R       : Float .
+
+	*** The weight of each rule is the number of pairs of agents involved
+	*** in it that can be picked from the configuration
+	sd step := matchrew G s.t. < AY, AN, PY, PN, T > := G by G using choice(
+			AY * AN : ay&an,
+			AY * PN : ay&pn,
+			AN * PY : an&py,
+			PY * PN : py&pn
+		   ) .
+
+	*** This is the same as the previous, but two nested choice operators
+	*** are used to choose one agent first and then the other
+	sd step2 := matchrew G s.t. < AY, AN, PY, PN, T > := G by G using choice(
+			AY : choice(AN : ay&an, PN : ay&pn),
+			AN : choice(AY : ay&an, PY : an&py),
+			PY : choice(AN : an&py, PN : py&pn),
+			PN : choice(AY : ay&pn, PY : py&pn)
+		    ) .
+
+	*** Execute the given number of steps of the protocol
+	sd repeat(R, 0) := idle .
+	sd repeat(R, s(N)) := (sample DT := exp(R) in tick[DT <- DT]) ; (step ? repeat(R, N) : idle) .
+
+	sd repeat2(R, 0) := idle .
+	sd repeat2(R, s(N)) := (sample DT := exp(R) in tick[DT <- DT]) ; (step2 ? repeat2(R, N) : idle) .
+endsm
+
+***
+*** Quantitative properties can be checked by simulation:
+***
+*** simaude ninjas-ct.maude '< 4, 2, 0, 0, 0.0 >' 'repeat(6.0, 100)'
