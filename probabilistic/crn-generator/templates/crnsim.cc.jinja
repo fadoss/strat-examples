@@ -1,0 +1,222 @@
+/*
+ * Translation to C++ of the CRN {{ name }} (generated automatically)
+ */
+ 
+#include <random>	/* for the random functions */
+#include <cstdio>	/* for printing the results */
+#include <ctime>	/* to initialize the random seed */
+
+// Limits of the abstract states
+const int limits[][{{gen.max_axis_length}}] = {
+	{% for axis in gen.levels %}
+	{ {{axis|join(', ')}} },
+	{% endfor %}
+};
+
+{% if gen.boundary == 'extended' %}
+// Extended limits of the abstract states
+const int extlimits[][{{gen.max_axis_length + 1}}] = {
+	{% for axis in gen.extended_limits %}
+	{ {{axis|join(', ')}} },
+	{% endfor %}
+};
+{% endif %}
+
+template <typename Generator>
+int simulate(int indices[]{% if gen.use_time %}, double& total_time{% endif %}, Generator& rsource) {
+	bool continue_simulation = true;
+	{% if gen.use_time %}
+	double time = 0.0;
+	{% endif %}
+	{% if gen.accelerated %}
+	int step = 0;
+	int speed = 1;
+	{% endif %}
+
+	// The simulation starts in the midpoint
+	int species[{{num_species}}];
+
+	for (int i = 0; i < {{num_species}}; i++)
+		species[i] = (limits[i][indices[i]] + limits[i][indices[i] + 1] - 1) / 2;
+
+	// Degenerate states are discarded in the original implementation by an initial
+	// check, but they are discarded here after calculating the first propensities
+
+	while (continue_simulation) {
+		int choice;
+		double propensities[{{ num_reactions }}];
+		double total_propensity;
+
+		// Propensity of each reaction at this moment
+		{% for reaction in crn.reactions %}
+		propensities[{{loop.index0}}] = {{gen.make_propensity(reaction)}};
+		{% endfor %}
+
+		// Total propensity
+		total_propensity = 0;
+		for (int i = 0; i < {{ num_reactions }}; i++) 
+			total_propensity += propensities[i];
+
+		// Simulation is stuck
+		if (total_propensity == 0)
+			break;
+
+		{% if gen.accelerated %}
+		if (++step % {{ gen.accelerate_every }} == 0)
+			speed *= 2;
+		{% endif %}
+
+		// Take a reaction at random
+		choice = std::discrete_distribution<int>(std::begin(propensities), std::end(propensities))(rsource);
+
+		// Apply the chosen reaction
+		switch (choice) {
+		{% for reaction in crn.reactions %}
+		case {{loop.index0}}:
+			{% for e in reaction.effect %}
+			{% if e != 0 %}
+			species[{{loop.index0}}] += {{e}}{% if gen.accelerated %} * speed{% endif %};
+			{% endif %}
+			{% endfor %}
+			break;
+		{% endfor %}
+		}
+
+		// Check whether we have finished
+		for (int i = 0; i < {{num_species}} && continue_simulation; ++i)
+			{% if gen.boundary == 'extended' %}
+			if (species[i] < extlimits[i][indices[i]] || species[i] >= extlimits[i][indices[i] + 2])
+			{% else %}
+			if (species[i] < limits[i][indices[i]] || species[i] >= limits[i][indices[i] + 1])
+			{% endif %}
+				continue_simulation = false;
+
+		{% if gen.accelerated %}
+		// Slow down
+		while (!continue_simulation && speed > 1) {
+			speed /= 2;
+
+			// Revert the reaction
+			switch (choice) {
+			{% for reaction in crn.reactions %}
+			case {{loop.index0}}:
+				{% for e in reaction.effect %}
+				{% if e != 0 %}
+				species[{{loop.index0}}] -= {{e}} * speed;
+				{% endif %}
+				{% endfor %}
+				break;
+			{% endfor %}
+			}
+
+			continue_simulation = true;
+			for (int i = 0; i < {{num_species}} && continue_simulation; ++i)
+				{% if gen.boundary == 'extended' %}
+				if (species[i] < extlimits[i][indices[i]] || species[i] >= extlimits[i][indices[i] + 2])
+				{% else %}
+				if (species[i] < limits[i][indices[i]] || species[i] >= limits[i][indices[i] + 1])
+				{% endif %}
+					continue_simulation = false;			
+		}
+		{% endif %}
+
+		{% if gen.use_time %}
+		time += {{ 'speed' if gen.accelerated else 1.0 }} / total_propensity;
+		{% endif %}
+	}
+
+	// Return the offset in base 3
+	int output = 0;
+	int power = 1;
+
+	for (int i = {{num_species - 1}}; i >= 0; --i) {
+		if (species[i] >= limits[i][indices[i]] && species[i] < limits[i][indices[i] + 1])
+			output += power;
+		else if (species[i] >= limits[i][indices[i]+1])
+			output += 2 * power;
+
+		power *= 3;
+	}
+
+	{% if gen.use_time %}
+	total_time = time;
+	{% endif %}
+
+	return output;
+}
+
+int main() {
+	int total_hits = 0;
+	int hits[{{ 3 ** num_species }}] = {0};
+	int indices[{{ num_species }}];
+	{% if gen.use_time %}
+	double mean_time[{{ 3 ** num_species }}] = {0.0};
+	{% endif %}
+
+	std::mt19937_64 rsource(time(0));
+
+	puts("{{gen.levels}}\n{{gen.initial_abstract_state}}\nstart;end;p;ex_time");
+
+	{% for axis in gen.levels %}
+	for (indices[{{loop.index0}}] = 0; indices[{{loop.index0}}] < {{axis|length - 1}}; ++indices[{{loop.index0}}])
+	{% endfor %}
+	{
+		// Execute multiple simulations
+		for (int sim = 0; sim < {{gen.num_simulations}}; ++sim) {
+			{% if gen.use_time %}
+			double this_time;
+			int res = simulate(indices, this_time, rsource);
+			++hits[res];
+			mean_time[res] += this_time;
+			{% else %}			
+			++hits[simulate(indices, rsource)];
+			{% endif %}
+			total_hits++;
+		}
+
+		// Print the results to the terminal
+		// (transition to outside are considered apart)
+		int index = -1;
+		int outside_hits = 0;
+		{% if gen.use_time %}
+		double outside_time = 0.0;
+		{% endif %}
+		{% for axis in gen.levels %}
+		for (int j{{loop.index0}} = -1; j{{loop.index0}} < 2; ++j{{loop.index0}})
+		{% endfor %}
+			if (hits[++index] > 0) {
+				if (index != {{ (3 ** num_species -1) // 2 }}) {
+					if ({{ gen.make_outside_check() }}) {
+						outside_hits += hits[index];
+						{% if gen.use_time %}
+						outside_time += mean_time[index];
+						{% endif %}
+					}
+					else {
+						printf("({{ '%i' | repeat(num_species, d=', ') }});({{ '%i' | repeat(num_species, d=', ') }});%g;%g\n",
+						       {{ gen.species_repeat('indices[{0}]') }},
+						       {{ gen.species_repeat('indices[{0}] + j{0}') }},
+						       ((double) hits[index]) / total_hits,
+						       {{ 'mean_time[index] / hits[index]' if gen.use_time else 0.0 }}
+						);
+					}
+				}
+				hits[index] = 0;
+				{% if gen.use_time %}
+				mean_time[index] = 0.0;
+				{% endif %}
+			}
+
+		if (outside_hits > 0) {
+			printf("({{ '%i' | repeat(num_species, d=', ') }});({{ '-1' | repeat(num_species, d=', ') }});%g;%g\n",
+			       {{ gen.species_repeat('indices[{0}]') }},
+			       ((double) outside_hits) / total_hits,
+			       {{ 'outside_time / outside_hits' if gen.use_time else 0.0 }}
+			);
+		}
+
+		total_hits = 0;
+	}
+
+	return 0;
+}

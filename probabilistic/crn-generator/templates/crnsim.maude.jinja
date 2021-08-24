@@ -1,0 +1,114 @@
+***
+*** Specification of the CRN {{ name }} (generated automatically)
+***
+
+mod CRN is
+	protecting NAT .
+	{% if gen.use_time %}
+	protecting FLOAT .
+	{% endif %}
+
+	sort System .
+
+	*** A tuple with the multiplicities of the species
+	op <{{'_'|repeat(num_species + gen.use_time, ',')}}> : {{'Nat'|repeat(num_species)}} {% if gen.use_time %}Float {% endif %}-> System [ctor] .
+
+	vars {{ gen.species_vars | join(' ') }} : Nat .
+	{% if gen.use_time %}
+	var  T DT : Float .
+	{% endif %}
+
+	{% for rule in gen.make_rules() %}
+	{{rule}}
+	{% endfor %}
+
+	{% if gen.use_time %}
+	rl [inctime] : < {{ gen.species_vars | join(', ') }}, T > => < {{ gen.species_vars | join(', ') }}, T + DT > [nonexec] .
+	{% endif %}
+
+	op initial : -> System .
+	eq initial = {{ gen.make_literal_tuple(gen.init, extra=("0.0", ) if gen.use_time else ()) }} .
+endm
+
+smod CRN-STRAT is
+	protecting CRN .
+	protecting CONVERSION .
+
+	*** Execute a single reaction
+	strat step @ System .
+
+	vars {{ gen.species_vars | join(' ') }} N : Nat .
+	var  S    : System .
+	var  T DT : Float .
+
+	sd step := matchrew S s.t. {{ gen.variable_pattern }} := S by S using (choice(
+		{{ gen.write_choice() | join(',\n\t\t') }}
+	) {%- if gen.use_time %} ;
+	*** Increment the execution time
+	inctime[DT <- 1.0 / ({{ gen.propensities_sum() }})] {% endif %}) .
+
+	{% if gen.accelerated %}
+	*** Accelerated step
+	strat step : Nat @ System .
+
+	sd step(N) := matchrew S s.t. {{ gen.variable_pattern }} := S by S using (choice(
+		{{ gen.write_choice(accelerated=True) | join(',\n\t\t') }}
+	) {%- if gen.use_time %} ;
+	*** Increment the execution time
+	inctime[DT <- float(N) / ({{ gen.propensities_sum() }})] {% endif %}) .
+
+	*** Strategies for repeating the application of rules
+	*** (unfortunately, there is no generic way or it is more verbose)
+	{{ gen.write_repeat_rule() }}
+	{% endif %}
+endsm
+
+smod CRN-SIMULATION is
+	protecting CRN-STRAT .
+	protecting EXT-BOOL .
+
+	vars {{ gen.species_vars | join(' ') }} N {% if gen.accelerated %}N' Speed Speed' {% endif %}: Nat .
+	var  S   : System .
+	var  T   : Float .
+	var  Bdr : Boundary .
+
+	*** Constants (passed as arguments to the generator)
+	op accelRate : -> Nat .
+	eq accelRate = {{ gen.accelerate_every }} .
+
+	*** Simulation boundary (auxiliary data for the stop condition)
+	sorts Interval Boundary .
+
+	op [_,_] : Nat Nat -> Interval [ctor] .
+	op boundary : {{ 'Interval' | repeat(num_species) }} -> Boundary [ctor] .
+
+	*** Execute a given number of independent reactions
+	strat repeat : Nat @ System .
+
+	sd repeat(0) := idle .
+	sd repeat(s N) := step ; repeat(N) .
+
+	*** Complete simulation
+	strat simulate : Boundary @ System .
+
+	sd simulate(Bdr) := idle .
+	sd simulate(Bdr) := match S s.t. withinBounds(S, Bdr)
+	                     ? (step ; simulate(Bdr))
+	                     : idle .
+
+	{% if gen.accelerated %}
+	*** Complete simulation (with acceleration)
+	strat simulate : Nat Nat Boundary @ System .
+
+	csd simulate(N, Speed, Bdr) := (step(Speed') ; match S s.t. withinBounds(S, Bdr))
+	                                ? simulate(N', Speed', Bdr)
+		                        : (match S s.t. Speed' == 1 ? try(step(Speed')) : simulate(N, Speed' quo 2, Bdr))
+	if N'     := if N == accelRate then 1 else s N fi
+	/\ Speed' := if N == accelRate then Speed * 2 else Speed fi  .
+	{% endif %}
+
+	*** Check whether the tuple is within bounds
+	op withinBounds : System Boundary -> Bool .
+
+	eq {{ gen.make_bound_equation() }} .
+endsm
