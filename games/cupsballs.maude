@@ -61,7 +61,7 @@ smod CUPS-BALLS-STRAT is
 	strats cups2 cups2-rec @ Table .
 
 	sd cups2 := cover ! ; cups2-rec .
-	sd cups2-rec := (swap | disappear) * ; uncover ; cover ; try(appear) ; cups-rec .
+	sd cups2-rec := (swap | disappear) * ; not(amatch cup(ball)) ; uncover ; cover ; appear ; cups2-rec .
 endsm
 
 smod CUPS-BALLS-CHECK is
