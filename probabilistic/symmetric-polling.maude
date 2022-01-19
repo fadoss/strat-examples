@@ -1,0 +1,96 @@
+***
+*** Symmetric polling example from the PMAude's paper
+***
+
+sload pmaude-conf
+
+mod SYMMETRIC-POLLING is
+	protecting NAT .
+	extending PMAUDE-CONFIGURATION .
+
+	*** Variable declarations.
+	vars D T : Float .
+	vars C S : Oid .
+	vars N M : Nat .
+
+	ops Client Server : -> Cid [ctor] .
+
+	*** Operator declarations.
+	op buf:_     : Nat -> Attribute [ctor gather (&)] .
+	op server:_  : Oid -> Attribute [ctor gather (&)] .
+	op client:_  : Nat -> Attribute [ctor gather (&)] .
+	op station   : Nat -> Oid [ctor] .
+
+	*** Message contents
+
+	ops poll serve done next : -> Content [ctor] .
+	op  increment            : Nat -> Nat .
+
+	*** Each station produces messages at the rate of 0.2. For this, each station sends a message
+	*** to itself with an exponentially-distributed delay of rate 0.2.
+	rl [produce] : < C : Client | buf: M, server: S > (C <- empty)
+	            => < C : Client | buf: 1, server: S > [T ; C <- empty] [nonexec] .
+	*** with probability t := exponential(0.2) .
+
+	*** On receiving a poll message from the server, the station sends a scheduled serve message
+	*** to itself to imitate the time associated with polling.
+	rl [poll] : < C : Client | buf: M, server: S > (C <- poll)
+	         => < C : Client | buf: M, server: S > [T ; C <- serve] [nonexec] .
+	*** with probability t := exponential(200.0) .
+
+	*** On receiving a serve message, if the buffer is empty then the station sends a next message
+	*** to the server; otherwise, it send a scheduled done message to itself.
+	rl [serve] : < C : Client | buf: M, server: S > (C <- serve)
+	          => if M > 0 then
+	                < C : Client | buf: M, server: S > [T ; C <- done]
+	             else
+	                < C : Client | buf: M, server: S > (S <- next)
+	             fi [nonexec] .
+	*** with probability t := exponential(1.0) .
+
+	*** On receiving a done message, the station sends a next message to the server.
+	rl [served] : < C : Client | buf: M, server: S > (C <- done)
+	           => < C : Client | buf: 0, server: S > (S <- next) .
+
+	*** On receiving a next message, the server sends a poll message to the next station.
+	rl [next] : < S : Server | client: N > (S <- next)
+	         => < S : Server | client: increment(N) > (station(N) <- poll) .
+
+	*** Define increment as increment(N) = (N+1) modulo 5, which is the number of stations
+	eq increment(N) = if N >= 5 then 1 else N + 1 fi .
+
+	*** Create the initial configuration with 5 stations and 1 server and a next message.
+	op init : -> Configuration .
+	op s : -> Oid [ctor] .
+	eq init = < s : Server | client: 1 > (s <- next) time(0.0)
+	          < station(1) : Client | buf: 1, server: s >
+	          < station(2) : Client | buf: 1, server: s >
+	          < station(3) : Client | buf: 1, server: s >
+                  < station(4) : Client | buf: 1, server: s >
+                  < station(5) : Client | buf: 1, server: s > .
+endm
+
+smod SYMMETRIC-POLLING-STRAT is
+	protecting SYMMETRIC-POLLING .
+
+	strat step @ Configuration .
+
+	var T : Float .
+	var C : Configuration .
+	var N : Nat .
+	var S : Oid .
+
+	sd step := ( (sample T := exp(0.2) in produce[T <- T])
+		   | (sample T := exp(200.0) in poll[T <- T])
+ 		   | (sample T := exp(1.0) in serve[T <- T])
+	           | served
+		   | next
+		) ! ; top(tick) .
+
+	*** Get the current client of the server
+	op cclient : Configuration ~> Nat .
+
+	eq cclient(< S : Server | client: N > C) = N .
+endsm
+
+*** mvmaude symmetric-polling.maude init symmetric-polling.multiquatex step

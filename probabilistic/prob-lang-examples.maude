@@ -1,0 +1,80 @@
+***
+*** Prob language in "Probabilistic Programming" by A.D. Gordon, T.A. Henzinger,
+*** A.V. Nori, S.K. Rajamani (DOI: 10.1145/2593882.2593900) -- Examples
+***
+
+sload prob-lang
+
+smod PROB-EXAMPLES is
+	protecting PROB-STRAT .
+
+	*** Variable definition
+	ops c1 c2 b c : -> BoolVar [ctor] .
+	ops count     : -> IVar [ctor] .
+
+	ops ex1a ex1b ex2 ex3 ex4 : -> ProbProgram .
+
+	eq ex1a =
+		c1 ~ bernouilli(0.5) ;
+		c2 ~ bernouilli(0.5)
+		return (c1 ; c2) .
+
+	eq ex1b =
+		c1 ~ bernouilli(0.5) ;
+		c2 ~ bernouilli(0.5) ;
+		observe(c1 or c2)
+		return (c1 ; c2) .
+
+	eq ex2 =
+		count := 0 ;
+		c1 ~ bernouilli(0.5) ;
+		if (c1) then
+			count := (count + 1)
+		endif ;
+		c2 ~ bernouilli(0.5) ;
+		if (c2) then
+			count := (count + 1)
+		endif ;
+		observe(c1 or c2)
+		return count .
+
+	eq ex3 =
+		count := 0 ;
+		c1 ~ bernouilli(0.5) ;
+		if (c1) then
+			count := (count + 1)
+		endif ;
+		c2 ~ bernouilli(0.5) ;
+		if (c2) then
+			count := (count + 1)
+		endif ;
+		while not(c1 or c2) do
+			count := 0 ;
+			c1 ~ bernouilli(0.5) ;
+			if (c1) then
+				count := (count + 1)
+			endif ;
+			c2 ~ bernouilli(0.5) ;
+			if (c2) then
+				count := (count + 1)
+			endif
+		done
+		return count .
+
+	eq ex4 =
+		b := true ;
+		c ~ bernouilli(0.5) ;
+		while (c) do
+			b := (not b) ;
+			c ~ bernouilli(0.5)
+		done
+		return b .
+endsm
+
+*** An auxiliary script discarded-filter.py is provided to calculate the
+*** conditional probability with the discarded states removed (to be used in a pipe)
+
+*** umaudemc pcheck prob-lang-examples 'start(ex1a)' @steady run --assign strategy
+*** umaudemc pcheck prob-lang-examples 'start(ex1a)' @steady run --assign strategy
+*** umaudemc pcheck prob-lang-examples 'start(ex2)' @steady run --assign strategy
+*** umaudemc pcheck prob-lang-examples 'start(ex3)' @steady run --assign strategy

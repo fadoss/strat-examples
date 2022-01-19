@@ -1,0 +1,7 @@
+SumIn(x) = if (s.rval("time(C)") >= x) then
+			s.rval("total(s, C)")
+		else
+			#SumIn(x)
+		fi ;
+
+eval parametric(E[ SumIn(x) ], x, 1, 5, 20) ;

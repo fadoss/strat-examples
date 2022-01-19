@@ -1,0 +1,113 @@
+***
+*** Knuth-Yao algorithm
+***
+
+fmod INTERVAL is
+	protecting INT .
+
+	sorts Interval List .
+	subsort Interval < List .
+
+	op [_,_] : Int Int -> Interval [ctor] . *** constructor
+	op __    : List List -> List [ctor assoc frozen] . *** associative
+endfm
+
+mod KNUTH-YAO is
+	protecting INTERVAL .
+
+	vars N M : Nat .
+	vars I J : Interval .
+	var  L   : List .
+
+	*** Left branch
+	crl [head] : [M, N] => [M, mid(M, N)]
+	 if M =/= N .
+
+	*** Even division
+	crl [tail] : [M, N] => [mid(M, N) + 1, N]
+	 if M =/= N /\ even(M, N) .
+
+	*** Odd division
+	crl [tail] : [M, N] => [M, N] [mid(M, N) + 1, N]
+	 if M =/= N /\ not even(M, N) .
+
+	*** Backtracking
+	rl [head] : I J => J .
+	rl [tail] : I J => I .
+
+	*** Even interval predicate
+	op even : Int Int -> Bool .
+	eq even(M, N) = (2 divides M) xor (2 divides N) .
+
+	*** Midpoint between two numbers
+	op mid : Int Int -> Int .
+	eq mid(M, N) = (N + M) quo 2 .
+
+	*** Fair predicate
+	op fair : List -> Bool .
+	eq fair([M, N]) = true .
+	eq fair(L) = false [owise] .
+endm
+
+sload model-checker
+
+mod KNUTH-CHECK is
+	protecting MODEL-CHECKER .
+	protecting KNUTH-YAO .
+
+	subsort List < State .
+
+	op result : -> Prop [ctor] .
+
+	var N : Int .
+	var S : State .
+
+	eq [N, N] |= result = true .
+	eq S |= result = false [owise] .
+endm
+
+smod KNUTH-STRAT is
+	protecting KNUTH-CHECK .
+	protecting FLOAT .
+
+	*** Start the Knuth-Yao algorithm with the given initial probability
+	*** for heads, which is reduced a 10% on every roll unless it is
+	*** already lower than 1/4
+	strat bias : Float @ State .
+
+	var F : Float .
+	var S : State .
+
+	sd bias(F) := choice(F : head, 1.0 - F : tail)
+	                 ? bias(if F > 0.25 then 0.9 * F else F fi)
+	                 : idle .
+endsm
+
+*** umaudemc pcheck knuthYao6 [1,6] @steady
+*** umaudemc pcheck knuthYao6 [1,6] @steady --fraction --backend storm
+*** umaudemc pcheck knuthYao6 [1,6] @steady --assign 'uaction(head=3, tail=2)'
+*** umaudemc pcheck knuthYao6 [1,6] @steady 'bias(0.5)' --assign strategy
+
+*** umaudemc pcheck knuthYao6 [1,6] '@transient(2)' -f
+
+*** Obtain the probabilistic graph (in PDF, if GraphViz is installed)
+*** umaudemc graph knuthYao6 [1,6] --passign uniform -o graph.pdf
+
+*** umaudemc check knuthYao6 [1,6] '<> result'
+*** umaudemc pcheck knuthYao6 [1,6] '<> result'
+*** umaudemc pcheck knuthYao6 [1,6] '<> result' --assign 'uaction(head=3, tail=2)'
+*** umaudemc pcheck knuthYao6 [1,6] '<> result' 'bias(0.5)' --assign strategy
+
+*** umaudemc pcheck knuthYao6 [1,6] '<> result' --steps
+*** umaudemc pcheck knuthYao6 [1,6] '<> result' --assign 'uaction(head=3, tail=2)' --steps
+*** umaudemc pcheck knuthYao6 [1,6] '<> result' 'bias(0.5)' --assign strategy --steps
+
+*** umaudemc pcheck knuthYao6 [1,6] '<> result' --reward 'if fair(S) then 0 else 1 fi'
+*** umaudemc pcheck knuthYao6 [1,6] '<> result' --assign 'uaction(head=3, tail=2)' --reward 'if fair(S) then 0 else 1 fi'
+*** umaudemc pcheck knuthYao6 [1,6] '<> result' 'bias(0.5)' --assign strategy --reward 'if fair(S) then 0 else 1 fi'
+
+*** umaudemc pcheck knuthYao6 [1,24] '@steady' -f --backend storm
+
+*** mvmaude knuthYao6 [1,6] knuthYao6.multiquatex
+*** mvmaude knuthYao6 [1,6] knuthYao6.multiquatex --assign 'uaction(head=3, tail=2)'
+*** mvmaude knuthYao6 [1,6] knuthYao6.multiquatex 'bias(0.5)' --assign strategy-full

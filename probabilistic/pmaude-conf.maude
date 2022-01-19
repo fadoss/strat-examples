@@ -1,0 +1,50 @@
+***
+*** PMaude-based configuration for probabilistic specifications
+***
+
+mod PMAUDE-CONFIGURATION is
+	protecting FLOAT .
+	extending CONFIGURATION .
+
+	sort Content .
+
+	*** Message
+	op _<-_ : Oid Content -> Msg [ctor msg] .
+	*** Empty content
+	op empty : -> Content [ctor] .
+	*** Current time
+	op time : Float -> Configuration [ctor] .
+	*** Scheduled object or message
+	op [_;_] : Float Configuration -> Configuration [ctor frozen (2)] .
+
+	*** Minimum delay in a configuration
+	op minDelay : Configuration -> Float .
+	*** Tick all scheduled objects in a configuration
+	op tick : Configuration Float -> Configuration .
+
+	vars C DC : Configuration .
+	var  O    : Object .
+	var  M    : Msg .
+	vars T D  : Float .
+
+	*** Tick as a rule (nonexec because it must be applied on top)
+	rl [tick] : C => if minDelay(C) > 0.0 then tick(C, minDelay(C)) else C fi [nonexec] .
+
+	eq [0.0 ; O] = O .
+
+	eq minDelay(none) = 0.0 .
+	eq minDelay(O C) = minDelay(C) .
+	eq minDelay(M C) = minDelay(C) .
+	eq minDelay(time(T) C) = minDelay(C) .
+	eq minDelay([T ; DC] C) = if minDelay(C) == 0.0 then T else min(T, minDelay(C)) fi .
+
+	eq tick(none, D) = none .
+	eq tick(O C, D) = O tick(C, D) .
+	eq tick(M C, D) = M tick(C, D) .
+	eq tick(time(T) C, D) = time(T + D) tick(C, D) .
+	eq tick([T ; DC] C, D) = if T == D then DC else [T - D ; DC] fi tick(C, D) .
+
+	*** Time query function
+	op time : Configuration -> Float .
+	eq time(time(T) C) = T .
+endm

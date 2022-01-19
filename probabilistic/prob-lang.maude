@@ -1,0 +1,395 @@
+***
+*** Prob language in "Probabilistic Programming" by A.D. Gordon, T.A. Henzinger,
+*** A.V. Nori, S.K. Rajamani (DOI: 10.1145/2593882.2593900)
+***
+
+fmod PROB-EXPR is
+	protecting FLOAT .
+	protecting INT .
+	protecting CONVERSION .
+
+	*** Expressions
+	sorts FVar IVar BoolVar FExpr IExpr BoolExpr .
+	subsorts Float FVar < FExpr .
+	subsorts Int IVar < IExpr .
+	subsorts Bool BoolVar < BoolExpr .
+
+	*** Floating-point expressions
+	ops _+_ _-_ _*_ min max atan : FExpr FExpr -> FExpr [ditto] .
+	ops -_ abs floor ceiling sin cos tan atan : FExpr -> FExpr [ditto] .
+
+	*** Integer expressions
+	ops s_ -_ : IExpr -> IExpr [ditto] .
+	ops _+_ sd _-_ _*_ _quo_ _rem_ _^_ gcd lcm min
+	    max _xor_ _&_ _|_ _>>_ _<<_ : IExpr IExpr -> IExpr [ditto] .
+
+	*** Boolean expresions
+	ops _<_ _<=_ _>_ _>=_ : FExpr FExpr -> BoolExpr [ditto] .
+	ops _<_ _<=_ _>_ _>=_ _divides_ : IExpr IExpr -> BoolExpr [ditto] .
+
+	op not_ : BoolExpr -> BoolExpr [ditto] .
+	ops _and_ _or_ _xor_ _implies_ : BoolExpr BoolExpr -> BoolExpr [ditto] .
+
+	*** Conversion operators
+	op float : IExpr -> FExpr [ditto] .
+	op float : BoolExpr -> FExpr .
+
+	*** Variable generators
+	op fv : Nat -> FVar [ctor] .
+	op iv : Nat -> IVar [ctor] .
+	op bv : Nat -> BoolVar [ctor] .
+endfm
+
+view FExpr from TRIV to PROB-EXPR is
+	sort Elt to FExpr .
+endv
+
+view IExpr from TRIV to PROB-EXPR is
+	sort Elt to IExpr .
+endv
+
+view BoolExpr from TRIV to PROB-EXPR is
+	sort Elt to BoolExpr .
+endv
+
+fmod PROB-TUPLE is
+	protecting LIST{FExpr} * (
+		sort List{FExpr} to FTuple,
+		sort NeList{FExpr} to NeFTuple,
+		op __ to _;_
+	) .
+
+	protecting LIST{IExpr} * (
+		sort List{IExpr} to ITuple,
+		sort NeList{IExpr} to NeITuple,
+		op __ to _;_
+	) .
+
+	protecting LIST{BoolExpr} * (
+		sort List{BoolExpr} to BTuple,
+		sort NeList{BoolExpr} to NeBTuple,
+		op __ to _;_
+	) .
+endfm
+
+fmod PROB-SYNTAX is
+	protecting PROB-EXPR .
+	protecting PROB-TUPLE .
+
+	*** Statements and programs
+	sorts ProbStmt ProbProgram FDistribution BDistribution Distribution .
+	subsorts FDistribution BDistribution < Distribution .
+
+	*** Deterministic assignment
+	op _:=_ : FVar FExpr -> ProbStmt [ctor prec 20] .
+	op _:=_ : IVar IExpr -> ProbStmt [ctor prec 20] .
+	op _:=_ : BoolVar BoolExpr -> ProbStmt [ctor prec 20] .
+
+	*** Probabilistic assignment
+	op _~_ : FVar FDistribution -> ProbStmt [ctor prec 20] .
+	op _~_ : BoolVar BDistribution -> ProbStmt [ctor prec 20] .
+
+	*** Observe
+	op observe : BoolExpr -> ProbStmt [ctor] .
+
+	*** Sequential composition
+	op skip : -> ProbStmt [ctor] .
+	op _;_ : ProbStmt ProbStmt -> ProbStmt [ctor assoc id: skip] .
+
+	*** Conditional
+	op if_then_else_endif : BoolExpr ProbStmt ProbStmt -> ProbStmt [ctor] .
+
+	*** While loop
+	op while_do_done : BoolExpr ProbStmt -> ProbStmt [ctor] .
+
+	*** Program
+	op _return_ : ProbStmt FTuple -> ProbProgram [ctor] .
+
+	*** Syntactic sugar
+	op if_then_endif : BoolExpr ProbStmt -> ProbStmt .
+
+	op _return_ : ProbStmt ITuple -> ProbProgram [ctor] .
+	op _return_ : ProbStmt BTuple -> ProbProgram [ctor] .
+
+	var B : BoolExpr .
+	var S : ProbStmt .
+	var I : IExpr .
+	var IT : ITuple .
+	var BT : BTuple .
+
+	eq if B then S endif = if B then S else skip endif .
+	eq S return IT = S return toFTuple(IT) .
+	eq S return BT = S return toFTuple(BT) .
+
+	op toFTuple : ITuple -> FTuple .
+	op toFTuple : BTuple -> FTuple .
+
+	eq toFTuple((nil).ITuple) = nil .
+	eq toFTuple(I ; IT) = float(I) ; toFTuple(IT) .
+
+	eq toFTuple((nil).BTuple) = nil .
+	eq toFTuple(B ; BT) = float(B) ; toFTuple(BT) .
+endfm
+
+fmod PROB-VARMAP is
+	protecting PROB-EXPR .
+
+	*** Variable map
+	sort VarMap .
+
+	op [_,_] : FVar Float -> VarMap [ctor] .
+	op [_,_] : IVar Int -> VarMap [ctor] .
+	op [_,_] : BoolVar Bool -> VarMap [ctor] .
+
+	op empty : -> VarMap .
+	op __ : VarMap VarMap -> VarMap [ctor assoc comm id: empty] .
+
+	*** Obtain the value of a variable from the map (with defaults)
+	op get : VarMap FVar -> FExpr .
+	op get : VarMap IVar -> IExpr .
+	op get : VarMap BoolVar -> BoolExpr .
+
+	*** Replace a variable in a variable map
+	op _[_/_] : VarMap FVar Float -> VarMap .
+	op _[_/_] : VarMap IVar Int -> VarMap .
+	op _[_/_] : VarMap BoolVar Bool -> VarMap .
+
+	vars B B1 B2 : BoolExpr .
+	vars F F1 F2 : FExpr .
+	vars I I1 I2 : IExpr .
+	var  VM      : VarMap .
+	var  FV      : FVar .
+	var  IV      : IVar .
+	var  BV      : BoolVar .
+
+	eq get([FV, F] VM, FV) = F .
+	eq get(VM, FV) = 0.0 [owise] .
+	eq get([IV, I] VM, IV) = I .
+	eq get(VM, IV) = 0 [owise] .
+	eq get([BV, B] VM, BV) = B .
+	eq get(VM, BV) = false [owise] .
+
+	eq ([FV, F1] VM)[FV / F2] = [FV, F2] VM .
+	eq ([IV, I1] VM)[IV / I2] = [IV, I2] VM .
+	eq ([BV, B1] VM)[BV / B2] = [BV, B2] VM .
+	eq VM[FV / F] = [FV, F] VM [owise] .
+	eq VM[IV / I] = [IV, I] VM [owise] .
+	eq VM[BV / B] = [BV, B] VM [owise] .
+endfm
+
+fmod PROB-SUBSTITUTION is
+	protecting PROB-EXPR .
+	protecting PROB-VARMAP .
+	protecting PROB-TUPLE .
+
+	*** Functions to instantiate expressions
+	op instantiate : FExpr VarMap -> FExpr .
+	op instantiate : IExpr VarMap -> IExpr .
+	op instantiate : BoolExpr VarMap -> BoolExpr .
+	op instantiate : FTuple VarMap -> FTuple .
+
+	vars B B1 B2 : BoolExpr .
+	vars F F1 F2 : FExpr .
+	vars I I1 I2 : IExpr .
+	var  VM      : VarMap .
+	var  FV      : FVar .
+	var  IV      : IVar .
+	var  BV      : BoolVar .
+	var  FC      : Float .
+	var  IC      : Int .
+	var  BC      : Bool .
+	var  NeFT    : NeFTuple .
+
+	eq instantiate(FV, VM) = get(VM, FV) .
+	eq instantiate(IV, VM) = get(VM, IV) .
+	eq instantiate(BV, VM) = get(VM, BV) .
+
+	eq instantiate(FC, VM) = FC .
+	eq instantiate(IC, VM) = IC .
+	eq instantiate(BC, VM) = BC .
+
+	eq instantiate(not B, VM) = not instantiate(B, VM) .
+	eq instantiate(B1 and B2, VM) = instantiate(B1, VM) and instantiate(B2, VM) .
+	eq instantiate(B1 or B2, VM) = instantiate(B1, VM) or instantiate(B2, VM) .
+	eq instantiate(B1 xor B2, VM) = instantiate(B1, VM) xor instantiate(B2, VM) .
+	eq instantiate(B1 implies B2, VM) = instantiate(B1, VM) implies instantiate(B2, VM) .
+	eq instantiate(if B then B1 else B2 fi, VM) = if instantiate(B, VM) then B1 else B2 fi .
+	eq instantiate(F1 < F2, VM) = instantiate(F1, VM) < instantiate(F2, VM) .
+	eq instantiate(F1 <= F2, VM) = instantiate(F1, VM) <= instantiate(F2, VM) .
+	eq instantiate(F1 > F2, VM) = instantiate(F1, VM) > instantiate(F2, VM) .
+	eq instantiate(F1 >= F2, VM) = instantiate(F1, VM) >= instantiate(F2, VM) .
+	eq instantiate(I1 < I2, VM) = instantiate(I1, VM) < instantiate(I2, VM) .
+	eq instantiate(I1 <= I2, VM) = instantiate(I1, VM) <= instantiate(I2, VM) .
+	eq instantiate(I1 > I2, VM) = instantiate(I1, VM) > instantiate(I2, VM) .
+	eq instantiate(I1 >= I2, VM) = instantiate(I1, VM) >= instantiate(I2, VM) .
+	eq instantiate(I1 divides I2, VM) = instantiate(I1, VM) divides instantiate(I2, VM) .
+	eq instantiate(float(I), VM) = float(instantiate(I, VM)) .
+	eq instantiate(float(B), VM) = float(instantiate(B, VM)) [owise] .
+
+	eq float(true) = 1.0 .
+	eq float(false) = 0.0 .
+
+	eq instantiate(F1 + F2, VM) = instantiate(F1, VM) + instantiate(F2, VM) .
+	eq instantiate(F1 - F2, VM) = instantiate(F1, VM) - instantiate(F2, VM) .
+	eq instantiate(F1 * F2, VM) = instantiate(F1, VM) * instantiate(F2, VM) .
+	eq instantiate(min(F1, F2), VM) = min(instantiate(F1, VM), instantiate(F2, VM)) .
+	eq instantiate(max(F1, F2), VM) = max(instantiate(F1, VM), instantiate(F2, VM)) .
+	eq instantiate(atan(F1, F2), VM) = atan(instantiate(F1, VM), instantiate(F2, VM)) .
+	eq instantiate(- F, VM) = - instantiate(F, VM) .
+	eq instantiate(abs(F), VM) = abs(instantiate(F, VM)) .
+	eq instantiate(floor(F), VM) = floor(instantiate(F, VM)) .
+	eq instantiate(ceiling(F), VM) = ceiling(instantiate(F, VM)) .
+	eq instantiate(sin(F), VM) = sin(instantiate(F, VM)) .
+	eq instantiate(cos(F), VM) = cos(instantiate(F, VM)) .
+	eq instantiate(tan(F), VM) = tan(instantiate(F, VM)) .
+	eq instantiate(atan(F), VM) = atan(instantiate(F, VM)) .
+	eq instantiate(if B then F1 else F2 fi, VM) = if instantiate(B, VM) then F1 else F2 fi .
+
+	eq instantiate(s I, VM) = s instantiate(I, VM) .
+	eq instantiate(- I, VM) = - instantiate(I, VM) .
+	eq instantiate(I1 + I2, VM) = instantiate(I1, VM) + instantiate(I2, VM) .
+	eq instantiate(sd(I1, I2), VM) = sd(instantiate(I1, VM), instantiate(I2, VM)) .
+	eq instantiate(I1 - I2, VM) = instantiate(I1, VM) - instantiate(I2, VM) .
+	eq instantiate(I1 * I2, VM) = instantiate(I1, VM) * instantiate(I2, VM) .
+	eq instantiate(I1 quo I2, VM) = instantiate(I1, VM) quo instantiate(I2, VM) .
+	eq instantiate(I1 rem I2, VM) = instantiate(I1, VM) rem instantiate(I2, VM) .
+	eq instantiate(I1 ^ I2, VM) = instantiate(I1, VM) ^ instantiate(I2, VM) .
+	eq instantiate(gcd(I1, I2), VM) = gcd(instantiate(I1, VM), instantiate(I2, VM)) .
+	eq instantiate(lcm(I1, I2), VM) = lcm(instantiate(I1, VM), instantiate(I2, VM)) .
+	eq instantiate(min(I1, I2), VM) = min(instantiate(I1, VM), instantiate(I2, VM)) .
+	eq instantiate(max(I1, I2), VM) = max(instantiate(I1, VM), instantiate(I2, VM)) .
+	eq instantiate(I1 xor I2, VM) = instantiate(I1, VM) xor instantiate(I2, VM) .
+	eq instantiate(I1 & I2, VM) = instantiate(I1, VM) & instantiate(I2, VM) .
+	eq instantiate(I1 | I2, VM) = instantiate(I1, VM) | instantiate(I2, VM) .
+	eq instantiate(I1 >> I2, VM) = instantiate(I1, VM) >> instantiate(I2, VM) .
+	eq instantiate(I1 << I2, VM) = instantiate(I1, VM) << instantiate(I2, VM) .
+	eq instantiate(if B then I1 else I2 fi, VM) = if instantiate(B, VM) then I1 else I2 fi .
+
+	eq instantiate(F ; NeFT, VM) = instantiate(F, VM) ; instantiate(NeFT, VM) .
+endfm
+
+mod PROB-RULES is
+	protecting PROB-SYNTAX .
+	protecting PROB-SUBSTITUTION .
+
+	*** Execution state
+	sort State .
+
+	op <_|_> : ProbProgram VarMap -> State [ctor] .
+	op solution : FTuple -> State [ctor] .
+
+	*** Initial execution state
+	op start : ProbProgram -> State .
+
+	eq start(P) = < P | empty > .
+
+	vars S L S1 S2 : ProbStmt .
+	var  F         : FExpr .
+	var  R         : FTuple .
+	var  P         : ProbProgram .
+	var  FV        : FVar .
+	var  IV        : IVar .
+	var  BV        : BoolVar .
+	var  I         : IExpr .
+	var  B         : BoolExpr .
+	var  VM        : VarMap .
+	var  FD        : FDistribution .
+	var  BD        : BDistribution .
+
+	rl [step] : < FV := F ; S return R | VM > =>
+	                      < S return R | VM[FV / instantiate(F, VM)] > .
+	rl [step] : < IV := I ; S return R | VM > =>
+	                      < S return R | VM[IV / instantiate(I, VM)] > .
+	rl [step] : < BV := B ; S return R | VM > => < S return R | VM[BV / instantiate(B, VM)] > .
+
+	crl [step] : < observe(B) ; S return R | VM > =>
+	                          < S return R | VM > if instantiate(B, VM) .
+
+	rl [sample] : < FV ~ FD ; S return R | VM > =>
+	                        < S return R | VM[FV / F] > [nonexec] .
+
+	rl [sample] : < BV ~ BD ; S return R | VM > =>
+	                        < S return R | VM[BV / B] > [nonexec] .
+
+	rl [step] : < if B then S1 else S2 endif ; S return R | VM > =>
+		if instantiate(B, VM) then
+			< S1 ; S return R | VM >
+		else
+			< S2 ; S return R | VM >
+		fi
+	.
+
+	rl [step] : < while B do L done ; S return R | VM > =>
+		if instantiate(B, VM) then
+			< L ; while B do L done ; S return R | VM >
+		else
+			< S return R | VM >
+		fi
+	.
+
+	rl [step] : < skip return R | VM > => solution(instantiate(R, VM)) .
+endm
+
+fmod PROB-DISTRIB is
+	protecting PROB-SYNTAX .
+
+	op bernouilli  : FExpr -> BDistribution [ctor] .
+	op exponential : FExpr -> FDistribution [ctor] .
+	ops uniform norm gamma     : FExpr FExpr -> FDistribution [ctor] .
+endfm
+
+smod PROB-STRAT is
+	protecting PROB-RULES .
+	protecting PROB-DISTRIB .
+
+	strats run sstep @ State .
+
+	var  X         : State .
+	var  S         : ProbStmt .
+	var  P         : ProbProgram .
+	var  FV        : FVar .
+	var  BV        : BoolVar .
+	vars F F1 F2   : FExpr .
+	var  B         : BoolExpr .
+	var  R         : FTuple .
+	var  FC        : Float .
+	var  VM        : VarMap .
+	var  D         : Distribution .
+
+	*** A computation in the language is an exhastive execution of
+	*** steps that yields either solution(R) or discarded
+	sd run := sstep ! ; (match solution(R) ? idle : discard) .
+
+	*** Execute a step of the semantics, probabilistic assignment apart
+	sd sstep := step | matchrew X s.t. < FV ~ D ; S return R | VM > := X
+	                    by X using sample(D, VM)
+	                 | matchrew X s.t. < BV ~ D ; S return R | VM > := X
+	                    by X using sample(D, VM) .
+
+	*** This strategy uses the sample operator of the probabilistic strategy
+	*** language to implement the probabilistic assignment of Prob
+	strat sample : Distribution VarMap @ State .
+
+	*** For the Bernouilli distribution, choice is used instead of sample to
+	*** allow for discrete probabilistic analysis
+	csd sample(bernouilli(F), VM) := choice(FC : sample[B <- true], (1.0 - FC) : sample[B <- false])
+	 if FC := instantiate(F, VM) .
+
+	sd sample(exponential(F), VM) := sample FC := exp(instantiate(F, VM)) in sample[F <- FC] .
+	sd sample(uniform(F1, F2), VM) := sample FC := uniform(instantiate(F1, VM), instantiate(F2, VM)) in sample[F <- FC] .
+	sd sample(norm(F1, F2), VM) := sample FC := norm(instantiate(F1, VM), instantiate(F2, VM)) in sample[F <- FC] .
+	sd sample(gamma(F1, F2), VM) := sample FC := gamma(instantiate(F1, VM), instantiate(F2, VM)) in sample[F <- FC] .
+
+	*** Special state for discarded executions, they are not simply ignored
+	*** by fail to obtain proper conditional probabilities
+	op discarded : -> State [ctor] .
+
+	rl [discard] : < P | VM > => discarded [nonexec] .
+endsm
+
+eof
+
+srew start(fv(0) ~ bernouilli(0.1) return fv(0)) using run .
+rew start(fv(0) := 2.0 ; iv(0) := 5 ; while iv(0) > 0 do
+          iv(0) := (iv(0) - 1) ; fv(0) := (fv(0) * fv(0)) done
+          return fv(0)) .

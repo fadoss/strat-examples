@@ -1,0 +1,10 @@
+BoundedOk(n) = if (n == 0) then 0
+                  else if (s.rval("C |= okSender") == 1) then 1
+                  else #BoundedOk(n - 1) fi fi ;
+
+BoundedSteps(n) = if (n == 0) then 0
+                  else if (s.rval("C |= okSender") == 1) then s.rval("steps")
+                  else #BoundedSteps(n - 1) fi fi ;
+
+eval parametric(E[BoundedOk(x)], x, 1, 10, 100) ;
+eval parametric(E[BoundedSteps(x)], x, 1, 10, 100) ;

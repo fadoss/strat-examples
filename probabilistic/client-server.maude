@@ -1,0 +1,61 @@
+***
+*** Simple client server from PMaude's paper
+***
+
+sload pmaude-conf
+
+mod SIMPLE-CLIENT-SERVER is
+	protecting NAT .
+	extending PMAUDE-CONFIGURATION .
+
+	vars T T1 T2 : Float .
+	vars C S     : Oid .
+	vars N M     : Nat .
+	var  W       : Configuration .
+
+	ops Client Server : -> Cid [ctor] .
+
+	op counter:_ : Nat -> Attribute [ctor gather (&)] .
+	op server:_  : Oid -> Attribute [ctor gather (&)] .
+	op total:_   : Nat -> Attribute [ctor gather (&)] .
+
+	op ctnt : Nat -> Content [ctor] .
+
+	rl [send] : < C : Client | counter: N, server: S > (C <- empty)
+	         => < C : Client | counter: N + 1, server: S >
+	            [T1 ; C <- empty] [T2 ; S <- ctnt(N)] [nonexec] .
+        *** with probability T1 := exponential(2.0) and T2 := exponential(10.0) .
+
+	rl [compute] : < S : Server | total: M > (S <- ctnt(N))
+	            => [T1 ; < S : Server | total: M + N >] [nonexec] .
+        *** with probability T1 := exponential(1.0) .
+
+	rl [busy-drop] : [T ; < S : Server | total: M >] (S <- ctnt(N))
+	              => [T ; < S : Server | total: M >] .
+
+	op init : -> Configuration .
+	ops c s : -> Oid .
+
+	eq init = < c : Client | counter: 0, server: s >
+	          < s : Server | total: 0 >
+	          (c <- empty)
+	          time(0.0) .
+
+	*** Query methods
+	op total : Oid Configuration -> Nat .
+	eq total(S, < S : Server | total: M > W) = M .
+endm
+
+smod SIMPLE-CLIENT-SERVER-STRAT is
+	protecting SIMPLE-CLIENT-SERVER .
+
+	strat step @ Configuration .
+
+	vars T1 T2 : Float .
+	var C     : Configuration .
+
+	sd step := ((sample T1 := exp(2.0) in (sample T2 := exp(10.0) in send[T1 <- T1, T2 <- T2]))
+			| (sample T1 := exp(1.0) in compute[T1 <- T1])
+			| busy-drop
+		) ! ; top(tick) .
+endsm

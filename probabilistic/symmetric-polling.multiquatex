@@ -1,0 +1,15 @@
+RoundsTime(r, b) = if (r == 0) then
+			s.rval("time(C)")
+		else
+			if (s.rval("cclient(C)") == 1) then
+				if (b == 1) then
+					#RoundsTime(r - 1, 0)
+				else
+					#RoundsTime(r, 0)
+				fi
+			else
+				#RoundsTime(r, 1)
+			fi
+		fi ;
+
+eval parametric(E[ RoundsTime(r, 0) ], r, 0, 1, 50) ;

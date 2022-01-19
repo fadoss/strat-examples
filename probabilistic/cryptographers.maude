@@ -1,0 +1,133 @@
+***
+*** Dining cryptographers problem
+***
+*** Based on https://www.prismmodelchecker.org/casestudies/dining_crypt.php
+***
+
+sload model-checker
+
+mod CRYPHER-DINNER is
+	protecting NAT .
+
+	sorts Side Side? Vote Crypher List Table .
+	subsort Side < Side? .
+	subsort Crypher < List .
+
+	*** Every cryptographer throws a coin, but the outcome is only known
+	*** to himself and the messmate at his right
+	ops head tail : -> Side [ctor] .
+	op  pending : -> Side? [ctor] .
+
+	*** Every cryptographer has a public vote (see below)
+	ops undecided agree disagree : -> Vote [ctor] .
+
+	*** A cryptographer (coin, whether s/he pays, vote)
+	op <_;_;_> : Side? Bool Vote -> Crypher [ctor] .
+
+	op nil : -> List [ctor] .
+	op __  : List List -> List [ctor assoc id: nil] .
+
+	op {_} : List -> Table [ctor] .
+
+	vars S1 S2   : Side .
+	var  V       : Vote .
+	vars B B1 B2 : Bool .
+	vars L M     : List .
+	var  T       : Table .
+	var  N       : Nat .
+
+	*** Coin throw
+	rl [head] : < pending ; B ; V > => < head ; B ; V > .
+	rl [tail] : < pending ; B ; V > => < tail ; B ; V > .
+
+	*** Tell the right-hand philosopher about the outcome of the coin
+	*** throw, who compares it with his own. The vote is then
+	***  - agree, if the sides coincides and 2 does not pay
+	***  - agree, if the sides differ and 2 pays
+	***  - disagree, otherwise
+	rl [tell] : < S1 ; B1 ; V > < S2 ; B2 ; undecided >
+	         => < S1 ; B1 ; V > < S2 ; B2 ; if (S1 == S2) =/= B1 then agree else disagree fi > .
+
+	*** The same, but for the last and first philosophers of the
+	*** circular table represented in a linear list
+	rl [tell] : { < S2 ; B2 ;  undecided > L < S1 ; B1 ; V > }
+	         => { < S2 ; B2 ; if (S1 == S2) =/= B1 then agree else disagree fi > L < S1 ; B1 ; V > } .
+
+	*** A cryptographer pays
+	rl [cpays] : < pending ; false ; undecided > => < pending ; true ; undecided > .
+	*** The master pays (nothing happens)
+	rl [mpays] : T => T .
+
+	*** Initial term
+	op initial    : Nat -> Table .
+	op initialAux : Nat -> List .
+
+	eq initial(N) = { initialAux(N) } .
+	eq initialAux(0) = nil .
+	eq initialAux(s N) = initialAux(N) < pending ; false ; undecided > .
+endm
+
+mod CRYPHER-PREDS is
+	protecting CRYPHER-DINNER .
+	including SATISFACTION .
+
+	subsort Table < State .
+
+	*** Whether every cryptographer has decided
+	op decided : -> Prop .
+	*** Whether a cryptographer has paid
+	op crypherPays : -> Prop .
+	*** Whether the number of agrees and cryptographers matches modulo two
+	op parityMatch : -> Prop .
+
+	var  T   : Table .
+	var  S   : Side? .
+	var  V   : Vote .
+	var  B   : Bool .
+	vars L M : List .
+
+	eq { L < S ; B ; undecided > M } |= decided = false .
+	eq T |= decided = true .
+
+	eq { L < S ; true ; V > M } |= crypherPays = true .
+	eq T |= crypherPays = false .
+
+	eq { L } |= parityMatch = parityMatch(L) .
+
+	op parityMatch : List -> Bool .
+	eq parityMatch(nil) = true .
+	eq parityMatch(< S ; B ; V > L) = parityMatch(L) == (V == agree) .
+endm
+
+smod CRYPHER-STRATS is
+	protecting CRYPHER-DINNER .
+
+	*** Free rewriting, but only one pays
+	strat free @ Table .
+
+	sd free := (cpays | mpays) ; (head | tail | tell) ! .
+
+	*** Staged rewriting (uniform probabilities work here)
+	strat staged @ Table .
+
+	sd staged := (cpays | mpays) ; (head | tail) ! ; tell ! .
+endsm
+
+smod CRYPHER-CHECK is
+	protecting CRYPHER-STRATS .
+	protecting CRYPHER-PREDS .
+	including STRATEGY-MODEL-CHECKER .
+endsm
+
+*** umaudemc check cryptographers 'initial(3)' '<> decided' free
+*** umaudemc check cryptographers 'initial(3)' '<> decided' staged
+*** umaudemc check cryptographers 'initial(3)' '[] (crypherPays -> <> (decided /\ ~ parityMatch))' staged/free
+*** umaudemc check cryptographers 'initial(3)' '([] ~ crypherPays) -> <> (decided /\ parityMatch)' staged/free
+
+*** Anonymity (every option is equally probable)
+*** umaudemc pcheck cryptographers 'initial(3)' @steady staged -f
+*** umaudemc pcheck cryptographers 'initial(4)' @steady staged -f
+*** umaudemc pcheck cryptographers 'initial(3)' '[] ~ crypherPays' free
+*** umaudemc pcheck cryptographers 'initial(3)' '<> decided' staged --steps
+
+*** umaudemc graph cryptographers 'initial(3)' --passign uniform --depth 1

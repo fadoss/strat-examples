@@ -1,0 +1,488 @@
+***
+*** Specification of the Bounded Retransmission Protocol (BRP)
+***
+*** As described in "Proof-checking a data link protocol"
+*** with DOI 10.1007/3-540-58085-9_75.
+***
+
+sload model-checker
+
+mod BRP-COMMON is
+	extending CONFIGURATION .
+
+	*** The first two arguments of a message are always the object identifiers
+	*** of the recipient and sender of this message, which may not coincide with
+	*** the recipient and the sender in the protocol
+
+	*** Packet with (is first chunk, is last chunk, alternating bit)
+	op packet : Oid Oid Bool Bool Bool -> Msg [ctor msg] .
+	*** Acknowledgment with the same fields as packet
+	op ack : Oid Oid Bool Bool Bool -> Msg [ctor msg] .
+
+	*** Common attributes
+
+	*** Alternating bit
+	op bit:_ : Bool -> Attribute [ctor gather (&)] .
+	*** Client of the BRP service (higher layers)
+	op client:_ : Oid -> Attribute [ctor gather (&)] .
+
+	vars S R   : Oid .
+	vars F L B : Bool .
+
+	rl [losePacket] : packet(S, R, F, L, B) => none .
+	rl [loseAck] : ack(S, R, F, L, B) => none .
+endm
+
+mod BRP-SENDER is
+	protecting NAT .
+	extending BRP-COMMON .
+	extending CONFIGURATION .
+
+	*** Class of BRP senders
+	op Sender : -> Cid [ctor] .
+
+	sorts SState SResult .
+
+	*** Attributes
+	op pframes:_  : Nat -> Attribute [ctor gather (&)] .  *** pending frames
+	op receiver:_ : Oid -> Attribute [ctor gather (&)] .  *** receiver of the message
+	op nret:_     : Nat -> Attribute [ctor gather (&)] .  *** number of retransmissions
+	op maxret:_   : Nat -> Attribute [ctor gather (&)] .  *** maximum number of retransmissions
+	op first:_    : Bool -> Attribute [ctor gather (&)] .  *** whether this is the first package
+	op state:_    : SState -> Attribute [ctor gather (&)] .  *** state of the sender
+
+	*** Request to send with (receiver of the message to be sent, number of chunks)
+	op send : Oid Oid Oid Nat -> Msg [ctor msg] .
+	*** Confirmation message with (receiver, result)
+	op conf : Oid Oid Oid SResult -> Msg .
+
+	*** Confirmation variant
+	ops not-ok do-not-know ok : -> SResult [ctor] .
+	*** State
+	ops idle first next : -> SState [ctor] .
+
+	vars O P R C         : Oid .
+	vars N M NR          : Nat .
+	vars B First Last MB : Bool .
+	var  Attrs           : AttributeSet .
+	var  S               : SState .
+
+	rl [send] :
+		< O : Sender | state: idle, maxret: M,  Attrs >
+		send(O, C, R, s N)
+	=>
+		< O : Sender | state: first, pframes: N, client: C, receiver: R, bit: true, nret: M, maxret: M, Attrs >
+		packet(R, O, true, false, true)
+	.
+
+	crl [whenAckBad] :
+		< O : Sender | receiver: R, bit: B, Attrs >
+		ack(O, R, First, Last, MB)
+	=>
+		< O : Sender | receiver: R, bit: B, Attrs > if B =/= MB
+	.
+
+	rl [whenAck] :
+		< O : Sender | state: S, pframes: s N, receiver: R, bit: B, nret: NR, maxret: M, Attrs >
+		ack(O, R, First, Last, B)
+	=>
+		< O : Sender | state: next, pframes: N, receiver: R, bit: not B, nret: M, maxret: M, Attrs >
+		packet(R, O, false, N == 0, not B)
+	.
+
+	rl [whenAckLast] :
+		< O : Sender | state: S, pframes: 0, client: C, receiver: R, bit: B, nret: NR, Attrs >
+		ack(O, R, First, Last, B)
+	=>
+		< O : Sender | state: idle, Attrs >
+		conf(C, O, R, ok)
+	.
+
+	rl [lost] :
+		< O : Sender | state: S, pframes: N, receiver: R, bit: B, nret: s NR, Attrs >
+	=>
+		< O : Sender | state: S, pframes: N, receiver: R, bit: B, nret: NR, Attrs >
+		packet(R, O, S == first, N == 0, B)
+	.
+
+	rl [lost] :
+		< O : Sender | state: S, pframes: N, client: C, receiver: R, bit: B, nret: 0, Attrs >
+	=>
+		< O : Sender | state: idle, Attrs >
+		conf(C, O, R, if N == 0 then do-not-know else not-ok fi)
+	.
+endm
+
+mod BRP-RECEIVER is
+	extending BRP-COMMON .
+	extending CONFIGURATION .
+
+	op Receiver : -> Cid [ctor] .
+
+	*** Attributes
+	op state:_ : RState -> Attribute [ctor gather (&)] .
+
+	sorts RInd RState .
+
+	*** Indications
+	ops first incomplete ok not-ok : -> RInd [ctor] .
+	*** Receiver states
+	ops wait-first wait-next : -> RState [ctor] .
+
+	*** Indication message with (state)
+	op ind : Oid Oid RInd -> Msg [ctor msg] .
+
+	vars O S C           : Oid .
+	vars First Last B MB : Bool .
+	var  Attrs           : AttributeSet .
+
+	rl [packetFirst] :
+		< O : Receiver | state: wait-first, client: C, Attrs >
+		packet(O, S, true, Last, B)
+	=>
+		< O : Receiver | state: wait-next, client: C, bit: not B, Attrs >
+		ind(C, O, first)
+		ack(S, O, true, Last, B)
+	.
+
+	rl [packetNext] :
+		< O : Receiver | state: wait-next, client: C, bit: B, Attrs >
+		packet(O, S, false, Last, B)
+	=>
+		< O : Receiver | state: if Last then wait-first else wait-next fi, client: C, bit: not B, Attrs >
+		ind(C, O, if Last then ok else incomplete fi)
+		ack(S, O, false, Last, B)
+	.
+
+	*** For the case when the ACK is lost and the sender resends the packet
+	crl [packetBad] :
+		< O : Receiver | bit: B, Attrs >
+		packet(O, S, First, Last, MB)
+	=>
+		< O : Receiver | bit: B, Attrs >
+		ack(S, O, First, Last, MB) if B =/= MB
+	.
+
+	rl [aborted] :
+		< O : Receiver | state: wait-next, client: C, bit: B, Attrs >
+	=>
+		< O : Receiver | state: wait-first, client: C, Attrs >
+		ind(C, O, not-ok)
+	.
+endm
+
+mod BRP-WHOLE is
+	extending BRP-RECEIVER .
+	extending BRP-SENDER .
+
+	*** Application-layer object
+	op App : -> Cid [ctor] .
+
+	ops recver sender client server : -> Oid .
+
+	vars O S P : Oid .
+	vars N M   : Nat .
+	var  Attrs : AttributeSet .
+
+	rl [discard] : < O : App | Attrs > conf(O, S, P, R:SResult) => < O : App | Attrs > .
+	rl [discard] : < O : App | Attrs > ind(O, S, R:RInd) => < O : App | Attrs > .
+
+	*** Initial state for (number of chunks, maximum of repetitions)
+	op initial : Nat Nat -> Configuration .
+	op initial : -> Configuration .
+
+	eq initial(N, M) = < server : App | none >
+	                   < sender : Sender | state: idle, maxret: M >
+	                   < client : App | none >
+	                   < recver : Receiver | state: wait-first, client: client >
+	                   send(sender, server, recver, N) .
+
+	eq initial = initial(10, 5) .
+endm
+
+mod BRP-PRED is
+	including SATISFACTION .
+	protecting BRP-WHOLE .
+
+	subsort Configuration < State .
+
+	ops okReceiver okSender notOkReceiver : -> Prop [ctor] .
+
+	var  C     : Configuration .
+	vars S R D : Oid .
+
+	eq C ind(R, S, ok) |= okReceiver = true .
+	eq C |= okReceiver = false [owise] .
+
+	eq C conf(R, S, D, ok) |= okSender = true .
+	eq C |= okSender = false [owise] .
+
+	eq C ind(R, S, not-ok) |= notOkReceiver = true .
+	eq C |= notOkReceiver = false [owise] .
+endm
+
+mod BRP-REALTIME is
+	extending BRP-COMMON .
+	protecting FLOAT .
+
+	op timer:_ : Float -> Attribute [ctor gather (&)] .
+
+	vars T D   : Float .
+	var  M     : Msg .
+	var  O     : Oid .
+	var  S     : Cid .
+	var  Attrs : AttributeSet .
+	var  C     : Configuration .
+	var  B     : Object .
+
+	rl [initTimer] : < O : S | Attrs > => < O : S | timer: T, Attrs > [nonexec] .
+	rl [dropTimer] : < O : S | timer: T, Attrs > => < O : S | Attrs > [nonexec] .
+
+	rl [advance] : C => advance(C, D) [nonexec] .
+
+	*** Lowest timer value in the configuration
+	op soonest : Configuration -> Float .
+
+	eq soonest(none) = Infinity .
+	eq soonest(M C) = soonest(C) .
+	eq soonest(< O : S | timer: T, Attrs > C) = min(T, soonest(C)) .
+	eq soonest(B C) = soonest(C) [owise] .
+
+	*** Advance timers in the configuration
+	op advance : Configuration Float -> Configuration .
+
+	eq advance(none, D) = none .
+	eq advance(M C, D) = M advance(C, D) .
+	eq advance(< O : S | timer: T, Attrs > C, D) = < O : S | timer: (T - D), Attrs > advance(C, D) .
+	eq advance(B C, D) = B advance(C, D) [owise] .
+
+	*** Timed configuration (configuration with a time entry)
+	sort TimedConfiguration .
+
+	op {_,_} : Configuration Float -> TimedConfiguration [ctor] .
+	rl [advance-tc] : { C, T } => { advance(C, D), T + D } [nonexec] .
+
+	op soonest : TimedConfiguration -> Float .
+	eq soonest({ C, T }) = soonest(C) .
+
+	op time : TimedConfiguration -> Float .
+	eq time({ C, T }) = T .
+endm
+
+smod BRP-STRAT is
+	extending BRP-WHOLE .
+	extending BRP-REALTIME .
+
+	*** Perfect execution where no package is lost
+	strat perfect @ Configuration .
+
+	sd perfect := (discard or-else (send | whenAckBad | whenAck | whenAckLast
+	                               | packetNext | packetFirst | packetBad)) ! .
+
+	*** Like in the example of the PRISM distribution (see
+	*** https://www.prismmodelchecker.org/casestudies/brp.php)
+	strats prism-like prism-like-step @ Configuration .
+
+	sd prism-like-step := (discard | packetBad | whenAckBad) or-else (
+		  send
+		| choice(99 : (packetNext | packetFirst), 1 : (losePacket ; lost))
+		| choice(98 : (whenAck | whenAckLast), 2 : (loseAck ; lost))
+	) or-else aborted .
+
+	sd prism-like := prism-like-step ! .
+
+	*** Like prism-like but with nondeterminism
+	strats prism-like-nd prism-like-nd-step @ Configuration .
+
+	sd prism-like-nd-step := (discard | packetBad | whenAckBad) or-else (
+		  send
+		| packetNext | packetFirst | (losePacket ; lost)
+		| whenAck | whenAckLast | (loseAck ; lost)
+	) or-else aborted .
+
+	sd prism-like-nd := prism-like-nd-step ! .
+
+	*** Real-time specification with delays
+	*** However, this is for quantitative model-checking since the delays
+	*** are fixed and we do not count the total time
+	strats real-time-step real-time @ Configuration .
+	strat resetTimer : Oid Float @ Configuration .
+
+	vars C C'   : Configuration .
+	vars T D    : Float .
+	var  O      : Oid .
+	var  N      : Nat .
+	var  M      : Msg .
+	vars TC TC' : TimedConfiguration .
+	var  Attrs  : AttributeSet .
+
+	sd real-time-step := discard or-else (matchrew C s.t. D := soonest(C) by C using (
+		  (send ; initTimer[O <- sender, T <- senderTimeout])
+		| losePacket
+		| loseAck
+		*** Timeout handling (when there is less time left in the timers than the
+		*** delay of the next action or when there is no message to answer)
+		| ((match C' s.t. D < minDelay | match C' s.t. D < Infinity ; not(match M C'))
+		    *** Advance the timers in the minimum delay (at least one will become zero)
+		    ? top(advance[D <- D]) ; (
+		        *** Timeout for the sender (resend the package if the maximum of
+		        *** retransmissions has not been reached)
+			(match < sender : Sender | timer: 0.0, Attrs > C'
+			   ? lost ; (match < sender : Sender | state: idle, Attrs > C'
+			               ? dropTimer[O <- sender]
+			               : resetTimer(sender, senderTimeout))
+			   : idle) ;
+			*** Timeout for the receiver (assume that the transmission has been aborted)
+			(match < recver : Receiver | timer: 0.0, Attrs > C'
+			   ? aborted ; dropTimer[O <- recver]
+			   : idle)
+		  ) : (
+		  	*** Apply the message rules, advancing the delay, and setting the timers
+			  ((packetNext | packetFirst) ; top(advance[D <- packetDelay]) ;
+			      resetTimer(recver, receiverTimeout))
+			| ((whenAck | whenAckLast) ; top(advance[D <- ackDelay]) ;
+			      resetTimer(sender, senderTimeout))
+		  )
+		))
+	) .
+
+	sd real-time := real-time-step ! .
+
+	*** Reset (or set) the timer to the given time
+	sd resetTimer(O, T) := try(dropTimer[O <- O]) ; initTimer[O <- O, T <- T] .
+
+	*** Delays and timer periods
+	ops packetDelay ackDelay minDelay senderTimeout receiverTimeout : -> Float .
+
+	eq packetDelay = 3.0 .
+	eq ackDelay = 2.0 .
+	eq minDelay = min(packetDelay, ackDelay) .
+	eq senderTimeout = 1.2 * (packetDelay + ackDelay) .
+	eq receiverTimeout = 5.2 * senderTimeout .
+
+	*** Real-time specification with delays and probabilities
+	strats real-time-p-step real-time-p @ Configuration .
+
+	sd real-time-p-step := discard or-else (matchrew C s.t. D := soonest(C) by C using (
+		  (send ; initTimer[O <- sender, T <- senderTimeout])
+		*** Timeout handling (when there is less time left in the timers than the
+		*** delay of the next action or when there is no message to answer)
+		| ((match C' s.t. D < minDelay | match C' s.t. D < Infinity ; not(match M C'))
+		    *** Advance the timers in the minimum delay (at least one will become zero)
+		    ? top(advance[D <- D]) ; (
+		        *** Timeout for the sender (resend the package if the maximum of
+		        *** retransmissions has not been reached)
+			(match < sender : Sender | timer: 0.0, Attrs > C'
+			   ? lost ; (match < sender : Sender | state: idle, Attrs > C'
+			               ? dropTimer[O <- sender]
+			               : resetTimer(sender, senderTimeout))
+			   : idle) ;
+			*** Timeout for the receiver (assume that the transmission has been aborted)
+			(match < recver : Receiver | timer: 0.0, Attrs > C'
+			   ? aborted ; dropTimer[O <- recver]
+			   : idle)
+		  ) : (
+		  	*** Apply the message rules resetting the timers
+			  choice(99 : ((packetNext | packetFirst) ; top(advance[D <- packetDelay]) ;
+			                  resetTimer(recver, receiverTimeout)), 1 : losePacket)
+			| choice(98 : ((whenAck | whenAckLast) ; top(advance[D <- ackDelay]) ;
+			                  resetTimer(sender, senderTimeout)), 2 : loseAck)
+		  )
+		))
+	) .
+
+	sd real-time-p := real-time-p-step ! .
+
+	*** Real-time specification with sampled delays and probabilities
+	strats real-time-s-step real-time-s @ Configuration .
+
+	sd real-time-s-step := discard or-else (matchrew TC s.t. D := soonest(TC) by TC using (
+		  (send ; initTimer[O <- sender, T <- senderTimeout])
+		*** Timeout handling (when there is less time left in the timers than the
+		*** delay of the next action or when there is no message to answer)
+		| ((match TC' s.t. D < minDelay | match TC' s.t. D < Infinity ; not(match { M C', T }))
+		    *** Advance the timers in the minimum delay (at least one will become zero)
+		    ? advance-tc[D <- D] ; (
+		        *** Timeout for the sender (resend the package if the maximum of
+		        *** retransmissions has not been reached)
+			(match {< sender : Sender | timer: 0.0, Attrs > C', T}
+			   ? lost ; (match {< sender : Sender | state: idle, Attrs > C', T}
+			               ? dropTimer[O <- sender]
+			               : resetTimer(sender, senderTimeout))
+			   : idle) ;
+			*** Timeout for the receiver (assume that the transmission has been aborted)
+			(match {< recver : Receiver | timer: 0.0, Attrs > C', T}
+			   ? aborted ; dropTimer[O <- recver]
+			   : idle)
+		  ) : (
+		  	*** Apply the message rules resetting the timers
+			  choice(99 : ((packetNext | packetFirst) ;
+			               (sample T := exp(packetDelay) in advance-tc[D <- T]) ;
+			               resetTimer(recver, receiverTimeout)), 1 : losePacket)
+		        | choice(98 : ((whenAck | whenAckLast) ;
+			               (sample T := exp(ackDelay) in advance-tc[D <- T]) ;
+			               resetTimer(sender, senderTimeout)), 2 : loseAck)
+		  )
+		))
+	) .
+
+	sd real-time-s := real-time-s-step ! .
+
+	*** We could have used parameterized strategies to avoid duplicating code
+endsm
+
+smod BRP-CHECK is
+	protecting BRP-PRED .
+	protecting BRP-STRAT .
+	including STRATEGY-MODEL-CHECKER .
+
+	var C  : Configuration .
+	var TC : TimedConfiguration .
+
+	*** Satisfaction relation for timed configurations
+	op _|=_ : TimedConfiguration Prop -> Bool .
+	eq {C, T:Float} |= P:Prop = C |= P:Prop .
+endsm
+
+*** Qualitative and quantitative properties
+
+*** umaudemc check brp initial '<> okReceiver /\ <> okSender' perfect
+*** The property is satisfied in the initial state (32 system states, 186 rewrites, 2 Büchi states)
+
+*** umaudemc pcheck brp initial '<> okReceiver /\ <> okSender' prism-like --assign strategy
+*** Result: 0.9999991961451121
+
+*** umaudemc pcheck brp 'initial(10, 0)' '<> okReceiver /\ <> okSender' prism-like --assign strategy
+*** Result: 0.7389460005262277
+
+*** umaudemc pcheck brp initial '(~ okSender) W okReceiver' prism-like --assign strategy
+*** Result: 1.0
+
+*** If packages are allowed to be received out of order, this may not even hold
+*** umaudemc check brp 'initial(3, 2)' '(~ okSender) W okReceiver' '(discard or-else all) !' --elabel %l
+*** The property is not satisfied in the initial state (463 system states, 2542 rewrites, 2 Büchi states)
+
+*** umaudemc pcheck brp initial '<> notOkReceiver' prism-like --assign strategy
+*** Result: 1.131659528473694e-09 (relative error 2.8500182376131725e-06)
+
+*** umaudemc pcheck brp initial '(<> okReceiver /\ <> okSender) \/ <> notOkReceiver' prism-like --assign strategy
+*** Result: 0.9999991972746721
+
+*** umaudemc pcheck brp initial '<> okReceiver \/ <> okSender \/ <> notOkReceiver' prism-like --assign strategy
+*** Result: 0.999999
+
+*** These do not hold becase all packages may be lost before arriving to the receiver
+*** umaudemc check brp initial '<> okReceiver \/ <> okSender \/ <> notOkReceiver' prism-like-nd --elabel %l
+*** umaudemc check brp initial '<> (okReceiver \/ okSender \/ notOkReceiver)' real-time --elabel %l
+
+*** Maude> search [1] initial =>* C s.t. C |= okSender using real-time .
+*** show path labels 1750 .
+
+*** umaudemc pcheck brp initial '<> okReceiver /\ <> okSender' real-time-p --assign strategy
+*** Result: 0.8170726551657641
+
+*** mvmaude brp initial brp-okp.multiquatex prism-like-step -- -bs 80
+
+*** Due to a bug in MultiVeSta, only one evaluation statement can be used at a time,
+*** so you should remove the other one in brp-timed.multiquatex before running
+*** mvmaude brp '{initial, 0.0}' brp-timed.multiquatex real-time-s-step

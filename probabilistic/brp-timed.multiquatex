@@ -1,0 +1,10 @@
+BoundedOk(n) = if (n == 0) then 0
+                  else if (s.rval("TC |= okSender") == 1) then 1
+                  else #BoundedOk(n - 1) fi fi ;
+
+BoundedTime(n) = if (n == 0) then 0
+                  else if (s.rval("TC |= okSender") == 1) then s.rval("time(TC)")
+                  else #BoundedTime(n - 1) fi fi ;
+
+eval E[BoundedOk(100)] ;
+eval E[BoundedTime(100)] ;

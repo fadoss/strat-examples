@@ -1,0 +1,7 @@
+ResultTime() = if (s.rval("S |= result") == 1) then
+			s.rval("time")
+		else
+			#ResultTime()
+		fi ;
+
+eval E[ ResultTime() ] ;
