@@ -1,0 +1,6 @@
+Steps4EmptyInit() = if (s.rval("TPN[init]") == 0)
+                    then s.rval("time(TPN)")
+                    else # Steps4EmptyInit()
+                    fi ;
+
+eval E[ Steps4EmptyInit() ] ;

@@ -1,0 +1,207 @@
+***
+*** Template for specifying stochastic Petri nets as Maude modules:
+***
+***  1. The set of places with their markings is represented as a term.
+***  2. Transitions are represented as rewrite rules with their rates in the metadata attribute.
+***  3. The probabilistic model is obtained by using the 'metadata' probability assignment method.
+***
+*** In the first part, until PETRI-NET-TIME, we do not take care about time and see SPNs as DTMCs
+*** for qualititive and probabilistic model checking. Then, we introduce time for statistical
+*** model checking. The transition rates do not depend on the marking of the input, but this can
+*** be easily done with the "choice" if desired.
+***
+*** While umaudemc currently only supports passing DTMCs and MDPs to the probabilistic
+*** model-checking backends, deriving CTMCs for these tools will be fairly easy since
+*** rules/transitions are already annotated with their rates.
+***
+
+
+fmod PLACE is
+	protecting NAT .
+
+	sort PlaceId Place .
+
+	*** A place consists of an identifier and a marking
+	op {_:_} : PlaceId Nat -> Place [ctor] .
+endfm
+
+view Place from TRIV to PLACE is
+	sort Elt to Place .
+endv
+
+mod PETRI-NET is
+	protecting SET{Place} * (
+		sort Set{Place} to PetriNet,
+		sort NeSet{Place} to NePetriNet,
+		op _,_ to __ *** use yuxtaposition instead of comma
+	) .
+
+	*** The Petri net state is a set of places
+
+	*** Place identifiers for this particular example
+	ops init p1 p2 p3 : -> PlaceId .
+
+	vars M M1 M2 M3 M4 : Nat .
+
+	*** Transition are specified as rewrite rules
+	*** (with inputs in the first line and outputs in the second)
+
+	rl [tr1] : {init : s M}
+	           {p1 : M1} {p2 : M2}
+                => {init : M}
+                   {p1 : s M1} {p2 : s M2}	[metadata "0.1"] .
+
+	rl [tr2] : {p1 : s M1} {p2 : s M2}
+	           {p3 : M3}
+	        => {p1 : M1} {p2 : M2}
+	           {p3 : M3 + 2} 		[metadata "0.2"] .
+
+	rl [tr3] : {init : s M}
+	           {p3 : M3}
+	        => {init : M}
+	           {p3 : s M3}			[metadata "0.4"] .
+
+	rl [tr4] : {p3 : s s M3}
+	           {init : M}
+	        => {p3 : M3}
+	           {init : s M}			[metadata "0.25"] .
+
+
+	*** Example of initial marking (it yields 69 reachable states)
+	op initial : -> PetriNet .
+
+	eq initial = {init : 4} {p1 : 0} {p2 : 0} {p3 : 1} .
+endm
+
+sload model-checker
+
+mod PETRI-NET-PREDS is
+	protecting PETRI-NET .
+	including SATISFACTION .
+
+	subsort PetriNet < State .
+
+	*** Atomic propositions for model checking
+
+	var  PN      : PetriNet .
+	vars P P1 P2 : PlaceId .
+	vars M MP    : Nat .
+
+	*** Marking is above or below number
+	ops below above : PlaceId Nat -> Prop [ctor] .
+
+	eq {P : MP} PN |= below(P, M) = MP <= M .
+	eq PN |= below(P, M) = false [owise] .
+
+	eq {P : MP} PN |= above(P, M) = MP >= M .
+	eq PN |= above(P, M) = false [owise] .
+
+	*** Marking of two places coincide
+	op coincide : PlaceId PlaceId -> Prop [ctor] .
+
+	eq {P1 : M} {P2 : M} PN |= coincide(P1, P2) = true .
+	eq PN |= coincide(P1, P2) = false [owise] .
+
+	*** A place is empty
+	op empty : PlaceId -> Prop [ctor] .
+	eq PN |= empty(P1) = PN |= below(P1, 0) .
+endm
+
+mod PETRI-NET-CHECK is
+	protecting PETRI-NET-PREDS .
+	including MODEL-CHECKER .
+endm
+
+*** Look for deadlock states with the search command
+*** (answer is {init : 0} {p1 : 0} {p2 : 0} {p3 : 1})
+*** search initial =>! P:PetriNet .
+
+*** Model checking
+*** red modelCheck(initial, [] coincide(p1, p2)) .
+*** equivalently: umaudemc check stpetri-tmpl.maude -m PETRI-NET-CHECK initial '[] coincide(p1, p2)'
+*** umaudemc check stpetri-tmpl.maude -m PETRI-NET-CHECK initial '<> above(p3, 2)'
+*** umaudemc check stpetri-tmpl.maude -m PETRI-NET-CHECK initial '<> above(p3, 3)'
+
+*** Probabilsitic model checking
+*** (stpetri-tmpl.maude initial -m PETRI-NET-CHECK is omitted)
+
+*** umaudemc pcheck ... '<> [] (empty(init) /\ empty(p1))' --assign metadata
+*** Result: 1.0
+*** umaudemc pcheck ... '<> (empty(init) /\ empty(p1))' --assign metadata --steps
+*** Result: 8.707408901207089 (relative error 9.184534723750327e-06)
+*** umaudemc pcheck ... '<> above(p3, 5)' --assign metadata
+*** Result: 0.5043249806651557 (relative error 7.14176006804161e-06)
+*** umaudemc pcheck ... '<> above(p3, 7)' --assign metadata
+*** Result: 0.032834208421662556 (relative error 9.34375559351084e-06)
+*** umaudemc pcheck ... '@steady' --assign metadata
+*** 1.0                  {init : 0} {p1 : 0} {p2 : 0} {p3 : 1}
+
+
+smod PETRI-NET-TIME is
+	extending PETRI-NET .
+	protecting FLOAT .
+
+	sort TimedPetriNet .
+
+	*** Petri net along with time
+	op net : PetriNet Float -> TimedPetriNet .
+
+	var  TPN             : TimedPetriNet .
+	vars PN PN'          : PetriNet .
+	var  P               : PlaceId .
+	vars T D R1 R2 R3 R4 : Float .
+	var  M               : Nat .
+
+	*** Rule that executes a transition and advances time
+	crl [tick] : net(PN, T) => net(PN', T + D) if PN => PN' [nonexec] .
+
+	*** Strategy that applies the previous rule (this and rateSum
+	*** could be derived from the metadata information using reflection)
+	strat step @ TimedPetriNet .
+
+	sd step := matchrew TPN s.t.
+			   R1 := if TPN[init] >= 1 then 0.1 else 0.0 fi
+			/\ R2 := if TPN[p1] >= 1 and TPN[p2] > 0 then 0.2 else 0.0 fi
+			/\ R3 := R1 * 4.0
+			/\ R4 := if TPN[p3] >= 2 then 0.25 else 0.0 fi
+			/\ D  := 1.0 / (R1 + R2 + R3 + R4)
+		by TPN using choice(
+			R1 : tick[D <- D]{tr1},
+			R2 : tick[D <- D]{tr2},
+			R3 : tick[D <- D]{tr3},
+			R4 : tick[D <- D]{tr4}
+		) .
+
+	*** Get the marking for a place id
+	op _[_] : TimedPetriNet PlaceId -> Nat [prec 10] .
+	op _[_] : PetriNet PlaceId -> Nat [prec 10] .
+
+	eq net(PN, T)[P] = PN[P] .
+
+	eq ({P : M} PN)[P] = M .
+	eq PN[P] = 0 [owise] .
+
+	*** Get the current time
+	op time : TimedPetriNet -> Float .
+
+	eq time(net(PN, T)) = T .
+
+	*** Initial state with zero time
+	op start : PetriNet -> TimedPetriNet .
+
+	eq start(PN) = net(PN, 0.0) .
+endsm
+
+*** Single step
+*** srew start(initial) using step .
+
+*** Expected time until init is emptied
+
+*** umaudemc scheck stpetri-tmpl.maude 'start(initial)' stpetri-tmpl.multiquatex -d 0.2
+*** Number of simulations = 1740
+***  μ = 10.39368824359751         σ = 4.230812728370211         r = 0.1989297078820332
+
+*** mvmaude stpetri-tmpl.maude 'start(initial)' stpetri-tmpl.multiquatex -- -a 0.05 -d1 0.2
+*** Samples generated for query 0 (Steps4EmptyInit()): 6570
+*** MultiVeStA client: Results:
+***	10.346663462308763 [var: 17.03718149599211, ci/2: 0.09980775366757978]
