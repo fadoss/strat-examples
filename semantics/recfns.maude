@@ -23,7 +23,7 @@ fmod REC-EXPR is
 	op _,_ : EmptyArguments EmptyArguments -> EmptyArguments [ctor ditto] .
 
 	*** A function call
-	op _(_) : Qid Arguments -> FunctionCall [prec 20] .
+	op _(_) : Qid Arguments -> FunctionCall [ctor prec 20] .
 
 	*** Product and addition of REC expression is allowed
 	op _+_ : RecExpr RecExpr -> RecExpr [ditto] .
@@ -49,7 +49,7 @@ fmod REC-SYNTAX is
 	op _(_) : Qid FormalArguments -> FunctionLhs [ditto] .
 
 	*** Sets of variables
-	op novar : -> VarSet .
+	op novar : -> VarSet [ctor] .
 	op _._ : VarSet VarSet -> VarSet [ctor assoc comm id: novar] .
 
 	op subset : VarSet VarSet -> Bool .
@@ -111,7 +111,7 @@ endfm
 
 view FunctionDef from TRIV to REC-SYNTAX is
 	sort Elt to FunctionDef .
-endv	
+endv
 
 mod REC-RULE is
 	protecting REC-SYNTAX .

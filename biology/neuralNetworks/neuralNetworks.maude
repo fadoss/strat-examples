@@ -19,12 +19,12 @@ mod ANN-BASE is
 	*** Messages ***
 
 	*** netStatus(counter, final training pattern, times of training set, final pattern)
-	msg netStatus : Nat Nat Nat Nat -> Msg .
+	msg netStatus : Nat Nat Nat Nat -> Msg [ctor] .
 
 	*** inputPattern(counter, neuron, value)
 	*** outputPattern(counter, neuron, value, state)
-	msg inputPattern : Nat Nat Float -> Msg .
-	msg outputPattern : Nat Nat Float Nat -> Msg .
+	msg inputPattern : Nat Nat Float -> Msg [ctor] .
+	msg outputPattern : Nat Nat Float Nat -> Msg [ctor] .
 
 	*** Classes ***
 
@@ -44,9 +44,9 @@ mod ANN-BASE is
 	*** Operators ***
 
 	*** Final object representation
-	op net : Nat -> Oid .
-	op neuron : Nat Nat -> Oid .
-	op link : Nat Nat Nat -> Oid .
+	op net : Nat -> Oid [ctor] .
+	op neuron : Nat Nat -> Oid [ctor] .
+	op link : Nat Nat Nat -> Oid [ctor] .
 
 	*** Initial object representation
 	ops ann inputs layer0 layer1 layer2 : -> Configuration .
@@ -61,8 +61,8 @@ mod ANN-BASE is
 	*** Link matrix
 	sorts FloatList Matrix .
 	subsorts Float < FloatList < Matrix .
-	op __ : FloatList FloatList -> FloatList [assoc prec 14] .
-	op _;_ : Matrix Matrix -> Matrix [assoc] .
+	op __ : FloatList FloatList -> FloatList [ctor assoc prec 14] .
+	op _;_ : Matrix Matrix -> Matrix [ctor assoc] .
 
 	*** Conversion operators
 	ops inPatternConversion outPatternConversion : Nat FloatList Nat -> Configuration .

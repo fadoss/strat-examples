@@ -15,7 +15,7 @@ fmod IP-ADDR is
 	*** An Internet Protocol v4 address
 	op _._._._ : Nat Nat Nat Nat -> IPv4Addr [ctor prec 28] .
 	*** An IP host or network address in Classless Inter-Domain Routing notation
-	op _/_ : IPAddr Nat -> CIDR [prec 30] .
+	op _/_ : IPAddr Nat -> CIDR [ctor prec 30] .
 
 	op zero : -> IPAddr .
 	eq zero = 0 . 0 . 0 . 0 .
@@ -200,9 +200,9 @@ mod IP-MESSAGES is
 	subsort IPMsg < Msg < Payload .
 
 	*** Unicast IP datagram
-	op IPMessage : IPAddr IPAddr Payload -> IPMsg [msg format (g o)] .
+	op IPMessage : IPAddr IPAddr Payload -> IPMsg [ctor msg format (g o)] .
 	*** Broadcast or multicast IP datagram within a network
-	op IPMessage : IPAddr NetworkId IPAddr Payload -> IPMsg [msg format (y o)] .
+	op IPMessage : IPAddr NetworkId IPAddr Payload -> IPMsg [ctor msg format (y o)] .
 endm
 
 view Oid from TRIV to CONFIGURATION is
@@ -215,7 +215,7 @@ mod ROUTER is
 	protecting RIP-ENTRIES .
 	protecting SET{Oid} .
 
-	op Router : -> Cid .
+	op Router : -> Cid [ctor] .
 
 	sort Address Interfaces .
 	subsort IPAddr < Address .

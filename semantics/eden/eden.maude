@@ -14,16 +14,16 @@ fmod EDEN-SYNTAX is
 	subsorts Whnf NonWhnf < Exp .
 	subsort LetBinding < LetBindings .
 
-	op n : Nat -> Whnf .
-	op s : String -> Std .
-	op c : String -> Cha .
-	op \_._ : Std Exp -> Whnf [prec 19] .
-	op __ : Exp Exp -> NonWhnf [prec 15 gather (E e)] .
-	op let_in_ : LetBindings Exp -> NonWhnf [prec 20] .
-	op _#_ : Exp Exp -> NonWhnf [prec 15 gather (E e)] .
-	ops _+_ _-_ : Exp Exp -> NonWhnf [assoc prec 16] .
-	ops _*_ : Exp Exp -> NonWhnf [assoc prec 14] .
-	op if0 : Exp Exp Exp -> NonWhnf .
+	op n : Nat -> Whnf [ctor] .
+	op s : String -> Std [ctor] .
+	op c : String -> Cha [ctor] .
+	op \_._ : Std Exp -> Whnf [ctor prec 19] .
+	op __ : Exp Exp -> NonWhnf [ctor prec 15 gather (E e)] .
+	op let_in_ : LetBindings Exp -> NonWhnf [ctor prec 20] .
+	op _#_ : Exp Exp -> NonWhnf [ctor prec 15 gather (E e)] .
+	ops _+_ _-_ : Exp Exp -> NonWhnf [ctor assoc prec 16] .
+	ops _*_ : Exp Exp -> NonWhnf [ctor assoc prec 14] .
+	op if0 : Exp Exp Exp -> NonWhnf [ctor] .
 	op if_==_then_else_endif : Exp Exp Exp Exp -> NonWhnf .
 	op if_=/=_then_else_endif : Exp Exp Exp Exp -> NonWhnf .
 	op if_<=_then_else_endif : Exp Exp Exp Exp -> NonWhnf .
@@ -31,9 +31,9 @@ fmod EDEN-SYNTAX is
 	op if_<_then_else_endif : Exp Exp Exp Exp -> NonWhnf .
 	op if_>_then_else_endif : Exp Exp Exp Exp -> NonWhnf .
 
-	op _=_ : Std Exp -> LetBinding [prec 10] .
-	op nil : -> LetBindings .
-	op __ : LetBindings LetBindings -> LetBindings [assoc id: nil prec 14] .
+	op _=_ : Std Exp -> LetBinding [ctor prec 10] .
+	op nil : -> LetBindings [ctor] .
+	op __ : LetBindings LetBindings -> LetBindings [ctor assoc id: nil prec 14] .
 
 	--- Syntax sugar
 
@@ -47,9 +47,9 @@ fmod EDEN-SYNTAX is
 	eq if E1 > E2 then E3 else E4 endif = if E1 <= E2 then E4 else E3 endif .
 
 	sort ExpNat .
-	op <_`,_> : Exp Nat -> ExpNat .
+	op <_`,_> : Exp Nat -> ExpNat [ctor] .
 	sort LbsNat .
-	op <_`,_> : LetBindings Nat -> LbsNat .
+	op <_`,_> : LetBindings Nat -> LbsNat [ctor] .
 
 endfm
 
@@ -135,8 +135,8 @@ fmod NEWVARS is
 
 	sort StringList .
 	subsort String < StringList .
-	op nil : -> StringList .
-	op _;_ : StringList StringList -> StringList [assoc id: nil] .
+	op nil : -> StringList [ctor] .
+	op _;_ : StringList StringList -> StringList [ctor assoc id: nil] .
 
 	op newvar : String Nat -> String .
 	op newvars : String Nat Nat -> StringList .
@@ -158,31 +158,31 @@ fmod SYSTEMS-SYNTAX is
 	subsort Thread < Heap .
 	subsort Process < System .
 
-	op A : -> TState [format (g o)] .
-	op I : -> TState [format (b o)].
-	op B : -> TState [format (r o)].
-	op _|-_->_ : Var TState Exp -> Thread [prec 25 format (ni d d d d d)] .
+	op A : -> TState [ctor format (g o)] .
+	op I : -> TState [ctor format (b o)].
+	op B : -> TState [ctor format (r o)].
+	op _|-_->_ : Var TState Exp -> Thread [ctor prec 25 format (ni d d d d d)] .
 
-	op none : -> Heap .
-	op _+_ : Heap Heap -> Heap [assoc comm id: none prec 30] .
+	op none : -> Heap [ctor] .
+	op _+_ : Heap Heap -> Heap [ctor assoc comm id: none prec 30] .
 
-	op _:_  : Heap Heap -> Heap [prec 80] .
-	op _&_  : Heap Heap -> Heap [prec 80] .
+	op _:_  : Heap Heap -> Heap [ctor prec 80] .
+	op _&_  : Heap Heap -> Heap [ctor prec 80] .
 
 	var T : Thread .
 	eq T + T = T .  --- + heap idempotence
 
-	op <_`,_`,_`,_> : String Heap Nat Nat -> Process [format (ni c! o ++ -- s d s d d)] .
+	op <_`,_`,_`,_> : String Heap Nat Nat -> Process [ctor format (ni c! o ++ -- s d s d d)] .
 ***  	op <_`,_`,_`,_`,_> : String Heap Heap Nat Nat -> Process .
-	op <_`,_`,_`,_`,_`,_`,_> : String Heap VarSet Heap Heap Nat Nat -> Process .
+	op <_`,_`,_`,_`,_`,_`,_> : String Heap VarSet Heap Heap Nat Nat -> Process [ctor] .
 
-	op empty : -> System .
-	op __ : System System -> System [assoc comm id: empty prec 40] .
+	op empty : -> System [ctor] .
+	op __ : System System -> System [ctor assoc comm id: empty prec 40] .
 
 	sort VarSet .
 	subsort Var < VarSet .
-	op mt : -> VarSet .
-	op _._ : VarSet VarSet -> VarSet [assoc comm id: mt] .
+	op mt : -> VarSet [ctor] .
+	op _._ : VarSet VarSet -> VarSet [ctor assoc comm id: mt] .
 	eq V:Var . V:Var = V:Var .
 
 	var p : String .
@@ -210,14 +210,14 @@ fmod SYSTEMS-AUX-FUN is
 
 	sort VarList .
 	subsort Var < VarList .
-	op nil : -> VarList .
-	op _;_ : VarList VarList -> VarList [assoc id: nil] .
+	op nil : -> VarList [ctor] .
+	op _;_ : VarList VarList -> VarList [ctor assoc id: nil] .
 
 	sorts VarVar VarVarList .
 	subsort VarVar < VarVarList .
-	op <_`,_> : Var Var -> VarVar .
-	op nil : -> VarVarList .
-	op __ : VarVarList VarVarList -> VarVarList [assoc id: nil] .
+	op <_`,_> : Var Var -> VarVar [ctor] .
+	op nil : -> VarVarList [ctor] .
+	op __ : VarVarList VarVarList -> VarVarList [ctor assoc id: nil] .
 
 	vars N M N1 N2 N3 : Nat .
 	vars X Y Z : Std .
@@ -303,7 +303,7 @@ fmod RENAME is
 	pr SYSTEMS-AUX-FUN .
 
 	sort LbsVVListNat .
-	op <_`,_`,_> : LetBindings VarVarList Nat -> LbsVVListNat .
+	op <_`,_`,_> : LetBindings VarVarList Nat -> LbsVVListNat [ctor] .
 
 	vars N M N1 N2 N3 : Nat .
 	vars X Y Z : Std .

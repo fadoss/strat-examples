@@ -39,14 +39,14 @@ fmod EQS-RULES{X :: MODULE} is
 	subsort Eq < EqS .
 	subsort Rl < RlS .
 
-	op _=._ : Term Term -> Eq [comm prec 60] .
-	op _->_ : Term Term -> Rl [prec 60] .
-	op mtEqS : -> EqS .
-	op __ : EqS EqS -> EqS [assoc comm id: mtEqS prec 70] .
+	op _=._ : Term Term -> Eq [ctor comm prec 60] .
+	op _->_ : Term Term -> Rl [ctor prec 60] .
+	op mtEqS : -> EqS [ctor] .
+	op __ : EqS EqS -> EqS [ctor assoc comm id: mtEqS prec 70] .
 	eq E:Eq E:Eq = E:Eq .
 
-	op mtRlS : -> RlS .
-	op __ : RlS RlS -> RlS [assoc comm id: mtRlS prec 70] .
+	op mtRlS : -> RlS [ctor] .
+	op __ : RlS RlS -> RlS [ctor assoc comm id: mtRlS prec 70] .
 	eq R:Rl R:Rl = R:Rl .
 
 	vars Q F            : Qid .
@@ -118,13 +118,13 @@ fmod EXT-TERM is
 	subsort Position < PositionSet .
 	subsort Nat < Position .
 
-	op emptyPos : -> Position .
-	op pos : Position Position -> Position [assoc] .
-	op nullPos : -> Position .
+	op emptyPos : -> Position [ctor] .
+	op pos : Position Position -> Position [ctor assoc] .
+	op nullPos : -> Position [ctor] .
 
-	op emptyPosSet : -> PositionSet .
+	op emptyPosSet : -> PositionSet [ctor] .
 	op posSet : PositionSet PositionSet -> PositionSet
-	        [assoc comm id: emptyPosSet] .
+	        [ctor assoc comm id: emptyPosSet] .
 
 	vars T T'         : Term .
 	var  F            : Qid .
@@ -224,7 +224,7 @@ fmod EXT-TERM is
 	eq substitute1(empty, Subst) = empty .
 
 
-	op _@_ : Substitution Substitution -> Substitution [assoc prec 70] .
+	op _@_ : Substitution Substitution -> Substitution [ctor assoc prec 70] .
 
 	eq substitute(T, Subst @ Subst') = substitute(substitute(T, Subst), Subst') .
 
@@ -317,9 +317,9 @@ fmod UNIFICATION is
 
 	sorts Pair PairSet .
 	subsort Pair < PairSet .
-	op _?=?_ : Term Term -> Pair [comm prec 60] .
-	op none : -> PairSet .
-	op __ : PairSet PairSet -> PairSet [assoc comm id: none prec 70] .
+	op _?=?_ : Term Term -> Pair [ctor comm prec 60] .
+	op none : -> PairSet [ctor] .
+	op __ : PairSet PairSet -> PairSet [ctor assoc comm id: none prec 70] .
 
 	op unify : Term Term ~> Substitution .
 	op unify : PairSet ~> Substitution .
@@ -378,13 +378,13 @@ fmod CRITICAL-PAIRS{X :: MODULE} is
 	*** Critical pairs and critical pair sets
 
 	sort CritPair .
-	op cp : Term Term -> CritPair .
+	op cp : Term Term -> CritPair [ctor] .
 
 	sort CritPairSet .
 	subsort CritPair < CritPairSet .
-	op emptyCritPairSet : -> CritPairSet .
+	op emptyCritPairSet : -> CritPairSet [ctor] .
 	op critPairSet : CritPairSet CritPairSet -> CritPairSet
-	        [assoc comm id: emptyCritPairSet] .
+	        [ctor assoc comm id: emptyCritPairSet] .
 
 
 	op critPairs1 : RlS RlS -> CritPairSet .
@@ -422,7 +422,8 @@ fmod CRITICAL-PAIRS{X :: MODULE} is
 	op equations : CritPairSet -> EqS .
 
 	eq equations(emptyCritPairSet) = mtEqS .
-	eq equations(critPairSet(cp(T,T'), CPS)) = (T =. T') equations(CPS) .
+	eq equations(critPairSet(cp(T,T'), CPS)) = if T == T' then mtEqS else T =. T' fi
+	                                           equations(CPS) .
 
 	op delete : CritPairSet -> CritPairSet .
 

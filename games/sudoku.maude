@@ -12,14 +12,14 @@
 mod CONFIGURATION-FORMAT is
 	sorts Attribute AttributeSet .
 	subsort Attribute < AttributeSet .
-	op none : -> AttributeSet .
+	op none : -> AttributeSet [ctor] .
 	op _`,_ : AttributeSet AttributeSet -> AttributeSet
 		 [ctor assoc comm id: none	format (m! o sm! o)] .
 	sorts Oid Cid Object Configuration .
 	subsort Object < Configuration .
 	op <_:_|_> : Oid Cid AttributeSet -> Object
 		 [ctor object format (n r! o g o tm! ot d)] .
-	op none : -> Configuration .
+	op none : -> Configuration [ctor] .
 	op __ : Configuration Configuration -> Configuration
 		 [ctor config assoc comm id: none] .
 endm
@@ -32,11 +32,11 @@ mod SUDOKU is
 
 
 	*** Cell (Grid, Given, Value and Number) definitions
-	ops cell rows :	-> Cid .
-	op id : Nat Nat -> Oid .
-	ops (grd`:_) (giv`:_) (num`:_) : Nat -> Attribute .
-	op	pss`:_ : Set -> Attribute .
-	op	val`:_ : List -> Attribute .
+	ops cell rows :	-> Cid [ctor] .
+	op id : Nat Nat -> Oid [ctor] .
+	ops (grd`:_) (giv`:_) (num`:_) : Nat -> Attribute [ctor] .
+	op	pss`:_ : Set -> Attribute [ctor] .
+	op	val`:_ : List -> Attribute [ctor] .
 
 
 ********* Initialization of the sudoku *********
@@ -84,7 +84,7 @@ mod SUDOKU is
 	subsort Nat < List .
 	subsort Nat < NeSet < Set .
 
-	op _;_ : Nat List -> List .
+	op _;_ : Nat List -> List [ctor] .
 	op empty : -> Set [ctor] .
 	op __ : Set Set -> Set	[ctor assoc comm id: empty] .
 	op __ : NeSet NeSet -> NeSet [ctor ditto] .

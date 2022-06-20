@@ -9,7 +9,7 @@ fmod RELATION is
 	subsort Entry < Relation .
 
 	op `(_,_`) : Nat Nat -> Entry [ctor] .
-	op empty : -> Relation .
+	op empty : -> Relation [ctor] .
 	op __ : Relation Relation -> Relation [comm assoc ctor id: empty] .
 
 	op _in_ : Entry Relation -> Bool .

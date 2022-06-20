@@ -53,7 +53,7 @@ eof
 *** Common solution
 ***	< mtEqS,'a['x:U] -> 'b['x:U] 'b['x:U] -> 'c['x:U] >
 
-*** with the basic one (Knuth-Bendix)
+*** with the basic one (Terese)
 srew < eqs, mtRlS > using compl .
 *** rewrites: 9757 in 6ms cpu (6ms real) (1471644 rewrites/second)
 

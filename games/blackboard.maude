@@ -10,7 +10,7 @@ mod BLACKBOARD is
 	sort Blackboard .
 	subsort Nat < Blackboard .
 
-	op __ : Blackboard Blackboard -> Blackboard [assoc comm] .
+	op __ : Blackboard Blackboard -> Blackboard [ctor assoc comm] .
 
 	vars M N : Nat .
 

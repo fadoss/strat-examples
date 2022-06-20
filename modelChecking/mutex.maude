@@ -27,8 +27,8 @@ mod MUTEX-PREDS is
 
 	subsort Conf < State .
 
-	op crit : Name -> Prop .
-	op wait : Name -> Prop .
+	op crit : Name -> Prop [ctor] .
+	op wait : Name -> Prop [ctor] .
 	var N : Name .
 	var C : Conf .
 	var P : Prop .

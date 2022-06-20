@@ -5,10 +5,10 @@
 mod RIVER-CROSSING is
 	sort Side Group .
 
-	ops left right : -> Side .
+	ops left right : -> Side [ctor] .
 	op change : Side -> Side .
-	ops s w g c : Side -> Group .
-	op __ : Group Group -> Group [assoc comm] .
+	ops s w g c : Side -> Group [ctor] .
+	op __ : Group Group -> Group [ctor assoc comm] .
 	op init : -> Group .
 
 	vars S S' : Side .

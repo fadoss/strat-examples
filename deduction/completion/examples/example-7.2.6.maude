@@ -64,7 +64,7 @@ eof
 ***	< mtEqS,'f['x:S] -> 'a.S 'g['x:S,'y:S] -> 'a.S 'h['x:S,'y:S] -> 'a.S >
 ***	< mtEqS,'f['y:S] -> 'a.S 'g['x:S,'y:S] -> 'a.S 'h['x:S,'y:S] -> 'a.S >
 
-*** with the basic one (Knuth-Bendix)
+*** with the basic one (Terese)
 srew < eqs, mtRlS > using compl .
 *** rewrites: 211564 in 222ms cpu (221ms real) (949330 rewrites/second)
 *** (gives 10 solution, some are renaming but some others can be simplified)

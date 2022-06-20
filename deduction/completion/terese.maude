@@ -5,7 +5,7 @@
 
 sload completion-rules
 
-smod KNUTH-BENDIX-STRAT{X :: MODULE-AND-ORDER} is
+smod BASIC-COMPLETION-STRAT{X :: MODULE-AND-ORDER} is
 	pr COMPLETION{X} .
 
 	strat compl           @ System .
@@ -20,10 +20,13 @@ smod KNUTH-BENDIX-STRAT{X :: MODULE-AND-ORDER} is
 	sd compl := (matchrew Sys s.t. < E s =. t, R > := Sys by
 	               Sys using (
 	                 *** Simplify both sides of the selected equation
-	                 try(Simplify[s <- s]) ;
-	                 try(Simplify[s <- t]) ;
-	                 *** In case it is reduced to an indentity, delete it
-	                 (Delete[E <- E] or-else (
+	                 try(Simplify[s <- s, E <- E]) ;
+	                 try(Simplify[s <- t, E <- E]) ;
+	                 *** In case it is reduced to an identity, delete it
+	                 try(Delete[E <- E]) ;
+	                 *** Simplify itself may have also removed the equation by
+	                 *** reducing it to an existing one, since E is a set
+	                 (match < E, R > or-else (
 	                      *** Otherwise, orient the equation as a rule
 	                     Orient[E <- E] ;
 	                     *** and calculate its critical pairs

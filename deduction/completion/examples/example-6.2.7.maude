@@ -51,7 +51,7 @@ eof
 *** Common solution
 ***	< mtEqS,'f['f['x:S]] -> 'g['x:S] 'f['g['x:S]] -> 'g['f['x:S]] >
 
-*** with the basic one (Knuth-Bendix)
+*** with the basic one (Terese)
 srew < eqs, mtRlS > using compl .
 *** rewrites: 6944 in 6ms cpu (6ms real) (1046571 rewrites/second)
 
@@ -64,5 +64,5 @@ srew < eqs, mtRlS > using S-COMP .
 *** rewrites: 2253 in 0ms cpu (3ms real) (~ rewrites/second)
 
 *** with ANS-Completion
-srew < mtRlS, mtRlS, mtRlS, mtRlS, mtRlS, eqs > using ANS-COMP .
+srew < eqs, mtRlS > using ANS-COMP .
 *** rewrites: 2253 in 3ms cpu (3ms real) (675764 rewrites/second)

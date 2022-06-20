@@ -35,7 +35,7 @@ fmod LP-SYNTAX is
 
   sort Program .
   subsort Clause < Program .
-  op nil : -> Program .
+  op nil : -> Program [ctor] .
   op _;_ : Program Program -> Program [ctor assoc prec 70 id: nil] .
 
 endfm
@@ -50,7 +50,7 @@ fmod LP-SYNTAX+CUT is
   *** The cut symbol
   op ! : -> NePredicateList [ctor] .
 
-  mb nil : CfPredicateList .
+  op nil : -> CfPredicateList [ctor ditto] .
 
   op _,_ : NeCfPredicateList NeCfPredicateList -> NeCfPredicateList [ditto] .
   op _,_ : CfPredicateList CfPredicateList -> CfPredicateList [ditto] .
@@ -69,7 +69,7 @@ fmod LP-UNIFICATION is
   sort Substitution .
   subsort Binding < Substitution .
   op empty : -> Substitution [ctor] .
-  op _;_ : Substitution Substitution -> Substitution [assoc comm prec 70 id: empty] .
+  op _;_ : Substitution Substitution -> Substitution [ctor assoc comm prec 70 id: empty] .
 
   sort Substitution? .
   subsort Substitution < Substitution? .
@@ -293,7 +293,7 @@ smod PROLOG+CUT is
     *** If the objective list does not contain a cut,
     *** it tries to unify the head with the program clauses as usual
     matchrew Conf s.t. < N | CfPL $ S | Pr > := Conf by Conf using clauseWalk(Pr)
-    *** At the presence of a cut, it tries to find a single solution for the
+    *** In the presence of a cut, it tries to find a single solution for the
     *** objectives to its left and then it continues with the rest as usual
     | matchrew Conf s.t. < N | CfPL, !, PL $ S | Pr > := Conf by Conf using (cut{solveOne} ; solve)
   ) .

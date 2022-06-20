@@ -20,14 +20,14 @@ fmod NORMALIZATION is
 	var LB : LetBinding .
 
 	sort StdExp .
-	op {_`,_} : Std Exp -> StdExp .
+	op {_`,_} : Std Exp -> StdExp [ctor] .
 	sort StdExpList .
 	subsort StdExp < StdExpList .
-	op none : -> StdExpList .
-	op __ : StdExpList StdExpList -> StdExpList [assoc id: none] .
+	op none : -> StdExpList [ctor] .
+	op __ : StdExpList StdExpList -> StdExpList [ctor assoc id: none] .
 
 	sort StdExpListNat .
-	op <_`,_> : StdExpList Nat -> StdExpListNat .
+	op <_`,_> : StdExpList Nat -> StdExpListNat [ctor] .
 
 	vars sel sel' : StdExpList .
 	vars seln seln' : StdExpListNat .

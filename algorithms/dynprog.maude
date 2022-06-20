@@ -14,7 +14,7 @@ mod DYNAMIC-PROBLEM-DATA{K :: TRIV, V :: TRIV} is
 	subsort Result < Table .
 
 	*** Table of computed results
-	op <_,_> : K$Elt V$Elt -> Result .
+	op <_,_> : K$Elt V$Elt -> Result [ctor] .
 
 	op empty : -> Table [ctor] .
 	op __    : Table Table -> Table [ctor assoc comm id: empty] .
@@ -57,7 +57,7 @@ th DYNAMIC-PROBLEM-BASE is
 	subsort Result < Table .
 
 	*** Table of computed results
-	op <_,_>  : Key Value -> Result .
+	op <_,_>  : Key Value -> Result [ctor] .
 
 	op empty  : -> Table [ctor] .
 	op __     : Table Table -> Table [ctor assoc comm id: empty] .

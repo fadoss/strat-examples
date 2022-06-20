@@ -50,7 +50,7 @@ eof
 ***	         '*['*['x1:S,'*['x:S,'y:S]],'y:S] -> '*['x:S,'y:S]
 ***		 '*['*['x:S,'y:S],'*['y:S,'z:S]] -> 'y:S >
 
-*** with the basic one (Knuth-Bendix)
+*** with the basic one (Terese)
 dsrew [1] < eqs, mtRlS > using compl .
 *** rewrites: 15754 in 6ms cpu (8ms real) (2373305 rewrites/second)
 

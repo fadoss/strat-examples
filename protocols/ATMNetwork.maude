@@ -10,7 +10,7 @@ mod PAIRNODES is
 	protecting CONFIGURATION .
 
 	sort NodesPair .
-	op <<_;_>> : Oid Oid -> NodesPair .
+	op <<_;_>> : Oid Oid -> NodesPair [ctor] .
 endm
 
 mod SERVICEDEMAND is

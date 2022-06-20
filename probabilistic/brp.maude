@@ -54,7 +54,7 @@ mod BRP-SENDER is
 	*** Request to send with (receiver of the message to be sent, number of chunks)
 	op send : Oid Oid Oid Nat -> Msg [ctor msg] .
 	*** Confirmation message with (receiver, result)
-	op conf : Oid Oid Oid SResult -> Msg .
+	op conf : Oid Oid Oid SResult -> Msg [ctor msg] .
 
 	*** Confirmation variant
 	ops not-ok do-not-know ok : -> SResult [ctor] .

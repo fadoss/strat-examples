@@ -9,7 +9,7 @@ fmod POSITIONS is
 
 	sort Pos .
 
-	op [_,_] : Nat Nat -> Pos .
+	op [_,_] : Nat Nat -> Pos [ctor] .
 endfm
 
 view Pos from TRIV to POSITIONS is
@@ -25,8 +25,8 @@ mod LABYRINTH is
 	op wall : -> List{Pos} .
 
 	vars X Y : Nat .
-	vars P Q : Pos .
-	var  L   : List{Pos} .
+	var P Q : Pos .
+	var L : List{Pos} .
 
 	eq wall = [5,5] [5,6] [5,7] [5, 8] [6,5] [7,5] .
 	eq isSolution(L [8,8]) = true .

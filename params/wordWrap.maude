@@ -29,7 +29,7 @@ fmod LINE is
 
 	sort Line .
 
-	op {_}   : List{Word} -> Line .
+	op {_}   : List{Word} -> Line [ctor] .
 	op {_@_} : List{Word} Rat -> Line [ctor] .
 endfm
 

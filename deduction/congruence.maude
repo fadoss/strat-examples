@@ -10,18 +10,18 @@ fmod EQS-RULES is
 	sort UConstant .
 	subsort UConstant < GroundTerm .
 
-	op c : Nat -> UConstant .
+	op c : Nat -> UConstant [ctor] .
 
 	sort Eq EqS Rl RlS .
 	subsort Eq < EqS .
 	subsort Rl < RlS .
 
-	op _=_ : GroundTerm GroundTerm -> Eq [comm prec 60] .
-	op _->_ : GroundTerm GroundTerm -> Rl [prec 60] .
-	op mtEqS : -> EqS .
-	op __ : EqS EqS -> EqS [assoc comm id: mtEqS prec 70] .
-	op mtRlS : -> RlS .
-	op __ : RlS RlS -> RlS [assoc comm id: mtRlS prec 70] .
+	op _=_ : GroundTerm GroundTerm -> Eq [ctor comm prec 60] .
+	op _->_ : GroundTerm GroundTerm -> Rl [ctor prec 60] .
+	op mtEqS : -> EqS [ctor] .
+	op __ : EqS EqS -> EqS [ctor assoc comm id: mtEqS prec 70] .
+	op mtRlS : -> RlS [ctor] .
+	op __ : RlS RlS -> RlS [ctor assoc comm id: mtRlS prec 70] .
 endfm
 
 fmod AUX-FUNCTIONS is
@@ -30,8 +30,8 @@ fmod AUX-FUNCTIONS is
 	sorts GroundTermSet SubTerm .
 	subsorts GroundTerm < GroundTermSet SubTerm .
 
-	op mtTS : -> GroundTermSet .
-	op __ : GroundTermSet GroundTermSet -> GroundTermSet [assoc comm id: mtTS prec 45] .
+	op mtTS : -> GroundTermSet [ctor] .
+	op __ : GroundTermSet GroundTermSet -> GroundTermSet [ctor assoc comm id: mtTS prec 45] .
 
 	op subGroundTerms : GroundTerm -> GroundTermSet [memo] .
 	op subGroundTermsTL : GroundTermList -> GroundTermSet [memo] .
@@ -86,7 +86,7 @@ mod ABSTRACT-CONGRUENCE-CLOSURE is
 
 	sort State .
 
-	op <_,_,_> : Nat EqS RlS -> State .
+	op <_,_,_> : Nat EqS RlS -> State [ctor] .
 
 	var  K        : Nat .
 	vars c d      : UConstant .

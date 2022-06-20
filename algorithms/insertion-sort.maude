@@ -11,9 +11,9 @@ mod SORTING is
 	sorts Pair PairSet .
 	subsort Pair < PairSet .
 
-	op `(_`,_`) : Nat Value -> Pair .
-	op empty : -> PairSet .
-	op __ : PairSet PairSet -> PairSet [assoc comm id: empty] .
+	op `(_`,_`) : Nat Value -> Pair [ctor] .
+	op empty : -> PairSet [ctor] .
+	op __ : PairSet PairSet -> PairSet [ctor assoc comm id: empty] .
 
 	op length : PairSet -> Nat .
 
