@@ -1,0 +1,6 @@
+NumIters(n) = if (s.rval("S |= sorted") == 1) then n
+	else if (s.rval("S |= check") == 1) then # NumIters(n + 1)
+		else # NumIters(n) fi
+	fi ;
+
+eval E[NumIters(0)] ;

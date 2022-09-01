@@ -1,0 +1,376 @@
+***
+*** Abstract specification of some aspects of HTTP/2 and HTTP/3
+***
+*** The goal of this specification is comparing the transmission delay of the first
+*** and last packages of a multiplexed HTTP connection under the versions 2 and 3 of
+*** the protocol in a fixed setting. The expected result is that the full transmission
+*** of the first stream is slower in HTTP/2 due to head-of-line blocking. This
+*** specification assumes that:
+***
+***  1. Packages traverse the communication channel in the order they are sent,
+***     and lost packages are retransmitted immediately.
+***  2. All streams transmit the same amount of the data, partitioned in the same
+***     number of chunks. Data is immediately available and chunks are sent by
+***     the user-level program as soon as the communication layer allows it.
+***  3. The simultaneous streams are served by the communication infrastructure
+***     in round-robin. Some assumption like this is needed because the delay of
+***     of the first package in a concurrent context would yield quite different
+***     values, from an unfair policy that sends all packets of a single stream
+***     first to the chosen fair round-robin policy.
+***
+
+view Msg from TRIV to CONFIGURATION is
+	sort Elt to Msg .
+endv
+
+mod MSG-LIST is
+	protecting (LIST * (op __ to _·_)){Msg} * (
+		sort List{Msg} to MsgList,
+		sort NeList{Msg} to NeMsgList
+	) .
+endm
+
+mod NETWORKING-COMMON is
+	protecting CONFIGURATION .
+	protecting NAT .
+	protecting MSG-LIST .
+
+	*** Parameters
+	op numChunks : -> Nat .		*** Number of chunks to be transmitted
+	eq numChunks = 10 .
+
+	*** Object classes
+	ops Stream Node Simulation Channel : -> Cid [ctor] .
+
+	*** Object identifiers
+
+	*** stream(P, N) is the N-th stream in parent P
+	op stream : Oid Nat -> Oid [ctor] .
+	*** Client, server, and a auxiliary object for the simulation
+	ops client server simulation : -> Oid [ctor] .
+	*** chan(T, F) is a channel form F to T
+	op chan : Oid Oid -> Oid [ctor] .
+
+	*** Mode of a stream
+	sort Mode .
+	ops sender receiver : -> Mode [ctor] .
+
+	*** Attributes of the different objects
+
+	op seqn:_ : Nat -> Attribute [ctor gather (&)] .  *** sequence number
+	op mode:_ : Mode -> Attribute [ctor gather (&)] .  *** mode (sender/receiver)
+	op queue:_ : MsgList -> Attribute [ctor gather (&)] .  *** queue of messages
+	op ready:_ : Bool -> Attribute [ctor gather (&)] .  *** whether the channel/node is ready
+
+	var  N             : Nat .
+	var  C             : Configuration .
+	vars O S           : Oid .
+	var  M             : Msg .
+	var  Q             : MsgList .
+	vars Attrs1 Attrs2 : AttributeSet .
+
+	*** Channels are modeled as queues where some packages may be lost
+	*** but otherwise their order is preserved.
+
+	*** A package arrives to the end of the channel without trouble
+	rl [channel-ok] :
+		< O : Channel | queue: M · Q, ready: false, Attrs1 >
+		< S : Simulation | Attrs2 >
+	=>
+		< O : Channel | queue: M · Q, ready: true, Attrs1 >
+		< S : Simulation | countPkg(Attrs2) >
+	.
+
+	*** A package is lost in the channel and the sender resends it (all in one)
+	rl [channel-loss] :
+		< O : Channel | queue: M · Q, ready: false, Attrs1 >
+		< S : Simulation | Attrs2 >
+	=>
+		< O : Channel | queue: Q · M, ready: false, Attrs1 >
+		< S : Simulation | countPkg(Attrs2) >
+	.
+
+	*** Number of packages that have been sent in the simulation
+	op numPkgs : Configuration -> Nat .
+	eq numPkgs(< S : Simulation | seqn: N > C) = N .
+
+	*** Increment the counter of sent packages
+	op countPkg : AttributeSet -> AttributeSet .
+	eq countPkg((seqn: N, Attrs1)) = seqn: s N, Attrs1 .
+	eq countPkg(Attrs1) = Attrs1 [owise] .
+endm
+
+mod HTTP3 is
+	protecting NETWORKING-COMMON .
+
+	var  C                    : Configuration .
+	vars O P R S              : Oid .
+	vars N K PS               : Nat .
+	vars Q Q1 Q2              : MsgList .
+	vars Attrs1 Attrs2 Attrs3 : AttributeSet .
+	var  M                    : Msg .
+	var  B                    : Bool .
+
+	*** Simplified QUIC STREAM package with (stream ID, offset)
+	*** We omit connection IDs, package numbers, and other fields that
+	*** are not relevant to the experiment.
+	op packet : Nat Nat -> Msg [ctor msg] .
+	*** Simplified QUIC ACK package
+	*** Acknowledgment messages specify a range of packet numbers, but here
+	*** we acknowledge a single packet identified by (stream ID, offset).
+	*** This does not affect the experiments since ACKs are not counted.
+	op ack : Nat Nat -> Msg [ctor msg] .
+	*** UDP message (destination, origin, payload)
+	op udp : Oid Oid Msg -> Msg [ctor msg] .
+
+	*** A stream sends a package when receiving an ACK
+	rl [stream-send] :
+		< stream(P, K) : Stream | mode: sender, seqn: N >
+		< chan(P, R) : Channel | queue: udp(P, R, ack(K, N)) · Q1, ready: true, Attrs1 >
+		< chan(R, P) : Channel | queue: Q2, Attrs2 >
+	=>
+		< stream(P, K) : Stream | mode: sender, seqn: s N >
+		< chan(P, R) : Channel | queue: Q1, ready: false, Attrs1 >
+
+		if s N < numChunks then
+			< chan(R, P) : Channel | queue: Q2 · udp(R, P, packet(K, s N)), Attrs2 >
+		else
+			< chan(R, P) : Channel | queue: Q2, Attrs2 >
+		fi
+	.
+
+	*** A stream sends an ACK when receiving a package
+	rl [stream-receive] :
+		< stream(P, K) : Stream | mode: receiver, seqn: N >
+		< chan(P, R) : Channel | queue: udp(P, R, packet(K, N)) · Q1, ready: true, Attrs1 >
+		< chan(R, P) : Channel | queue: Q2, Attrs2 >
+	=>
+		< stream(P, K) : Stream | mode: receiver, seqn: s N >
+		< chan(P, R) : Channel | queue: Q1, ready: false, Attrs1 >
+		< chan(R, P) : Channel | queue: Q2 · udp(R, P, ack(K, N)), Attrs2 >
+	.
+
+	*** Initial configuration (number of streams, whether packages are counted)
+	op initial : Nat Bool -> Configuration .
+	op makeStreams : Nat -> Configuration .
+	op initialQueue : Nat -> MsgList .
+
+	eq initial(N, B) =
+		< simulation : Simulation | if B then seqn: 0 else none fi >
+		< chan(client, server) : Channel | queue: initialQueue(N), ready: false >
+		< chan(server, client) : Channel | queue: nil, ready: false >
+		makeStreams(N) .
+
+	eq makeStreams(0) = none .
+	eq makeStreams(s K) =
+		< stream(server, K) : Stream | mode: sender, seqn: 0 >
+		< stream(client, K) : Stream | mode: receiver, seqn: 0 >
+		makeStreams(K) .
+
+	*** The first package of every stream is already sent (but not yet counted)
+	eq initialQueue(0) = nil .
+	eq initialQueue(s N) = initialQueue(N) · udp(client, server, packet(N, 0)) .
+endm
+
+smod HTTP3-STRAT is
+	protecting HTTP3 .
+
+	var  O : Oid .
+	vars Attrs1 Attrs2 : AttributeSet .
+
+	strat step @ Configuration .
+
+	*** With this strategy we ensure without loss of relevant generality that
+	*** the system does not contain nondeterminism but in the choice between
+	*** channel-ok and channel-lost for a given channel
+
+	sd step := stream-receive or-else stream-send or-else
+	           (channel-ok[O <- chan(client, server)] | channel-loss[O <- chan(client, server)]) or-else
+	           (channel-ok[O <- chan(server, client)] | channel-loss[O <- chan(server, client)]) .
+endsm
+
+sload model-checker
+
+mod NETWORKING-PREDS is
+	protecting NETWORKING-COMMON .
+	including SATISFACTION .
+
+	subsort Configuration < State .
+
+	ops one-finished all-finished : -> Prop [ctor] .
+
+	var C : Configuration .
+	var O : Oid .
+	var N : Nat .
+
+	ceq < O : Stream | mode: receiver, seqn: N > C |= one-finished = true
+	 if N == numChunks .
+	eq C |= one-finished = false [owise] .
+
+	ceq < O : Stream | mode: receiver, seqn: N > C |= all-finished = false
+	 if N < numChunks .
+	eq C |= all-finished = true [owise] .
+endm
+
+smod HTTP3-CHECK is
+	protecting NETWORKING-PREDS .
+	protecting HTTP3-STRAT .
+	including MODEL-CHECKER .
+
+	var C : Configuration .
+endsm
+
+mod HTTP2 is
+	protecting NETWORKING-COMMON .
+	protecting LIST{Nat} .
+
+	var  C                    : Configuration .
+	vars O P R S              : Oid .
+	vars N K PS NS NN N'      : Nat .
+	vars Q Q1 Q2 Q3           : MsgList .
+	vars Attrs1 Attrs2 Attrs3 : AttributeSet .
+	vars M M'                 : Msg .
+	var  L                    : List{Nat} .
+	vars B W                  : Bool .
+
+	*** Attributes of the server class
+
+	op pending:_ : MsgList -> Attribute [ctor gather (&)] .  *** TCP reassembly queue
+	op pids:_ : List{Nat} -> Attribute [ctor gather (&)] .  *** stream identifier for round-robin
+	op waiting:_ : Bool -> Attribute [ctor gather (&)] .  *** whether waiting for an ACK
+
+	*** TCP wrapper (receiver, sender, sequence number, payload)
+	op tcp : Oid Oid Nat Msg -> Msg [ctor msg] .
+	*** TCP package with the ACK flag set (since the communication is
+	*** unidirectional, ACK packages do not carry a payload)
+	op ack : Oid Oid Nat -> Msg [ctor msg] .
+	*** HTTP/2 data packet (stream ID, offset)
+	op packet : Nat Nat -> Msg .
+
+	*** A package is sent to a stream when the TCP stack is not blocked
+	rl [stream-send] :
+		< stream(P, K) : Stream | mode: sender, seqn: N >
+		< P : Node | queue: Q, ready: true, pids: K L, Attrs1 >
+	=>
+		if N < numChunks then
+			< stream(P, K) : Stream | mode: sender, seqn: s N >
+			< P : Node | queue: packet(K, N) · Q, ready: false, pids: L K, Attrs1 >
+		else
+			< stream(P, K) : Stream | mode: sender, seqn: N >
+			< P : Node | queue: Q, ready: true, pids: L, Attrs1 >
+		fi
+	.
+
+	*** A package received by the TCP stack for a stream is processed by the user program
+	rl [stream-receive] :
+		< stream(P, K) : Stream | mode: receiver, seqn: N >
+		< P : Node | queue: packet(K, N) · Q, Attrs1 >
+	=>
+		< stream(P, K) : Stream | mode: receiver, seqn: s N >
+		< P : Node | queue: Q, Attrs1 >
+	.
+
+	*** The server sends a TCP packet for a message in its queue
+	rl [tcp-send] :
+		< P : Node | queue: M · Q1, seqn: N, ready: B, waiting: false, Attrs1 >
+		< chan(O, P) : Channel | queue: Q2, Attrs2 >
+	=>
+		< P : Node | queue: Q1, seqn: N, ready: Q1 == nil, waiting: true, Attrs1 >
+		< chan(O, P) : Channel | queue: Q2 · tcp(O, P, N, M), Attrs2 >
+	.
+
+	*** The client receives a TCP packet and answers with an TCP-ACK
+	rl [tcp-receive] :
+		< P : Node | queue: Q1, seqn: N, Attrs1 >
+		< chan(P, O) : Channel | queue: tcp(P, O, N, M) · Q2, ready: true, Attrs2 >
+		< chan(O, P) : Channel | queue: Q3, Attrs3 >
+	=>
+		< P : Node | queue: Q1 · M, seqn: s N, Attrs1 >
+		< chan(P, O) : Channel | queue: Q2, ready: false, Attrs2 >
+		< chan(O, P) : Channel | queue: Q3 · ack(O, P, N), Attrs3 >
+	.
+
+	*** The client receives a package out of order (and stores it in the
+	*** reassembly queue, which is assumed unbounded here)
+	crl [tcp-receive-ooo] :
+		< P : Node | seqn: N, pending: Q1, Attrs1 >
+		< chan(P, O) : Channel | queue: tcp(P, O, N', M) · Q2, ready: true, Attrs2 >
+	=>
+		< P : Node | seqn: N, pending: insert(Q1, tcp(P, O, N', M)), Attrs1 >
+		< chan(P, O) : Channel | queue: Q2, ready: false, Attrs2 >
+
+	if N =/= N' .
+
+	*** Sends the ACK for a package in the reassembly queue when its turn arrives
+	rl [tcp-pending] :
+		< P : Node | queue: Q1, pending: tcp(P, O, N, M) · Q2, seqn: N, Attrs1 >
+		< chan(P, O) : Channel | queue: Q3, Attrs2 >
+	=>
+		< P : Node | queue: Q1 · M, pending: Q2, seqn: s N, Attrs1 >
+		< chan(P, O) : Channel | queue: Q3 · ack(O, P, N), Attrs2 >
+	.
+
+	*** Receive ACK and set up for sending another package
+	rl [tcp-ack] :
+		< P : Node | seqn: N, waiting: true, Attrs1 >
+		< chan(P, O) : Channel | queue: ack(P, O, N) · Q2, ready: true, Attrs2 >
+	=>
+		< P : Node | seqn: s N, waiting: false, Attrs1 >
+		< chan(P, O) : Channel | queue: Q2, ready: false, Attrs2 >
+	.
+
+	*** Insert a message into a list sorted by sequence number
+	op insert : MsgList Msg -> MsgList .
+	eq insert(nil, M) = M .
+	eq insert(tcp(O, P, N', M') · Q, tcp(R, S, N, M)) = if N < N' then
+			tcp(R, S, N, M) · tcp(O, P, N', M') · Q
+		else
+			tcp(O, P, N', M') · insert(Q, tcp(R, S, N, M))
+		fi .
+
+	*** Initial configuration
+	op initial : Nat Bool -> Configuration .
+	op makeStreams : Nat -> Configuration .
+
+	eq initial(N, B) =
+		< simulation : Simulation | if B then seqn: 0 else none fi >
+		< server : Node | queue: nil, pending: nil, seqn: 0, pids: range(N), ready: true, waiting: false >
+		< client : Node | queue: nil, pending: nil, seqn: 0 >
+		< chan(server, client) : Channel | queue: nil, ready: false >
+		< chan(client, server) : Channel | queue: nil, ready: false >
+		makeStreams(N) .
+
+	eq makeStreams(0) = none .
+	eq makeStreams(s K) =
+		< stream(server, K) : Stream | mode: sender, seqn: 0 >
+		< stream(client, K) : Stream | mode: receiver, seqn: 0 >
+		makeStreams(K) .
+
+	*** range(N) is the list of integer numbers from 0 to N
+	op range : Nat -> List{Nat} .
+	eq range(0) = nil .
+	eq range(s N) = range(N) N .
+endm
+
+smod HTTP2-STRAT is
+	protecting HTTP2 .
+
+	strat step @ Configuration .
+
+	*** Communication inside the machine is faster than between machines,
+	*** and this prevents nondeterminism except for the choice between
+	*** channel-ok and channel-loss
+
+	sd step := (stream-send | stream-receive | tcp-send | tcp-receive | tcp-receive-ooo | tcp-pending | tcp-ack)
+	   or-else (channel-ok | channel-loss) .
+endsm
+
+smod HTTP2-CHECK is
+	protecting NETWORKING-PREDS .
+	protecting HTTP2-STRAT .
+	including MODEL-CHECKER .
+
+	var C : Configuration .
+endsm
+
+*** umaudemc pcheck quic -m HTTP2-CHECK 'initial(1, false)' '<> one-finished' 'step !' --backend storm --steps --assign 'uaction(channel-loss.p=0.2)'

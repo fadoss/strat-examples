@@ -1,0 +1,7 @@
+First() = if (s.rval("C |= one-finished") == 1) then
+		s.rval("numPkgs(C)")
+	  else
+	  	# First()
+	  fi ;
+
+eval E[First()] ;

@@ -59,3 +59,10 @@ smod SIMPLE-CLIENT-SERVER-STRAT is
 			| busy-drop
 		) ! ; top(tick) .
 endsm
+
+*** umaudemc scheck client-server.maude init client-server.multiquatex step -d 3.0
+*** Number of simulations = 3960
+***  x = 1.0        μ = 0.3146464646464647   σ = 0.8526070304859534   r = 0.02656331068041511
+***  x = 6.0        μ = 12.03459595959596    σ = 15.583135588344287   r = 0.48549877869561175
+***  x = 11.0       μ = 43.157828282828284   σ = 48.123085528452876   r = 1.4992938435704606
+***  x = 16.0       μ = 87.64343434343435    σ = 96.14003023093179    r = 2.9952808275497973

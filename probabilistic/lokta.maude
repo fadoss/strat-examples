@@ -163,6 +163,30 @@ smod LOKTA-TUPLE-STRAT is
 	sd repeat(s N) := step ? repeat(N) : idle .
 endsm
 
+mod LOKTA-TUPLE-METADATA is
+	protecting CONVERSION .
+
+	*** Like LOKTA-TUPLE but everything is in metadata and time is implicit
+
+	sort System .
+
+	op <_,_,_> : Nat Nat Nat -> System [ctor] .
+
+	var  S       : System .
+	vars X Y1 Y2 : Nat .
+	var  T TP    : Float .
+
+	rl [xy1] : < s X,   Y1,   Y2 > => < s X, s Y1,     Y2 > [metadata "10 * s X * Y1"] .
+	rl [y12] : <   X, s Y1, s Y2 > => <   X,   Y1, s s Y2 > [metadata "0.01 * float(s Y1 * s Y2)"] .
+	rl [y20] : <   X,   Y1, s Y2 > => <   X,   Y1,     Y2 > [metadata "10 * s Y2"] .
+
+	op initial : -> System .
+	eq initial = < 1, 1000, 1000 > .
+
+	op gety : System -> Nat .
+	eq gety(< X, Y1, Y2 >) = Y1 + Y2 .
+endm
+
 eof
 
 srew in LOKTA-AC-STRAT : initial using step .
@@ -172,3 +196,10 @@ srew in LOKTA-TUPLE-STRAT : initial using step .
 srew in LOKTA-AC-STRAT : initial using repeat(100) .
 srew in LOKTA-LP-STRAT : initial using repeat(100) .
 srew in LOKTA-TUPLE-STRAT : initial using repeat(100) .
+
+*** umaudemc scheck lokta.maude -m LOKTA-TUPLE-METADATA initial lokta.quatex --assign metadata -b 100
+*** Number of simulations = 1000
+*** Query 1 (line 7:1)
+***  μ = 1999.924                  σ = 7.984859546789728         r = 0.495497949068723
+*** Query 2 (line 8:1)
+***  μ = 0.0033334933180293206     σ = 1.0105960077485524e-05    r = 6.271221757153766e-07

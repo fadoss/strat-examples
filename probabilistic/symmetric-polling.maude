@@ -94,3 +94,4 @@ smod SYMMETRIC-POLLING-STRAT is
 endsm
 
 *** mvmaude symmetric-polling.maude init symmetric-polling.multiquatex step
+*** and the same with umaudemc scheck

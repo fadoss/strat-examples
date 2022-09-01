@@ -1,0 +1,8 @@
+YAt(n) = if (n == 0) then s.rval("gety(S)")
+                     else #YAt(n - 1) fi ;
+
+TimeAt(n) = if (n == 0) then s.rval("time")
+                        else #TimeAt(n - 1) fi ;
+
+eval E[ YAt(100) ] ;
+eval E[ TimeAt(100) ] ;

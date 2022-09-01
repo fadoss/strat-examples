@@ -1,0 +1,5 @@
+StepsFor(n) = if (n == 0) then s.rval("steps")
+              else if (s.rval("C == head") == 1) then #StepsFor(n - 1)
+              else #StepsFor(n) fi fi ;
+
+eval parametric(E[StepsFor(x)], x, 1, 2, 30);

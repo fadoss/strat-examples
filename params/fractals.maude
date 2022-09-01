@@ -126,15 +126,8 @@ view CantorDust from MAP-LIST to CANTOR-DUST is
 endv
 
 smod FRACTALS-STRAT{X :: MAP-LIST} is
-	protecting STRAT-MAP{X} * (
-		sort List{Striv0}{X} to Space,
-		op __ to __ [prec 46 format (- n -)]
-	) .
-	protecting EXPAND-EPSILON{X} * (
-		sort List{Striv0}{X} to Space,
-		op __ to __ [prec 46 format (- n -)]
-	) .
-
+	protecting STRAT-MAP{X} .
+	protecting EXPAND-EPSILON{X} .
 	protecting NAT .
 
 	strat expandTimes : Nat @ Space .

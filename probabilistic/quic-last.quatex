@@ -1,0 +1,7 @@
+Last() = if (s.rval("C |= all-finished") == 1) then
+		s.rval("numPkgs(C)")
+	 else
+	 	# Last()
+	 fi ;
+
+eval E[Last()] ;

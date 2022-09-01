@@ -1,0 +1,227 @@
+***
+*** Stochastic Petri nets where transitions are represented as terms
+***
+*** Both places and transitions are represented as terms in a common soup, and the
+*** matchrew-with-weigth operator is used to select the transitions according to their
+*** rates, which may depend on the marking.
+***
+*** This encoding is less efficient than stpetri-tmpl.maude, where transitions are
+*** represented as rewrite rules, but the advantage is that everything is a term
+***
+
+mod PETRI-NET is
+	protecting NAT .
+	protecting FLOAT .
+	protecting EXT-BOOL .
+
+	sorts PetriNet Soup Place PlaceId Arc Transition ArcSet .
+	subsorts Place Transition < Soup .
+	subsorts Arc < ArcSet .
+
+	*** Place
+	op {_:_} : PlaceId Nat -> Place [ctor] .
+	*** Transition with rate (in-put and outputs are assumed disjoint)
+	op <_,_> : PlaceId Nat -> Arc [ctor] .	*** arc with multiplicity
+	op {_=_=>_} : ArcSet Float ArcSet -> Transition [ctor] .
+
+	*** Place list (could be set)
+	op none : -> ArcSet [ctor] .
+	op __   : ArcSet ArcSet -> ArcSet [ctor assoc comm id: none] .
+
+	*** Soup of places and transitions
+	op none : -> Soup [ctor] .
+	op __   : Soup Soup -> Soup [ctor assoc comm id: none] .
+
+	*** Untimed Petri net
+	op net : Soup -> PetriNet .
+	*** Timed Petri net
+	op net : Soup Float -> PetriNet .
+
+	*** Check whether a rule is enabled
+	op enabled : ArcSet Soup -> Bool .
+
+	eq enabled(none, S) = true .
+	eq enabled(< P, N > AS, {P : M} S) = M >= N and-then enabled(AS, S) .
+	eq enabled(AS, S) = false [owise] .
+
+	*** Fire a transition (partial function)
+	op apply : ArcSet ArcSet Soup ~> Soup .
+
+	ceq apply(< P, N > I, O, {P : M} S) = apply(I, O, {P : sd(M, N)} S) if M >= N .
+	eq apply(I, < P, N > O, {P : M} S) = apply(I, O, {P : M + N} S) .
+	eq apply(none, none, S) = S .
+
+	vars I O AS : ArcSet .
+	var  P      : PlaceId .
+	var  N M    : Nat .
+	vars S S'   : Soup .
+	vars T D R  : Float .
+
+	*** Firing rules
+	crl [fire] : net({I = R => O} S) => net({I = R => O} S') if S' := apply(I, O, S) .
+	crl [fire] : net({I = R => O} S, T) => net({I = R => O} S', T + 1.0 / R) if S' := apply(I, O, S) .
+
+	*** Auxiliary functions
+
+	*** Get the current time
+	op time : PetriNet ~> Float .
+	eq time(net(S, T)) = T .
+
+	*** Get the number of tokens at the given place
+	op _[_] : PetriNet PlaceId ~> Nat .
+	op _[_] : Soup PlaceId ~> Nat .
+
+	eq net(S)[P] = S[P] .
+	eq net(S, T)[P] = S[P] .
+	eq ({P : N} S)[P] = N .
+endm
+
+smod PETRI-NET-STRAT is
+	protecting PETRI-NET .
+	protecting CONVERSION .
+
+	*** The firing rate is the number attached to the transition
+	strats simpleRates simpleRates-timed @ PetriNet .
+	*** The firing rate is the previous number times the
+	*** number of tokens in the input places
+	strats linearRates linearRates-timed @ PetriNet .
+
+	var  P      : PlaceId .
+	var  PN     : PetriNet .
+	vars I O AS : ArcSet .
+	vars R T    : Float .
+	vars N M    : Nat .
+	var  S      : Soup .
+
+	sd simpleRates := matchrew PN s.t. net({ I = R => O } S) := PN /\ enabled(I, S)
+	                    with weight R by PN using fire[I <- I, O <- O, R <- R] .
+
+	sd simpleRates-timed := matchrew PN s.t. net({ I = R => O } S, T) := PN /\ enabled(I, S)
+	                          with weight R by PN using fire[I <- I, O <- O, R <- R] .
+
+	sd linearRates := matchrew PN s.t. net({ I = R => O } S) := PN /\ enabled(I, S)
+	                    with weight R * float(countTokens(I, S))
+	                    by PN using fire[I <- I, O <- O, R <- R] .
+
+	sd linearRates-timed := matchrew PN s.t. net({ I = R => O } S, T) := PN /\ enabled(I, S)
+	                          with weight R * float(countTokens(I, S))
+	                          by PN using fire[I <- I, O <- O, R <- R] .
+
+	*** Count the number of tokens in the places of the given arc set
+	op countTokens : ArcSet Soup -> Nat .
+
+	eq countTokens(none, S) = 0 .
+	eq countTokens(< P, N > AS, {P : M} S) = M + countTokens(AS, S) .
+endsm
+
+smod PETRI-NET-EXAMPLE is
+	protecting PETRI-NET-STRAT .
+
+	*** Places
+	ops init p1 p2 p3 : -> PlaceId [ctor] .
+
+	*** Example net
+	op example-soup : -> Soup .
+	ops example example-timed : -> PetriNet .
+
+	eq example = net(example-soup) .
+	eq example-timed = net(example-soup, 0.0) .
+
+	eq example-soup =
+		*** Transitions
+		{ < init, 1 > = 0.1 => < p1, 1 > < p2, 1 > }
+		{ < p1, 1 > < p2, 1 > = 0.2 => < p3, 2 > }
+		{ < init, 1 > = 0.4 => < p3, 1 > }
+		{ < p3, 2 > = 0.25 => < init, 1 > }
+		*** Initial marking
+		{init : 4} {p1 : 0} {p2 : 0} {p3 : 1}
+	.
+endsm
+
+sload model-checker
+
+mod PETRI-NET-PREDS is
+	protecting PETRI-NET .
+	including SATISFACTION .
+
+	subsort PetriNet < State .
+
+	*** Atomic propositions for model checking
+
+	var  PN      : PetriNet .
+	var  S       : Soup .
+	vars P P1 P2 : PlaceId .
+	var  T       : Float .
+	vars M MP    : Nat .
+
+	*** Marking is above or below number
+	ops below above : PlaceId Nat -> Prop [ctor] .
+
+	eq net({P : MP} S) |= below(P, M) = MP <= M .
+	eq net({P : MP} S, T) |= below(P, M) = MP <= M .
+	eq PN |= below(P, M) = false [owise] .
+
+	eq net({P : MP} S) |= above(P, M) = MP >= M .
+	eq net({P : MP} S, T) |= above(P, M) = MP >= M .
+	eq PN |= above(P, M) = false [owise] .
+
+	*** Marking of two places coincide
+	op coincide : PlaceId PlaceId -> Prop [ctor] .
+
+	eq net({P1 : M} {P2 : M} S) |= coincide(P1, P2) = true .
+	eq net({P1 : M} {P2 : M} S, T) |= coincide(P1, P2) = true .
+	eq PN |= coincide(P1, P2) = false [owise] .
+
+	*** A place is empty
+	op empty : PlaceId -> Prop [ctor] .
+	eq PN |= empty(P1) = PN |= below(P1, 0) .
+endm
+
+smod PETRI-NET-CHECK is
+	protecting PETRI-NET-PREDS .
+	protecting PETRI-NET-EXAMPLE .
+	including MODEL-CHECKER * (sort Transition to MCTransition) .
+
+	var TPN : PetriNet .
+endsm
+
+*** Look for deadlock states with the search command
+*** (answer is {init : 0} {p1 : 0} {p2 : 0} {p3 : 1} <transitions>)
+*** search example =>! P:PetriNet .
+
+*** Model checking
+*** red modelCheck(example, [] coincide(p1, p2)) .
+*** equivalently: umaudemc check stpetri-tt.maude example '[] coincide(p1, p2)'
+*** umaudemc check stpetri-tt.maude example '<> above(p3, 2)'
+*** umaudemc check stpetri-tt.maude example '<> above(p3, 3)'
+
+*** Probabilistic model checking
+*** (we write "pcheck" for "umaudemc pcheck stpetri-tt.maude example")
+
+*** pcheck '<> [] (empty(init) /\ empty(p1))' 'simpleRates !' --assign strategy
+*** Result: 1.0
+*** pcheck '<> [] (empty(init) /\ empty(p1))' 'linearRates !' --assign strategy
+*** Result: 1.0
+*** pcheck '<> (empty(init) /\ empty(p1))' 'simpleRates !' --assign strategy --steps
+*** Result: 8.70740890120709 (relative error 9.184534726775519e-06)
+*** pcheck '<> (empty(init) /\ empty(p1))' 'linearRates !' --assign strategy --steps
+*** Result: 10.511723208062508 (relative error 9.785590775230194e-06
+*** pcheck '<> above(p3, 5)' 'simpleRates !' --assign strategy
+*** Result: 0.504324980665156 (relative error 7.141760068041607e-06)
+*** Result: 0.3350168212193446 (relative error 6.7534741468513924e-06) with linearRates
+*** pcheck '<> above(p3, 7)' 'simpleRates !' --assign strategy
+*** Result: 0.03283420842166258 (relative error 9.343755595626061e-06)
+*** Result: 0.012111396033254812 (relative error 8.965945800732319e-06) with linearRates
+*** pcheck '@steady' 'simpleRates !' --assign strategy
+*** 1.0                  {init : 0} {p1 : 0} {p2 : 0} {p3 : 1} <transitions>
+
+*** Timed single step
+*** umaudemc pcheck stpetri-tt.maude example '@steady' simpleRates --assign strategy
+*** 0.8		net({init : 3} {p1 : 0} {p2 : 0} {p3 : 2} ..., 2.5)
+*** 0.2		net({init : 3} {p1 : 1} {p2 : 1} {p3 : 1} ..., 10.0)
+
+*** Expected time until init is emptied
+*** (time is counted differently than in stpetri-tmpl.maude)
+*** umaudemc scheck stpetri-tt.maude example-timed stpetri-tmpl.multiquatex simpleRates-timed -d 0.3
+*** Number of simulations = 7380
+***  μ = 27.509620596205963        σ = 13.13856442606621         r = 0.29980513517446367

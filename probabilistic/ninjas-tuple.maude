@@ -81,6 +81,10 @@ endsm
 *** Quantitative properties can be checked with the umaudemc tool:
 ***
 *** umaudemc pcheck ninjas-tuple '< 4, 4, 0, 0 >' '<> [] consensus(N)' sensei --assign 'term(weight(L:Garden, A:Qid))'
+*** Result: 0.06713190566234181
 *** umaudemc pcheck ninjas-tuple '< 4, 4, 0, 0 >' 'P >= 1 <> [] consensus(N)' senseii --assign 'term(weight(L:Garden, A:Qid))'
+*** The property is satisfied (23 system states, 78 rewrites).
 *** umaudemc pcheck ninjas-tuple '< 4, 3, 0, 0 >' '<> consensus(Y)' sensei --assign 'term(weight(L:Garden, A:Qid))' --steps
+*** Result: 11.181798343404381 (relative error 5.929972206885414e-06)
 *** umaudemc pcheck ninjas-tuple '< 4, 3, 0, 0 >' '<> consensus(Y)' senseii --assign 'term(weight(L:Garden, A:Qid))' --steps
+*** Result: 822.8449991870834 (relative error 9.998159772318868e-06)

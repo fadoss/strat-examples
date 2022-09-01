@@ -58,3 +58,21 @@ smod COIN-SCHECK is
 	op inertia : Coin Coin -> Nat .
 	eq inertia(C, C') = if C == C' then 2 else 1 fi .
 endsm
+
+*** Properties under different assignment methods
+
+*** umaudemc pcheck coin head '[] <= 4 head'
+*** Result: 0.0625
+*** umaudemc pcheck coin head '[] <= 4 head' --assign metadata
+*** Result: 0.1434123455061096
+*** umaudemc pcheck coin head '[] <= 4 head' --assign 'uaction(thead=8, ttail=5)'
+*** Result: 0.1434123455061096
+*** umaudemc pcheck coin head '[] <= 4 head' --assign 'term(inertia(L, R))'
+*** Result: 0.19753086419753085
+
+*** umaudemc pcheck coin head '<> tail' --step
+*** Result: 2.0
+*** umaudemc pcheck coin head '<> tail' --step --assign metadata
+*** Result: 2.5999999999999996
+
+*** umaudemc scheck coin head coin.multiquatex --assign metadata

@@ -80,3 +80,4 @@ search initial =>* postman(15, E, M) S .
 
 *** The postman actions are nondeterministic, accidents are subject to probabilities
 *** umaudemc pcheck posthouse initial '<> reach(15)' --assign 'mdp-term(tiredness(L, R))'
+*** Result: 0.0 to 0.4221323452495324

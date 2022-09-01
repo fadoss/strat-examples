@@ -6,13 +6,10 @@
 ***  3. The probabilistic model is obtained by using the 'metadata' probability assignment method.
 ***
 *** In the first part, until PETRI-NET-TIME, we do not take care about time and see SPNs as DTMCs
-*** for qualititive and probabilistic model checking. Then, we introduce time for statistical
+*** for qualititive and probabilistic model checking. However, we can also see them as CTMCs using
+*** the ctmc-* assignment methods of umaudemc. Then, we introduce time for statistical
 *** model checking. The transition rates do not depend on the marking of the input, but this can
 *** be easily done with the "choice" if desired.
-***
-*** While umaudemc currently only supports passing DTMCs and MDPs to the probabilistic
-*** model-checking backends, deriving CTMCs for these tools will be fairly easy since
-*** rules/transitions are already annotated with their rates.
 ***
 
 
@@ -197,11 +194,11 @@ endsm
 
 *** Expected time until init is emptied
 
-*** umaudemc scheck stpetri-tmpl.maude 'start(initial)' stpetri-tmpl.multiquatex -d 0.2
+*** umaudemc scheck stpetri-tmpl.maude 'start(initial)' stpetri-tmpl.multiquatex step -d 0.2
 *** Number of simulations = 1740
 ***  μ = 10.39368824359751         σ = 4.230812728370211         r = 0.1989297078820332
 
-*** mvmaude stpetri-tmpl.maude 'start(initial)' stpetri-tmpl.multiquatex -- -a 0.05 -d1 0.2
+*** mvmaude stpetri-tmpl.maude 'start(initial)' stpetri-tmpl.multiquatex step -- -a 0.05 -d1 0.2
 *** Samples generated for query 0 (Steps4EmptyInit()): 6570
 *** MultiVeStA client: Results:
 ***	10.346663462308763 [var: 17.03718149599211, ci/2: 0.09980775366757978]

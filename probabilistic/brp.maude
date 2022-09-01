@@ -482,7 +482,15 @@ endsm
 *** Result: 0.8170726551657641
 
 *** mvmaude brp initial brp-okp.multiquatex prism-like-step -- -bs 80
+*** umaudemc scheck brp initial brp-okp.multiquatex prism-like-step -b 80
 
 *** Due to a bug in MultiVeSta, only one evaluation statement can be used at a time,
 *** so you should remove the other one in brp-timed.multiquatex before running
 *** mvmaude brp '{initial, 0.0}' brp-timed.multiquatex real-time-s-step
+
+*** umaudemc scheck brp '{initial, 0.0}' brp-timed.multiquatex real-time-s-step
+*** Number of simulations = 300
+*** Query 1 (line 9:1)
+***  μ = 0.7966666666666666        σ = 0.4031509118779828        r = 0.045805390761546
+*** Query 2 (line 10:1)
+***  μ = 7.091101512406564         σ = 4.337727020425341         r = 0.49284591782750337

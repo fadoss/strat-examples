@@ -1,0 +1,84 @@
+***
+*** Bogosort, also known as stupid sort
+***
+*** It repeteadly shuffles the list at random until a sorted sequence is found.
+***
+
+sload model-checker
+
+fmod BOGOSORT-AUX{X :: TOTAL-ORDER} is
+	protecting LIST{TOTAL-PREORDER}{TOTAL-ORDER}{X} * (
+		sort List{TOTAL-PREORDER}{TOTAL-ORDER}{X} to List,
+		sort NeList{TOTAL-PREORDER}{TOTAL-ORDER}{X} to NeList
+	) .
+	protecting EXT-BOOL .
+
+	*** Whether a list is sorted
+	op sorted : List -> Bool .
+
+	vars X Y : X$Elt .
+	var  L   : List .
+
+	eq sorted(X Y L) = X <= Y and-then sorted(Y L) .
+	eq sorted(L) = true [owise] .
+endfm
+
+mod BOGOSORT{X :: TOTAL-ORDER} is
+	protecting BOGOSORT-AUX{X} .
+
+	sort State .
+
+	*** Initial state in each iteration, before checking the order
+	op check : List -> State [ctor] .
+	*** Final state, when the list is already sorted
+	op done  : List -> State [ctor] .
+	*** Shuffling state, with the shuffled and not yet shuffled part
+	op shuffle : List List -> State [ctor] .
+
+	vars L M S : List .
+	var  X     : X$Elt .
+
+	rl [check] : check(L) => if sorted(L) then done(L)
+	                                      else shuffle(nil, L) fi .
+
+	rl [shuffle] : shuffle(S, L X M) => shuffle(S X, L M) .
+	rl [shuffle] : shuffle(S, nil) => check(S) .
+endm
+
+mod BOGOSORT-PREDS{X :: TOTAL-ORDER} is
+	protecting BOGOSORT{X} * (sort State to BState) .
+	including SATISFACTION .
+
+	subsort BState < State .
+
+	var L : List .
+	var S : State .
+
+	ops sorted check : -> Prop [ctor] .
+
+	eq done(L) |= sorted = true .
+	eq S       |= sorted = false [owise] .
+
+	eq check(L) |= check = true .
+	eq S        |= check = false [owise] .
+endm
+
+mod BOGOSORT-INT is
+	protecting BOGOSORT-PREDS{Int<=} .
+	including MODEL-CHECKER .
+
+	var S : State .
+endm
+
+*** Mean number of iterations until the sequence is sorted
+*** (with n elements, n! + 1, if the initial sequence is unsorted)
+*** umaudemc pcheck bogosort 'check(2 1 3 4 5)' '<> sorted' --reward 'if S |= check then 1 else 0 fi'
+*** Mean number of rule applications until the sequence is sorted
+*** (with n elements, n! * (n + 2) + 1, if the initial sequence is unsorted)
+*** umaudemc pcheck bogosort 'check(2 1 3 4 5)' '<> sorted' --steps
+
+*** The same with statistical model checking
+*** umaudemc scheck bogosort 'check(2 1 3)' bogosort.quatex -d 0.1
+*** Result: μ = 6.920673952641166 with 10980 executions
+*** umaudemc scheck bogosort 'check(2 1 3)' bogosort.quatex -d 0.05 -j 4
+*** Result: μ = 7.013250382012661 with 45810 executions

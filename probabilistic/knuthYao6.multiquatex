@@ -1,5 +1,5 @@
 ResultTime() = if (s.rval("S |= result") == 1) then
-			s.rval("time")
+			s.rval("steps")
 		else
 			#ResultTime()
 		fi ;

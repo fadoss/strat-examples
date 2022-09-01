@@ -111,3 +111,4 @@ endsm
 *** mvmaude knuthYao6 [1,6] knuthYao6.multiquatex
 *** mvmaude knuthYao6 [1,6] knuthYao6.multiquatex --assign 'uaction(head=3, tail=2)'
 *** mvmaude knuthYao6 [1,6] knuthYao6.multiquatex 'bias(0.5)' --assign strategy-full
+*** and the same with umaudemc scheck
