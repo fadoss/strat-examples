@@ -108,7 +108,7 @@ endsm
 
 *** umaudemc pcheck knuthYao6 [1,24] '@steady' -f --backend storm
 
-*** mvmaude knuthYao6 [1,6] knuthYao6.multiquatex
-*** mvmaude knuthYao6 [1,6] knuthYao6.multiquatex --assign 'uaction(head=3, tail=2)'
-*** mvmaude knuthYao6 [1,6] knuthYao6.multiquatex 'bias(0.5)' --assign strategy-full
-*** and the same with umaudemc scheck
+*** umaudemc scheck knuthYao6 [1,6] knuthYao6.quatex
+*** umaudemc scheck knuthYao6 [1,6] knuthYao6.quatex --assign 'uaction(head=3, tail=2)'
+*** umaudemc scheck knuthYao6 [1,6] knuthYao6.quatex 'bias(0.5)' --assign strategy
+*** and the same with mvmaude
