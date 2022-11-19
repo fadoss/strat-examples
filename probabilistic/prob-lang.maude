@@ -333,7 +333,7 @@ endm
 fmod PROB-DISTRIB is
 	protecting PROB-SYNTAX .
 
-	op bernouilli  : FExpr -> BDistribution [ctor] .
+	op bernoulli  : FExpr -> BDistribution [ctor] .
 	op exponential : FExpr -> FDistribution [ctor] .
 	ops uniform norm gamma     : FExpr FExpr -> FDistribution [ctor] .
 endfm
@@ -370,9 +370,9 @@ smod PROB-STRAT is
 	*** language to implement the probabilistic assignment of Prob
 	strat sample : Distribution VarMap @ State .
 
-	*** For the Bernouilli distribution, choice is used instead of sample to
+	*** For the Bernoulli distribution, choice is used instead of sample to
 	*** allow for discrete probabilistic analysis
-	csd sample(bernouilli(F), VM) := choice(FC : sample[B <- true], (1.0 - FC) : sample[B <- false])
+	csd sample(bernoulli(F), VM) := choice(FC : sample[B <- true], (1.0 - FC) : sample[B <- false])
 	 if FC := instantiate(F, VM) .
 
 	sd sample(exponential(F), VM) := sample FC := exp(instantiate(F, VM)) in sample[F <- FC] .
@@ -389,7 +389,7 @@ endsm
 
 eof
 
-srew start(fv(0) ~ bernouilli(0.1) return fv(0)) using run .
+srew start(fv(0) ~ bernoulli(0.1) return fv(0)) using run .
 rew start(fv(0) := 2.0 ; iv(0) := 5 ; while iv(0) > 0 do
           iv(0) := (iv(0) - 1) ; fv(0) := (fv(0) * fv(0)) done
           return fv(0)) .

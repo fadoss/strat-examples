@@ -18,7 +18,7 @@ class Runner:
 		self.env = os.environ.copy()
 		# self.env['PYTHONPATH'] = '<for local installations of umaudemc>'
 
-	def run_http3(self, num_streams, p, variant='first'):
+	def run_http3(self, num_streams, p, variant='first', seed=None):
 		"""Run a simulation for HTTP3"""
 
 		delta = self.radius(p)
@@ -35,6 +35,9 @@ class Runner:
 			'--format', 'json',  # Output in JSON
 		]
 
+		if seed is not None:
+			cmd_line += ['--seed', str(args.seed)]
+
 		start_time = time.process_time_ns()
 		raw = subprocess.run(cmd_line, stdout=subprocess.PIPE, env=self.env)
 		end_time = time.process_time_ns()
@@ -50,7 +53,7 @@ class Runner:
 
 		return result
 
-	def run_http2(self, num_streams, p, variant='first'):
+	def run_http2(self, num_streams, p, variant='first', seed=None):
 		"""Run a simulation for HTTP2"""
 
 		delta = self.radius(p)
@@ -66,6 +69,9 @@ class Runner:
 			'-d', str(delta),  # Radius of the confidence interval
 			'--format', 'json',  # Output in JSON
 		]
+
+		if seed is not None:
+			cmd_line += ['--seed', str(args.seed)]
 
 		start_time = time.process_time_ns()
 		raw = subprocess.run(cmd_line, stdout=subprocess.PIPE, env=self.env)
@@ -92,8 +98,19 @@ class Runner:
 
 
 if __name__ == '__main__':
+	import argparse
+
+	parser = argparse.ArgumentParser(description='Execute scheck on the quic.maude example and capture the results')
+
+	parser.add_argument('version', help='HTTP version', choices=['2', '3'])
+	parser.add_argument('--streams', help='Number of streams', type=int, default=5)
+	parser.add_argument('--seed', help='Random seed', type=int)
+
+	args = parser.parse_args()
+
 	rn = Runner()
+	cmd = rn.run_http2 if args.version == '2' else rn.run_http3
 
 	for p, variant in itertools.product(ps, ('first', 'last')):
-		json.dump(rn.run_http3(5, p, variant), sys.stdout)
+		json.dump(cmd(args.streams, p, variant, seed=args.seed), sys.stdout)
 		print()

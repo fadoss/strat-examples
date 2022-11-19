@@ -15,23 +15,23 @@ smod PROB-EXAMPLES is
 	ops ex1a ex1b ex2 ex3 ex4 : -> ProbProgram .
 
 	eq ex1a =
-		c1 ~ bernouilli(0.5) ;
-		c2 ~ bernouilli(0.5)
+		c1 ~ bernoulli(0.5) ;
+		c2 ~ bernoulli(0.5)
 		return (c1 ; c2) .
 
 	eq ex1b =
-		c1 ~ bernouilli(0.5) ;
-		c2 ~ bernouilli(0.5) ;
+		c1 ~ bernoulli(0.5) ;
+		c2 ~ bernoulli(0.5) ;
 		observe(c1 or c2)
 		return (c1 ; c2) .
 
 	eq ex2 =
 		count := 0 ;
-		c1 ~ bernouilli(0.5) ;
+		c1 ~ bernoulli(0.5) ;
 		if (c1) then
 			count := (count + 1)
 		endif ;
-		c2 ~ bernouilli(0.5) ;
+		c2 ~ bernoulli(0.5) ;
 		if (c2) then
 			count := (count + 1)
 		endif ;
@@ -40,21 +40,21 @@ smod PROB-EXAMPLES is
 
 	eq ex3 =
 		count := 0 ;
-		c1 ~ bernouilli(0.5) ;
+		c1 ~ bernoulli(0.5) ;
 		if (c1) then
 			count := (count + 1)
 		endif ;
-		c2 ~ bernouilli(0.5) ;
+		c2 ~ bernoulli(0.5) ;
 		if (c2) then
 			count := (count + 1)
 		endif ;
 		while not(c1 or c2) do
 			count := 0 ;
-			c1 ~ bernouilli(0.5) ;
+			c1 ~ bernoulli(0.5) ;
 			if (c1) then
 				count := (count + 1)
 			endif ;
-			c2 ~ bernouilli(0.5) ;
+			c2 ~ bernoulli(0.5) ;
 			if (c2) then
 				count := (count + 1)
 			endif
@@ -63,10 +63,10 @@ smod PROB-EXAMPLES is
 
 	eq ex4 =
 		b := true ;
-		c ~ bernouilli(0.5) ;
+		c ~ bernoulli(0.5) ;
 		while (c) do
 			b := (not b) ;
-			c ~ bernouilli(0.5)
+			c ~ bernoulli(0.5)
 		done
 		return b .
 endsm
