@@ -1,245 +1,253 @@
 ==========================================
 dsrewrite [10] in TICTACTOE-MAIN : makeContext(upTerm(initial), 'randomO[[
-    empty]],'randomX[[empty]], upModule('TICTACTOE-STRAT, true)) using turns(0,
-    2) .
+    empty]], 'randomX[[empty]], upModule('TICTACTOE-STRAT, true)) using turns(
+    0, 2) .
 
 Solution 1
-rewrites: 1443
-result MSContext: {'__['`[_`,_`,_`]['s_['0.Zero],'s_['0.Zero],'-.Player],
-    '`[_`,_`,_`]['s_['0.Zero],'s_^2['0.Zero],'-.Player],'`[_`,_`,_`]['s_[
-    '0.Zero],'s_^3['0.Zero],'O.Player],'`[_`,_`,_`]['s_^2['0.Zero],'s_[
-    '0.Zero],'X.Player],'`[_`,_`,_`]['s_^2['0.Zero],'s_^2['0.Zero],'O.Player],
-    '`[_`,_`,_`]['s_^2['0.Zero],'s_^3['0.Zero],'X.Player],'`[_`,_`,_`]['s_^3[
-    '0.Zero],'s_['0.Zero],'O.Player],'`[_`,_`,_`]['s_^3['0.Zero],'s_^2[
-    '0.Zero],'X.Player],'`[_`,_`,_`]['s_^3['0.Zero],'s_^3['0.Zero],'O.Player]]
-    :: < 0 % 'randomO[[empty]] > < 1 % 'randomX[[empty]] > log(0, match 'G:Grid
-    s.t. ('not_['hasWon['X.Player,'G:Grid]] = 'true.Bool) ; 'putO[none]{
-    empty}),smod_is_sorts_._______endsm(...)}
+rewrites: 1851
+result MSContext: {'__['`[_`,_`,_`]['s_['0.Zero], 's_['0.Zero], '-.Player],
+    '`[_`,_`,_`]['s_['0.Zero], 's_^2['0.Zero], '-.Player], '`[_`,_`,_`]['s_[
+    '0.Zero], 's_^3['0.Zero], 'O.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_[
+    '0.Zero], 'X.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_^2['0.Zero],
+    'O.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_^3['0.Zero], 'X.Player],
+    '`[_`,_`,_`]['s_^3['0.Zero], 's_['0.Zero], 'O.Player], '`[_`,_`,_`]['s_^3[
+    '0.Zero], 's_^2['0.Zero], 'X.Player], '`[_`,_`,_`]['s_^3['0.Zero], 's_^3[
+    '0.Zero], 'O.Player]] :: < 0 % 'randomO[[empty]] > < 1 % 'randomX[[empty]]
+    > log(0, match 'G:Grid s.t. ('not_['hasWon['X.Player, 'G:Grid]] =
+    'true.Bool) ; 'putO[none]{empty}), smod_is_sorts_._______endsm(...)}
 
 Solution 2
-rewrites: 1930
-result MSContext: {'__['`[_`,_`,_`]['s_['0.Zero],'s_['0.Zero],'O.Player],
-    '`[_`,_`,_`]['s_['0.Zero],'s_^2['0.Zero],'O.Player],'`[_`,_`,_`]['s_[
-    '0.Zero],'s_^3['0.Zero],'X.Player],'`[_`,_`,_`]['s_^2['0.Zero],'s_[
-    '0.Zero],'X.Player],'`[_`,_`,_`]['s_^2['0.Zero],'s_^2['0.Zero],'O.Player],
-    '`[_`,_`,_`]['s_^2['0.Zero],'s_^3['0.Zero],'X.Player],'`[_`,_`,_`]['s_^3[
-    '0.Zero],'s_['0.Zero],'O.Player],'`[_`,_`,_`]['s_^3['0.Zero],'s_^2[
-    '0.Zero],'X.Player],'`[_`,_`,_`]['s_^3['0.Zero],'s_^3['0.Zero],'O.Player]]
-    :: < 0 % 'randomO[[empty]] > < 1 % 'randomX[[empty]] > log(0, match 'G:Grid
-    s.t. ('not_['hasWon['X.Player,'G:Grid]] = 'true.Bool) ; 'putO[none]{
-    empty}),smod_is_sorts_._______endsm(...)}
+rewrites: 2430
+result MSContext: {'__['`[_`,_`,_`]['s_['0.Zero], 's_['0.Zero], 'O.Player],
+    '`[_`,_`,_`]['s_['0.Zero], 's_^2['0.Zero], 'O.Player], '`[_`,_`,_`]['s_[
+    '0.Zero], 's_^3['0.Zero], 'X.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_[
+    '0.Zero], 'X.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_^2['0.Zero],
+    'O.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_^3['0.Zero], 'X.Player],
+    '`[_`,_`,_`]['s_^3['0.Zero], 's_['0.Zero], 'O.Player], '`[_`,_`,_`]['s_^3[
+    '0.Zero], 's_^2['0.Zero], 'X.Player], '`[_`,_`,_`]['s_^3['0.Zero], 's_^3[
+    '0.Zero], 'O.Player]] :: < 0 % 'randomO[[empty]] > < 1 % 'randomX[[empty]]
+    > log(0, match 'G:Grid s.t. ('not_['hasWon['X.Player, 'G:Grid]] =
+    'true.Bool) ; 'putO[none]{empty}), smod_is_sorts_._______endsm(...)}
 
 Solution 3
-rewrites: 2259
-result MSContext: {'__['`[_`,_`,_`]['s_['0.Zero],'s_['0.Zero],'X.Player],
-    '`[_`,_`,_`]['s_['0.Zero],'s_^2['0.Zero],'O.Player],'`[_`,_`,_`]['s_[
-    '0.Zero],'s_^3['0.Zero],'O.Player],'`[_`,_`,_`]['s_^2['0.Zero],'s_[
-    '0.Zero],'X.Player],'`[_`,_`,_`]['s_^2['0.Zero],'s_^2['0.Zero],'O.Player],
-    '`[_`,_`,_`]['s_^2['0.Zero],'s_^3['0.Zero],'X.Player],'`[_`,_`,_`]['s_^3[
-    '0.Zero],'s_['0.Zero],'O.Player],'`[_`,_`,_`]['s_^3['0.Zero],'s_^2[
-    '0.Zero],'X.Player],'`[_`,_`,_`]['s_^3['0.Zero],'s_^3['0.Zero],'O.Player]]
-    :: < 0 % 'randomO[[empty]] > < 1 % 'randomX[[empty]] > log(0, match 'G:Grid
-    s.t. ('not_['hasWon['X.Player,'G:Grid]] = 'true.Bool) ; 'putO[none]{
-    empty}),smod_is_sorts_._______endsm(...)}
+rewrites: 2811
+result MSContext: {'__['`[_`,_`,_`]['s_['0.Zero], 's_['0.Zero], 'X.Player],
+    '`[_`,_`,_`]['s_['0.Zero], 's_^2['0.Zero], 'O.Player], '`[_`,_`,_`]['s_[
+    '0.Zero], 's_^3['0.Zero], 'O.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_[
+    '0.Zero], 'X.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_^2['0.Zero],
+    'O.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_^3['0.Zero], 'X.Player],
+    '`[_`,_`,_`]['s_^3['0.Zero], 's_['0.Zero], 'O.Player], '`[_`,_`,_`]['s_^3[
+    '0.Zero], 's_^2['0.Zero], 'X.Player], '`[_`,_`,_`]['s_^3['0.Zero], 's_^3[
+    '0.Zero], 'O.Player]] :: < 0 % 'randomO[[empty]] > < 1 % 'randomX[[empty]]
+    > log(0, match 'G:Grid s.t. ('not_['hasWon['X.Player, 'G:Grid]] =
+    'true.Bool) ; 'putO[none]{empty}), smod_is_sorts_._______endsm(...)}
 
 Solution 4
-rewrites: 2434
-result MSContext: {'__['`[_`,_`,_`]['s_['0.Zero],'s_['0.Zero],'O.Player],
-    '`[_`,_`,_`]['s_['0.Zero],'s_^2['0.Zero],'-.Player],'`[_`,_`,_`]['s_[
-    '0.Zero],'s_^3['0.Zero],'-.Player],'`[_`,_`,_`]['s_^2['0.Zero],'s_[
-    '0.Zero],'X.Player],'`[_`,_`,_`]['s_^2['0.Zero],'s_^2['0.Zero],'O.Player],
-    '`[_`,_`,_`]['s_^2['0.Zero],'s_^3['0.Zero],'X.Player],'`[_`,_`,_`]['s_^3[
-    '0.Zero],'s_['0.Zero],'O.Player],'`[_`,_`,_`]['s_^3['0.Zero],'s_^2[
-    '0.Zero],'X.Player],'`[_`,_`,_`]['s_^3['0.Zero],'s_^3['0.Zero],'O.Player]]
-    :: < 0 % 'randomO[[empty]] > < 1 % 'randomX[[empty]] > log(0, match 'G:Grid
-    s.t. ('not_['hasWon['X.Player,'G:Grid]] = 'true.Bool) ; 'putO[none]{
-    empty}),smod_is_sorts_._______endsm(...)}
+rewrites: 3002
+result MSContext: {'__['`[_`,_`,_`]['s_['0.Zero], 's_['0.Zero], 'O.Player],
+    '`[_`,_`,_`]['s_['0.Zero], 's_^2['0.Zero], '-.Player], '`[_`,_`,_`]['s_[
+    '0.Zero], 's_^3['0.Zero], '-.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_[
+    '0.Zero], 'X.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_^2['0.Zero],
+    'O.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_^3['0.Zero], 'X.Player],
+    '`[_`,_`,_`]['s_^3['0.Zero], 's_['0.Zero], 'O.Player], '`[_`,_`,_`]['s_^3[
+    '0.Zero], 's_^2['0.Zero], 'X.Player], '`[_`,_`,_`]['s_^3['0.Zero], 's_^3[
+    '0.Zero], 'O.Player]] :: < 0 % 'randomO[[empty]] > < 1 % 'randomX[[empty]]
+    > log(0, match 'G:Grid s.t. ('not_['hasWon['X.Player, 'G:Grid]] =
+    'true.Bool) ; 'putO[none]{empty}), smod_is_sorts_._______endsm(...)}
 
 Solution 5
-rewrites: 3095
-result MSContext: {'__['`[_`,_`,_`]['s_['0.Zero],'s_['0.Zero],'O.Player],
-    '`[_`,_`,_`]['s_['0.Zero],'s_^2['0.Zero],'X.Player],'`[_`,_`,_`]['s_[
-    '0.Zero],'s_^3['0.Zero],'X.Player],'`[_`,_`,_`]['s_^2['0.Zero],'s_[
-    '0.Zero],'O.Player],'`[_`,_`,_`]['s_^2['0.Zero],'s_^2['0.Zero],'O.Player],
-    '`[_`,_`,_`]['s_^2['0.Zero],'s_^3['0.Zero],'X.Player],'`[_`,_`,_`]['s_^3[
-    '0.Zero],'s_['0.Zero],'O.Player],'`[_`,_`,_`]['s_^3['0.Zero],'s_^2[
-    '0.Zero],'X.Player],'`[_`,_`,_`]['s_^3['0.Zero],'s_^3['0.Zero],'O.Player]]
-    :: < 0 % 'randomO[[empty]] > < 1 % 'randomX[[empty]] > log(0, match 'G:Grid
-    s.t. ('not_['hasWon['X.Player,'G:Grid]] = 'true.Bool) ; 'putO[none]{
-    empty}),smod_is_sorts_._______endsm(...)}
+rewrites: 3793
+result MSContext: {'__['`[_`,_`,_`]['s_['0.Zero], 's_['0.Zero], 'O.Player],
+    '`[_`,_`,_`]['s_['0.Zero], 's_^2['0.Zero], 'X.Player], '`[_`,_`,_`]['s_[
+    '0.Zero], 's_^3['0.Zero], 'X.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_[
+    '0.Zero], 'O.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_^2['0.Zero],
+    'O.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_^3['0.Zero], 'X.Player],
+    '`[_`,_`,_`]['s_^3['0.Zero], 's_['0.Zero], 'O.Player], '`[_`,_`,_`]['s_^3[
+    '0.Zero], 's_^2['0.Zero], 'X.Player], '`[_`,_`,_`]['s_^3['0.Zero], 's_^3[
+    '0.Zero], 'O.Player]] :: < 0 % 'randomO[[empty]] > < 1 % 'randomX[[empty]]
+    > log(0, match 'G:Grid s.t. ('not_['hasWon['X.Player, 'G:Grid]] =
+    'true.Bool) ; 'putO[none]{empty}), smod_is_sorts_._______endsm(...)}
 
 Solution 6
-rewrites: 3424
-result MSContext: {'__['`[_`,_`,_`]['s_['0.Zero],'s_['0.Zero],'X.Player],
-    '`[_`,_`,_`]['s_['0.Zero],'s_^2['0.Zero],'O.Player],'`[_`,_`,_`]['s_[
-    '0.Zero],'s_^3['0.Zero],'X.Player],'`[_`,_`,_`]['s_^2['0.Zero],'s_[
-    '0.Zero],'O.Player],'`[_`,_`,_`]['s_^2['0.Zero],'s_^2['0.Zero],'O.Player],
-    '`[_`,_`,_`]['s_^2['0.Zero],'s_^3['0.Zero],'X.Player],'`[_`,_`,_`]['s_^3[
-    '0.Zero],'s_['0.Zero],'O.Player],'`[_`,_`,_`]['s_^3['0.Zero],'s_^2[
-    '0.Zero],'X.Player],'`[_`,_`,_`]['s_^3['0.Zero],'s_^3['0.Zero],'O.Player]]
-    :: < 0 % 'randomO[[empty]] > < 1 % 'randomX[[empty]] > log(0, match 'G:Grid
-    s.t. ('not_['hasWon['X.Player,'G:Grid]] = 'true.Bool) ; 'putO[none]{
-    empty}),smod_is_sorts_._______endsm(...)}
+rewrites: 4174
+result MSContext: {'__['`[_`,_`,_`]['s_['0.Zero], 's_['0.Zero], 'X.Player],
+    '`[_`,_`,_`]['s_['0.Zero], 's_^2['0.Zero], 'O.Player], '`[_`,_`,_`]['s_[
+    '0.Zero], 's_^3['0.Zero], 'X.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_[
+    '0.Zero], 'O.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_^2['0.Zero],
+    'O.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_^3['0.Zero], 'X.Player],
+    '`[_`,_`,_`]['s_^3['0.Zero], 's_['0.Zero], 'O.Player], '`[_`,_`,_`]['s_^3[
+    '0.Zero], 's_^2['0.Zero], 'X.Player], '`[_`,_`,_`]['s_^3['0.Zero], 's_^3[
+    '0.Zero], 'O.Player]] :: < 0 % 'randomO[[empty]] > < 1 % 'randomX[[empty]]
+    > log(0, match 'G:Grid s.t. ('not_['hasWon['X.Player, 'G:Grid]] =
+    'true.Bool) ; 'putO[none]{empty}), smod_is_sorts_._______endsm(...)}
 
 Solution 7
-rewrites: 4427
-result MSContext: {'__['`[_`,_`,_`]['s_['0.Zero],'s_['0.Zero],'O.Player],
-    '`[_`,_`,_`]['s_['0.Zero],'s_^2['0.Zero],'-.Player],'`[_`,_`,_`]['s_[
-    '0.Zero],'s_^3['0.Zero],'X.Player],'`[_`,_`,_`]['s_^2['0.Zero],'s_[
-    '0.Zero],'-.Player],'`[_`,_`,_`]['s_^2['0.Zero],'s_^2['0.Zero],'O.Player],
-    '`[_`,_`,_`]['s_^2['0.Zero],'s_^3['0.Zero],'X.Player],'`[_`,_`,_`]['s_^3[
-    '0.Zero],'s_['0.Zero],'O.Player],'`[_`,_`,_`]['s_^3['0.Zero],'s_^2[
-    '0.Zero],'X.Player],'`[_`,_`,_`]['s_^3['0.Zero],'s_^3['0.Zero],'O.Player]]
-    :: < 0 % 'randomO[[empty]] > < 1 % 'randomX[[empty]] > log(0, match 'G:Grid
-    s.t. ('not_['hasWon['X.Player,'G:Grid]] = 'true.Bool) ; 'putO[none]{
-    empty}),smod_is_sorts_._______endsm(...)}
+rewrites: 5337
+result MSContext: {'__['`[_`,_`,_`]['s_['0.Zero], 's_['0.Zero], 'O.Player],
+    '`[_`,_`,_`]['s_['0.Zero], 's_^2['0.Zero], '-.Player], '`[_`,_`,_`]['s_[
+    '0.Zero], 's_^3['0.Zero], 'X.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_[
+    '0.Zero], '-.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_^2['0.Zero],
+    'O.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_^3['0.Zero], 'X.Player],
+    '`[_`,_`,_`]['s_^3['0.Zero], 's_['0.Zero], 'O.Player], '`[_`,_`,_`]['s_^3[
+    '0.Zero], 's_^2['0.Zero], 'X.Player], '`[_`,_`,_`]['s_^3['0.Zero], 's_^3[
+    '0.Zero], 'O.Player]] :: < 0 % 'randomO[[empty]] > < 1 % 'randomX[[empty]]
+    > log(0, match 'G:Grid s.t. ('not_['hasWon['X.Player, 'G:Grid]] =
+    'true.Bool) ; 'putO[none]{empty}), smod_is_sorts_._______endsm(...)}
 
 Solution 8
-rewrites: 5417
-result MSContext: {'__['`[_`,_`,_`]['s_['0.Zero],'s_['0.Zero],'X.Player],
-    '`[_`,_`,_`]['s_['0.Zero],'s_^2['0.Zero],'X.Player],'`[_`,_`,_`]['s_[
-    '0.Zero],'s_^3['0.Zero],'O.Player],'`[_`,_`,_`]['s_^2['0.Zero],'s_[
-    '0.Zero],'O.Player],'`[_`,_`,_`]['s_^2['0.Zero],'s_^2['0.Zero],'O.Player],
-    '`[_`,_`,_`]['s_^2['0.Zero],'s_^3['0.Zero],'X.Player],'`[_`,_`,_`]['s_^3[
-    '0.Zero],'s_['0.Zero],'O.Player],'`[_`,_`,_`]['s_^3['0.Zero],'s_^2[
-    '0.Zero],'X.Player],'`[_`,_`,_`]['s_^3['0.Zero],'s_^3['0.Zero],'O.Player]]
-    :: < 0 % 'randomO[[empty]] > < 1 % 'randomX[[empty]] > log(0, match 'G:Grid
-    s.t. ('not_['hasWon['X.Player,'G:Grid]] = 'true.Bool) ; 'putO[none]{
-    empty}),smod_is_sorts_._______endsm(...)}
+rewrites: 6509
+result MSContext: {'__['`[_`,_`,_`]['s_['0.Zero], 's_['0.Zero], 'X.Player],
+    '`[_`,_`,_`]['s_['0.Zero], 's_^2['0.Zero], 'X.Player], '`[_`,_`,_`]['s_[
+    '0.Zero], 's_^3['0.Zero], 'O.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_[
+    '0.Zero], 'O.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_^2['0.Zero],
+    'O.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_^3['0.Zero], 'X.Player],
+    '`[_`,_`,_`]['s_^3['0.Zero], 's_['0.Zero], 'O.Player], '`[_`,_`,_`]['s_^3[
+    '0.Zero], 's_^2['0.Zero], 'X.Player], '`[_`,_`,_`]['s_^3['0.Zero], 's_^3[
+    '0.Zero], 'O.Player]] :: < 0 % 'randomO[[empty]] > < 1 % 'randomX[[empty]]
+    > log(0, match 'G:Grid s.t. ('not_['hasWon['X.Player, 'G:Grid]] =
+    'true.Bool) ; 'putO[none]{empty}), smod_is_sorts_._______endsm(...)}
 
 Solution 9
-rewrites: 5592
-result MSContext: {'__['`[_`,_`,_`]['s_['0.Zero],'s_['0.Zero],'-.Player],
-    '`[_`,_`,_`]['s_['0.Zero],'s_^2['0.Zero],'X.Player],'`[_`,_`,_`]['s_[
-    '0.Zero],'s_^3['0.Zero],'O.Player],'`[_`,_`,_`]['s_^2['0.Zero],'s_[
-    '0.Zero],'-.Player],'`[_`,_`,_`]['s_^2['0.Zero],'s_^2['0.Zero],'O.Player],
-    '`[_`,_`,_`]['s_^2['0.Zero],'s_^3['0.Zero],'X.Player],'`[_`,_`,_`]['s_^3[
-    '0.Zero],'s_['0.Zero],'O.Player],'`[_`,_`,_`]['s_^3['0.Zero],'s_^2[
-    '0.Zero],'X.Player],'`[_`,_`,_`]['s_^3['0.Zero],'s_^3['0.Zero],'O.Player]]
-    :: < 0 % 'randomO[[empty]] > < 1 % 'randomX[[empty]] > log(0, match 'G:Grid
-    s.t. ('not_['hasWon['X.Player,'G:Grid]] = 'true.Bool) ; 'putO[none]{
-    empty}),smod_is_sorts_._______endsm(...)}
+rewrites: 6700
+result MSContext: {'__['`[_`,_`,_`]['s_['0.Zero], 's_['0.Zero], '-.Player],
+    '`[_`,_`,_`]['s_['0.Zero], 's_^2['0.Zero], 'X.Player], '`[_`,_`,_`]['s_[
+    '0.Zero], 's_^3['0.Zero], 'O.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_[
+    '0.Zero], '-.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_^2['0.Zero],
+    'O.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_^3['0.Zero], 'X.Player],
+    '`[_`,_`,_`]['s_^3['0.Zero], 's_['0.Zero], 'O.Player], '`[_`,_`,_`]['s_^3[
+    '0.Zero], 's_^2['0.Zero], 'X.Player], '`[_`,_`,_`]['s_^3['0.Zero], 's_^3[
+    '0.Zero], 'O.Player]] :: < 0 % 'randomO[[empty]] > < 1 % 'randomX[[empty]]
+    > log(0, match 'G:Grid s.t. ('not_['hasWon['X.Player, 'G:Grid]] =
+    'true.Bool) ; 'putO[none]{empty}), smod_is_sorts_._______endsm(...)}
 
 Solution 10
-rewrites: 5755
-result MSContext: {'__['`[_`,_`,_`]['s_['0.Zero],'s_['0.Zero],'O.Player],
-    '`[_`,_`,_`]['s_['0.Zero],'s_^2['0.Zero],'X.Player],'`[_`,_`,_`]['s_[
-    '0.Zero],'s_^3['0.Zero],'-.Player],'`[_`,_`,_`]['s_^2['0.Zero],'s_[
-    '0.Zero],'-.Player],'`[_`,_`,_`]['s_^2['0.Zero],'s_^2['0.Zero],'O.Player],
-    '`[_`,_`,_`]['s_^2['0.Zero],'s_^3['0.Zero],'X.Player],'`[_`,_`,_`]['s_^3[
-    '0.Zero],'s_['0.Zero],'O.Player],'`[_`,_`,_`]['s_^3['0.Zero],'s_^2[
-    '0.Zero],'X.Player],'`[_`,_`,_`]['s_^3['0.Zero],'s_^3['0.Zero],'O.Player]]
-    :: < 0 % 'randomO[[empty]] > < 1 % 'randomX[[empty]] > log(0, match 'G:Grid
-    s.t. ('not_['hasWon['X.Player,'G:Grid]] = 'true.Bool) ; 'putO[none]{
-    empty}),smod_is_sorts_._______endsm(...)}
+rewrites: 6879
+result MSContext: {'__['`[_`,_`,_`]['s_['0.Zero], 's_['0.Zero], 'O.Player],
+    '`[_`,_`,_`]['s_['0.Zero], 's_^2['0.Zero], 'X.Player], '`[_`,_`,_`]['s_[
+    '0.Zero], 's_^3['0.Zero], '-.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_[
+    '0.Zero], '-.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_^2['0.Zero],
+    'O.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_^3['0.Zero], 'X.Player],
+    '`[_`,_`,_`]['s_^3['0.Zero], 's_['0.Zero], 'O.Player], '`[_`,_`,_`]['s_^3[
+    '0.Zero], 's_^2['0.Zero], 'X.Player], '`[_`,_`,_`]['s_^3['0.Zero], 's_^3[
+    '0.Zero], 'O.Player]] :: < 0 % 'randomO[[empty]] > < 1 % 'randomX[[empty]]
+    > log(0, match 'G:Grid s.t. ('not_['hasWon['X.Player, 'G:Grid]] =
+    'true.Bool) ; 'putO[none]{empty}), smod_is_sorts_._______endsm(...)}
 ==========================================
 srewrite in TICTACTOE-MAIN : makeContext(upTerm(initial), 'perfectO[[empty]],
     'perfectX[[empty]], upModule('TICTACTOE-STRAT, true)) using turns(0, 2) .
 
 Solution 1
-rewrites: 12682
-result MSContext: {'__['`[_`,_`,_`]['s_['0.Zero],'s_['0.Zero],'O.Player],
-    '`[_`,_`,_`]['s_['0.Zero],'s_^2['0.Zero],'X.Player],'`[_`,_`,_`]['s_[
-    '0.Zero],'s_^3['0.Zero],'O.Player],'`[_`,_`,_`]['s_^2['0.Zero],'s_[
-    '0.Zero],'O.Player],'`[_`,_`,_`]['s_^2['0.Zero],'s_^2['0.Zero],'O.Player],
-    '`[_`,_`,_`]['s_^2['0.Zero],'s_^3['0.Zero],'X.Player],'`[_`,_`,_`]['s_^3[
-    '0.Zero],'s_['0.Zero],'X.Player],'`[_`,_`,_`]['s_^3['0.Zero],'s_^2[
-    '0.Zero],'O.Player],'`[_`,_`,_`]['s_^3['0.Zero],'s_^3['0.Zero],'X.Player]]
-    :: < 0 % 'perfectO[[empty]] > < 1 % 'perfectX[[empty]] > log(0, match
-    'G:Grid s.t. ('not_['hasWon['X.Player,'G:Grid]] = 'true.Bool) ;
-    'perfect-step[['O.Player]]),smod_is_sorts_._______endsm(...)}
+rewrites: 37310
+result MSContext: {'__['`[_`,_`,_`]['s_['0.Zero], 's_['0.Zero], 'O.Player],
+    '`[_`,_`,_`]['s_['0.Zero], 's_^2['0.Zero], 'X.Player], '`[_`,_`,_`]['s_[
+    '0.Zero], 's_^3['0.Zero], 'O.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_[
+    '0.Zero], 'O.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_^2['0.Zero],
+    'O.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_^3['0.Zero], 'X.Player],
+    '`[_`,_`,_`]['s_^3['0.Zero], 's_['0.Zero], 'X.Player], '`[_`,_`,_`]['s_^3[
+    '0.Zero], 's_^2['0.Zero], 'O.Player], '`[_`,_`,_`]['s_^3['0.Zero], 's_^3[
+    '0.Zero], 'X.Player]] :: < 0 % 'perfectO[[empty]] > < 1 % 'perfectX[[
+    empty]] > log(0, match 'G:Grid s.t. ('not_['hasWon['X.Player, 'G:Grid]] =
+    'true.Bool) ; 'perfect-step[['O.Player]]), smod_is_sorts_._______endsm(
+    ...)}
 
 Solution 2
-rewrites: 12685
-result MSContext: {'__['`[_`,_`,_`]['s_['0.Zero],'s_['0.Zero],'O.Player],
-    '`[_`,_`,_`]['s_['0.Zero],'s_^2['0.Zero],'X.Player],'`[_`,_`,_`]['s_[
-    '0.Zero],'s_^3['0.Zero],'O.Player],'`[_`,_`,_`]['s_^2['0.Zero],'s_[
-    '0.Zero],'X.Player],'`[_`,_`,_`]['s_^2['0.Zero],'s_^2['0.Zero],'O.Player],
-    '`[_`,_`,_`]['s_^2['0.Zero],'s_^3['0.Zero],'O.Player],'`[_`,_`,_`]['s_^3[
-    '0.Zero],'s_['0.Zero],'X.Player],'`[_`,_`,_`]['s_^3['0.Zero],'s_^2[
-    '0.Zero],'O.Player],'`[_`,_`,_`]['s_^3['0.Zero],'s_^3['0.Zero],'X.Player]]
-    :: < 0 % 'perfectO[[empty]] > < 1 % 'perfectX[[empty]] > log(0, match
-    'G:Grid s.t. ('not_['hasWon['X.Player,'G:Grid]] = 'true.Bool) ;
-    'perfect-step[['O.Player]]),smod_is_sorts_._______endsm(...)}
+rewrites: 37313
+result MSContext: {'__['`[_`,_`,_`]['s_['0.Zero], 's_['0.Zero], 'O.Player],
+    '`[_`,_`,_`]['s_['0.Zero], 's_^2['0.Zero], 'X.Player], '`[_`,_`,_`]['s_[
+    '0.Zero], 's_^3['0.Zero], 'O.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_[
+    '0.Zero], 'X.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_^2['0.Zero],
+    'O.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_^3['0.Zero], 'O.Player],
+    '`[_`,_`,_`]['s_^3['0.Zero], 's_['0.Zero], 'X.Player], '`[_`,_`,_`]['s_^3[
+    '0.Zero], 's_^2['0.Zero], 'O.Player], '`[_`,_`,_`]['s_^3['0.Zero], 's_^3[
+    '0.Zero], 'X.Player]] :: < 0 % 'perfectO[[empty]] > < 1 % 'perfectX[[
+    empty]] > log(0, match 'G:Grid s.t. ('not_['hasWon['X.Player, 'G:Grid]] =
+    'true.Bool) ; 'perfect-step[['O.Player]]), smod_is_sorts_._______endsm(
+    ...)}
 
 Solution 3
-rewrites: 12685
-result MSContext: {'__['`[_`,_`,_`]['s_['0.Zero],'s_['0.Zero],'O.Player],
-    '`[_`,_`,_`]['s_['0.Zero],'s_^2['0.Zero],'O.Player],'`[_`,_`,_`]['s_[
-    '0.Zero],'s_^3['0.Zero],'X.Player],'`[_`,_`,_`]['s_^2['0.Zero],'s_[
-    '0.Zero],'X.Player],'`[_`,_`,_`]['s_^2['0.Zero],'s_^2['0.Zero],'O.Player],
-    '`[_`,_`,_`]['s_^2['0.Zero],'s_^3['0.Zero],'O.Player],'`[_`,_`,_`]['s_^3[
-    '0.Zero],'s_['0.Zero],'O.Player],'`[_`,_`,_`]['s_^3['0.Zero],'s_^2[
-    '0.Zero],'X.Player],'`[_`,_`,_`]['s_^3['0.Zero],'s_^3['0.Zero],'X.Player]]
-    :: < 0 % 'perfectO[[empty]] > < 1 % 'perfectX[[empty]] > log(0, match
-    'G:Grid s.t. ('not_['hasWon['X.Player,'G:Grid]] = 'true.Bool) ;
-    'perfect-step[['O.Player]]),smod_is_sorts_._______endsm(...)}
+rewrites: 37313
+result MSContext: {'__['`[_`,_`,_`]['s_['0.Zero], 's_['0.Zero], 'O.Player],
+    '`[_`,_`,_`]['s_['0.Zero], 's_^2['0.Zero], 'O.Player], '`[_`,_`,_`]['s_[
+    '0.Zero], 's_^3['0.Zero], 'X.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_[
+    '0.Zero], 'X.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_^2['0.Zero],
+    'O.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_^3['0.Zero], 'O.Player],
+    '`[_`,_`,_`]['s_^3['0.Zero], 's_['0.Zero], 'O.Player], '`[_`,_`,_`]['s_^3[
+    '0.Zero], 's_^2['0.Zero], 'X.Player], '`[_`,_`,_`]['s_^3['0.Zero], 's_^3[
+    '0.Zero], 'X.Player]] :: < 0 % 'perfectO[[empty]] > < 1 % 'perfectX[[
+    empty]] > log(0, match 'G:Grid s.t. ('not_['hasWon['X.Player, 'G:Grid]] =
+    'true.Bool) ; 'perfect-step[['O.Player]]), smod_is_sorts_._______endsm(
+    ...)}
 
 Solution 4
-rewrites: 12686
-result MSContext: {'__['`[_`,_`,_`]['s_['0.Zero],'s_['0.Zero],'O.Player],
-    '`[_`,_`,_`]['s_['0.Zero],'s_^2['0.Zero],'X.Player],'`[_`,_`,_`]['s_[
-    '0.Zero],'s_^3['0.Zero],'X.Player],'`[_`,_`,_`]['s_^2['0.Zero],'s_[
-    '0.Zero],'X.Player],'`[_`,_`,_`]['s_^2['0.Zero],'s_^2['0.Zero],'O.Player],
-    '`[_`,_`,_`]['s_^2['0.Zero],'s_^3['0.Zero],'O.Player],'`[_`,_`,_`]['s_^3[
-    '0.Zero],'s_['0.Zero],'O.Player],'`[_`,_`,_`]['s_^3['0.Zero],'s_^2[
-    '0.Zero],'O.Player],'`[_`,_`,_`]['s_^3['0.Zero],'s_^3['0.Zero],'X.Player]]
-    :: < 0 % 'perfectO[[empty]] > < 1 % 'perfectX[[empty]] > log(0, match
-    'G:Grid s.t. ('not_['hasWon['X.Player,'G:Grid]] = 'true.Bool) ;
-    'perfect-step[['O.Player]]),smod_is_sorts_._______endsm(...)}
+rewrites: 37314
+result MSContext: {'__['`[_`,_`,_`]['s_['0.Zero], 's_['0.Zero], 'O.Player],
+    '`[_`,_`,_`]['s_['0.Zero], 's_^2['0.Zero], 'X.Player], '`[_`,_`,_`]['s_[
+    '0.Zero], 's_^3['0.Zero], 'X.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_[
+    '0.Zero], 'X.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_^2['0.Zero],
+    'O.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_^3['0.Zero], 'O.Player],
+    '`[_`,_`,_`]['s_^3['0.Zero], 's_['0.Zero], 'O.Player], '`[_`,_`,_`]['s_^3[
+    '0.Zero], 's_^2['0.Zero], 'O.Player], '`[_`,_`,_`]['s_^3['0.Zero], 's_^3[
+    '0.Zero], 'X.Player]] :: < 0 % 'perfectO[[empty]] > < 1 % 'perfectX[[
+    empty]] > log(0, match 'G:Grid s.t. ('not_['hasWon['X.Player, 'G:Grid]] =
+    'true.Bool) ; 'perfect-step[['O.Player]]), smod_is_sorts_._______endsm(
+    ...)}
 
 Solution 5
-rewrites: 12686
-result MSContext: {'__['`[_`,_`,_`]['s_['0.Zero],'s_['0.Zero],'X.Player],
-    '`[_`,_`,_`]['s_['0.Zero],'s_^2['0.Zero],'O.Player],'`[_`,_`,_`]['s_[
-    '0.Zero],'s_^3['0.Zero],'O.Player],'`[_`,_`,_`]['s_^2['0.Zero],'s_[
-    '0.Zero],'O.Player],'`[_`,_`,_`]['s_^2['0.Zero],'s_^2['0.Zero],'O.Player],
-    '`[_`,_`,_`]['s_^2['0.Zero],'s_^3['0.Zero],'X.Player],'`[_`,_`,_`]['s_^3[
-    '0.Zero],'s_['0.Zero],'X.Player],'`[_`,_`,_`]['s_^3['0.Zero],'s_^2[
-    '0.Zero],'X.Player],'`[_`,_`,_`]['s_^3['0.Zero],'s_^3['0.Zero],'O.Player]]
-    :: < 0 % 'perfectO[[empty]] > < 1 % 'perfectX[[empty]] > log(0, match
-    'G:Grid s.t. ('not_['hasWon['X.Player,'G:Grid]] = 'true.Bool) ;
-    'perfect-step[['O.Player]]),smod_is_sorts_._______endsm(...)}
+rewrites: 37314
+result MSContext: {'__['`[_`,_`,_`]['s_['0.Zero], 's_['0.Zero], 'X.Player],
+    '`[_`,_`,_`]['s_['0.Zero], 's_^2['0.Zero], 'O.Player], '`[_`,_`,_`]['s_[
+    '0.Zero], 's_^3['0.Zero], 'O.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_[
+    '0.Zero], 'O.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_^2['0.Zero],
+    'O.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_^3['0.Zero], 'X.Player],
+    '`[_`,_`,_`]['s_^3['0.Zero], 's_['0.Zero], 'X.Player], '`[_`,_`,_`]['s_^3[
+    '0.Zero], 's_^2['0.Zero], 'X.Player], '`[_`,_`,_`]['s_^3['0.Zero], 's_^3[
+    '0.Zero], 'O.Player]] :: < 0 % 'perfectO[[empty]] > < 1 % 'perfectX[[
+    empty]] > log(0, match 'G:Grid s.t. ('not_['hasWon['X.Player, 'G:Grid]] =
+    'true.Bool) ; 'perfect-step[['O.Player]]), smod_is_sorts_._______endsm(
+    ...)}
 
 Solution 6
-rewrites: 12686
-result MSContext: {'__['`[_`,_`,_`]['s_['0.Zero],'s_['0.Zero],'X.Player],
-    '`[_`,_`,_`]['s_['0.Zero],'s_^2['0.Zero],'X.Player],'`[_`,_`,_`]['s_[
-    '0.Zero],'s_^3['0.Zero],'O.Player],'`[_`,_`,_`]['s_^2['0.Zero],'s_[
-    '0.Zero],'O.Player],'`[_`,_`,_`]['s_^2['0.Zero],'s_^2['0.Zero],'O.Player],
-    '`[_`,_`,_`]['s_^2['0.Zero],'s_^3['0.Zero],'X.Player],'`[_`,_`,_`]['s_^3[
-    '0.Zero],'s_['0.Zero],'X.Player],'`[_`,_`,_`]['s_^3['0.Zero],'s_^2[
-    '0.Zero],'O.Player],'`[_`,_`,_`]['s_^3['0.Zero],'s_^3['0.Zero],'O.Player]]
-    :: < 0 % 'perfectO[[empty]] > < 1 % 'perfectX[[empty]] > log(0, match
-    'G:Grid s.t. ('not_['hasWon['X.Player,'G:Grid]] = 'true.Bool) ;
-    'perfect-step[['O.Player]]),smod_is_sorts_._______endsm(...)}
+rewrites: 37314
+result MSContext: {'__['`[_`,_`,_`]['s_['0.Zero], 's_['0.Zero], 'X.Player],
+    '`[_`,_`,_`]['s_['0.Zero], 's_^2['0.Zero], 'X.Player], '`[_`,_`,_`]['s_[
+    '0.Zero], 's_^3['0.Zero], 'O.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_[
+    '0.Zero], 'O.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_^2['0.Zero],
+    'O.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_^3['0.Zero], 'X.Player],
+    '`[_`,_`,_`]['s_^3['0.Zero], 's_['0.Zero], 'X.Player], '`[_`,_`,_`]['s_^3[
+    '0.Zero], 's_^2['0.Zero], 'O.Player], '`[_`,_`,_`]['s_^3['0.Zero], 's_^3[
+    '0.Zero], 'O.Player]] :: < 0 % 'perfectO[[empty]] > < 1 % 'perfectX[[
+    empty]] > log(0, match 'G:Grid s.t. ('not_['hasWon['X.Player, 'G:Grid]] =
+    'true.Bool) ; 'perfect-step[['O.Player]]), smod_is_sorts_._______endsm(
+    ...)}
 
 Solution 7
-rewrites: 12686
-result MSContext: {'__['`[_`,_`,_`]['s_['0.Zero],'s_['0.Zero],'X.Player],
-    '`[_`,_`,_`]['s_['0.Zero],'s_^2['0.Zero],'O.Player],'`[_`,_`,_`]['s_[
-    '0.Zero],'s_^3['0.Zero],'X.Player],'`[_`,_`,_`]['s_^2['0.Zero],'s_[
-    '0.Zero],'O.Player],'`[_`,_`,_`]['s_^2['0.Zero],'s_^2['0.Zero],'O.Player],
-    '`[_`,_`,_`]['s_^2['0.Zero],'s_^3['0.Zero],'X.Player],'`[_`,_`,_`]['s_^3[
-    '0.Zero],'s_['0.Zero],'O.Player],'`[_`,_`,_`]['s_^3['0.Zero],'s_^2[
-    '0.Zero],'X.Player],'`[_`,_`,_`]['s_^3['0.Zero],'s_^3['0.Zero],'O.Player]]
-    :: < 0 % 'perfectO[[empty]] > < 1 % 'perfectX[[empty]] > log(0, match
-    'G:Grid s.t. ('not_['hasWon['X.Player,'G:Grid]] = 'true.Bool) ;
-    'perfect-step[['O.Player]]),smod_is_sorts_._______endsm(...)}
+rewrites: 37314
+result MSContext: {'__['`[_`,_`,_`]['s_['0.Zero], 's_['0.Zero], 'X.Player],
+    '`[_`,_`,_`]['s_['0.Zero], 's_^2['0.Zero], 'O.Player], '`[_`,_`,_`]['s_[
+    '0.Zero], 's_^3['0.Zero], 'X.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_[
+    '0.Zero], 'O.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_^2['0.Zero],
+    'O.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_^3['0.Zero], 'X.Player],
+    '`[_`,_`,_`]['s_^3['0.Zero], 's_['0.Zero], 'O.Player], '`[_`,_`,_`]['s_^3[
+    '0.Zero], 's_^2['0.Zero], 'X.Player], '`[_`,_`,_`]['s_^3['0.Zero], 's_^3[
+    '0.Zero], 'O.Player]] :: < 0 % 'perfectO[[empty]] > < 1 % 'perfectX[[
+    empty]] > log(0, match 'G:Grid s.t. ('not_['hasWon['X.Player, 'G:Grid]] =
+    'true.Bool) ; 'perfect-step[['O.Player]]), smod_is_sorts_._______endsm(
+    ...)}
 
 Solution 8
-rewrites: 12686
-result MSContext: {'__['`[_`,_`,_`]['s_['0.Zero],'s_['0.Zero],'X.Player],
-    '`[_`,_`,_`]['s_['0.Zero],'s_^2['0.Zero],'O.Player],'`[_`,_`,_`]['s_[
-    '0.Zero],'s_^3['0.Zero],'X.Player],'`[_`,_`,_`]['s_^2['0.Zero],'s_[
-    '0.Zero],'X.Player],'`[_`,_`,_`]['s_^2['0.Zero],'s_^2['0.Zero],'O.Player],
-    '`[_`,_`,_`]['s_^2['0.Zero],'s_^3['0.Zero],'O.Player],'`[_`,_`,_`]['s_^3[
-    '0.Zero],'s_['0.Zero],'O.Player],'`[_`,_`,_`]['s_^3['0.Zero],'s_^2[
-    '0.Zero],'X.Player],'`[_`,_`,_`]['s_^3['0.Zero],'s_^3['0.Zero],'O.Player]]
-    :: < 0 % 'perfectO[[empty]] > < 1 % 'perfectX[[empty]] > log(0, match
-    'G:Grid s.t. ('not_['hasWon['X.Player,'G:Grid]] = 'true.Bool) ;
-    'perfect-step[['O.Player]]),smod_is_sorts_._______endsm(...)}
+rewrites: 37314
+result MSContext: {'__['`[_`,_`,_`]['s_['0.Zero], 's_['0.Zero], 'X.Player],
+    '`[_`,_`,_`]['s_['0.Zero], 's_^2['0.Zero], 'O.Player], '`[_`,_`,_`]['s_[
+    '0.Zero], 's_^3['0.Zero], 'X.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_[
+    '0.Zero], 'X.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_^2['0.Zero],
+    'O.Player], '`[_`,_`,_`]['s_^2['0.Zero], 's_^3['0.Zero], 'O.Player],
+    '`[_`,_`,_`]['s_^3['0.Zero], 's_['0.Zero], 'O.Player], '`[_`,_`,_`]['s_^3[
+    '0.Zero], 's_^2['0.Zero], 'X.Player], '`[_`,_`,_`]['s_^3['0.Zero], 's_^3[
+    '0.Zero], 'O.Player]] :: < 0 % 'perfectO[[empty]] > < 1 % 'perfectX[[
+    empty]] > log(0, match 'G:Grid s.t. ('not_['hasWon['X.Player, 'G:Grid]] =
+    'true.Bool) ; 'perfect-step[['O.Player]]), smod_is_sorts_._______endsm(
+    ...)}
 
 No more solutions.
-rewrites: 12686
+rewrites: 37314
 Bye.

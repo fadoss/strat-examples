@@ -11,7 +11,7 @@
 *** Running from terminal: maude neuralNetworks-data
 ***
 
-mod ANN-BASE is
+omod ANN-BASE is
 	protecting CONVERSION .
 	protecting QID .
 	protecting CONFIGURATION .
@@ -19,27 +19,18 @@ mod ANN-BASE is
 	*** Messages ***
 
 	*** netStatus(counter, final training pattern, times of training set, final pattern)
-	msg netStatus : Nat Nat Nat Nat -> Msg [ctor] .
+	msg netStatus : Nat Nat Nat Nat -> Msg .
 
 	*** inputPattern(counter, neuron, value)
 	*** outputPattern(counter, neuron, value, state)
-	msg inputPattern : Nat Nat Float -> Msg [ctor] .
-	msg outputPattern : Nat Nat Float Nat -> Msg [ctor] .
+	msg inputPattern : Nat Nat Float -> Msg .
+	msg outputPattern : Nat Nat Float Nat -> Msg .
 
 	*** Classes ***
 
-	*** class Net | e : Float, r : Bool, st : Nat .
-	op Net : -> Cid [ctor] .
-	op e :_ : Float -> Attribute [ctor] .
-	op r :_ : Bool -> Attribute [ctor] .
-	op st :_ : Nat -> Attribute [ctor] .
-	*** class Neuron | x : Float, t : Float, st : Nat .
-	op Neuron : -> Cid [ctor] .
-	op x :_ : Float -> Attribute [ctor] .
-	op t :_ : Float -> Attribute [ctor] .
-	*** class Link | w : Float, st : Nat .
-	op Link : -> Cid [ctor] .
-	op w :_ : Float -> Attribute [ctor] .
+	class Net | e : Float, r : Bool, st : Nat .
+	class Neuron | x : Float, t : Float, st : Nat .
+	class Link | w : Float, st : Nat .
 
 	*** Operators ***
 
@@ -116,7 +107,7 @@ mod ANN-BASE is
 	eq outPatternConversion(N, X, S) = outputPattern(N, s(S), X, 0)
 		< net(N) : Net |  e : 0.0 , r : false , st : 0 > .
 	*** Conversion to Object Neural Net Model (end) ***
-endm
+endom
 
 mod ANN-SYGMOID is
 	protecting ANN-BASE .
@@ -134,7 +125,7 @@ mod ANN-SYGMOID is
 	*** sygmoid function:  ( 1.0 / ( 1.0 + exp(_-_(nu , X))))
 endm
 
-mod ANN-EVALUATION is
+omod ANN-EVALUATION is
 	protecting ANN-SYGMOID .
 
 	*** Neural net model rules ***
@@ -213,18 +204,14 @@ mod ANN-EVALUATION is
 	  =>
 		*** < net(N) : Net | e : E , r : (E <= tol) , st : 1 > .
 		< net(N) : Net | e : E , r : (abs(E) <= tol) , st : 1 > . *** one neuron
-endm
+endom
 
-mod ANN-TRAINING is
+omod ANN-TRAINING is
 	protecting ANN-EVALUATION .
 
 	*** Classes ***
-	*** class LinkTR | w+1 : Float . subclass LinkTR < Link .
-	op LinkTR : -> Cid [ctor] .
-	op w+1 :_ : Float -> Attribute [ctor] .
-	*** class NeuronTR  | dt : Float . subclass NeuronTR < Neuron .
-	op NeuronTR : -> Cid [ctor] .
-	op dt :_ : Float -> Attribute [ctor] .
+	class LinkTR | w+1 : Float . subclass LinkTR < Link .
+	class NeuronTR  | dt : Float . subclass NeuronTR < Neuron .
 
 	*** Advanced net parameters
 	op eta : -> Float .
@@ -242,11 +229,11 @@ mod ANN-TRAINING is
 	rl [resetLinkW+1] :  C => resetLinkW+1(C) .
 	op resetLinkW+1 : Configuration -> Configuration .
 	eq resetLinkW+1(C < link(N, I, J) : Link | w : W , st : 1 >) =
-		resetLinkW+1(C < link(N, I, J) : LinkTR | w : W, w+1 : 0.0, st : 2 >) .
+		resetLinkW+1(C < link(N, I, J) : LinkTR | w : W, w+1 : 0.0, st : 2 >) [dnt] .
 	eq resetLinkW+1(C) = C [owise] .
 
 	rl [resetNeuronTR] : < neuron(L, I) : Neuron | x : X, t : T, st : 1 >
-		=> < neuron(L, I) : NeuronTR | x : X , t : T, dt : 0.0, st : 2 > .
+		=> < neuron(L, I) : NeuronTR | x : X , t : T, dt : 0.0, st : 2 > [dnt] .
 
 	rl [delta2] :  *** Computes dt (delta) at neurons for output layer
 		< neuron(2, I) : NeuronTR | x : X, dt : DT, st : 2 >
@@ -294,7 +281,7 @@ mod ANN-TRAINING is
 	rl [changeStatus] : *** Change status
 	*** netStatus(N , N1 , N2 , N0)  =>  netStatus(N1 , N1 , N2 , N0) .
 		netStatus(N , N1 , N2 , N0)  =>  netStatus(0 , N1 , N2 , N0) .
-endm
+endom
 
 smod ANN-STRAT is
 	protecting ANN-TRAINING .

@@ -2,875 +2,697 @@
 srewrite in ANN-MAIN : ann netStatus(0, 53, 1, 106) using one(trainANN) ! .
 
 Solution 1
-rewrites: 2994
-result Configuration: < net(1) : Net | e : 0.0,r : true,st : 1 > < net(2) : Net
-    | e : 0.0,r : true,st : 1 > < net(3) : Net | e : 0.0,r : true,st : 1 > <
-    net(4) : Net | e : 0.0,r : true,st : 1 > < net(5) : Net | e : 0.0,r : true,
-    st : 1 > < net(6) : Net | e : 0.0,r : true,st : 1 > < net(7) : Net | e :
-    0.0,r : true,st : 1 > < net(8) : Net | e : 0.0,r : true,st : 1 > < net(9) :
-    Net | e : 0.0,r : true,st : 1 > < net(10) : Net | e : 0.0,r : true,st : 1 >
-    < net(11) : Net | e : 0.0,r : true,st : 1 > < net(12) : Net | e : 0.0,r :
-    true,st : 1 > < net(13) : Net | e : 0.0,r : true,st : 1 > < net(14) : Net |
-    e : 0.0,r : true,st : 1 > < net(15) : Net | e : 0.0,r : true,st : 1 > <
-    net(16) : Net | e : 0.0,r : true,st : 1 > < net(17) : Net | e : 0.0,r :
-    true,st : 1 > < net(18) : Net | e : 0.0,r : true,st : 1 > < net(19) : Net |
-    e : 0.0,r : true,st : 1 > < net(20) : Net | e : 0.0,r : true,st : 1 > <
-    net(21) : Net | e : 0.0,r : true,st : 1 > < net(22) : Net | e : 0.0,r :
-    true,st : 1 > < net(23) : Net | e : 0.0,r : true,st : 1 > < net(24) : Net |
-    e : 0.0,r : true,st : 1 > < net(25) : Net | e : 0.0,r : true,st : 1 > <
-    net(26) : Net | e : 0.0,r : true,st : 1 > < net(27) : Net | e : 0.0,r :
-    true,st : 1 > < net(28) : Net | e : 0.0,r : true,st : 1 > < net(29) : Net |
-    e : 0.0,r : true,st : 1 > < net(30) : Net | e : 0.0,r : true,st : 1 > <
-    net(31) : Net | e : 0.0,r : true,st : 1 > < net(32) : Net | e : 0.0,r :
-    true,st : 1 > < net(33) : Net | e : 0.0,r : true,st : 1 > < net(34) : Net |
-    e : 0.0,r : true,st : 1 > < net(35) : Net | e : 0.0,r : true,st : 1 > <
-    net(36) : Net | e : 0.0,r : true,st : 1 > < net(37) : Net | e : 0.0,r :
-    true,st : 1 > < net(38) : Net | e : 0.0,r : true,st : 1 > < net(39) : Net |
-    e : 0.0,r : true,st : 1 > < net(40) : Net | e : 0.0,r : true,st : 1 > <
-    net(41) : Net | e : 0.0,r : true,st : 1 > < net(42) : Net | e : 0.0,r :
-    true,st : 1 > < net(43) : Net | e : 0.0,r : true,st : 1 > < net(44) : Net |
-    e : 0.0,r : true,st : 1 > < net(45) : Net | e : 0.0,r : true,st : 1 > <
-    net(46) : Net | e : 0.0,r : true,st : 1 > < net(47) : Net | e : 0.0,r :
-    true,st : 1 > < net(48) : Net | e : 0.0,r : true,st : 1 > < net(49) : Net |
-    e : 0.0,r : true,st : 1 > < net(50) : Net | e : 0.0,r : true,st : 1 > <
-    net(51) : Net | e : 0.0,r : true,st : 1 > < net(52) : Net | e : 0.0,r :
-    true,st : 1 > < net(53) : Net | e : 0.0,r : true,st : 1 > < neuron(0, 1) :
-    Neuron | st : 0,x : 0.0,t : 0.0 > < neuron(0, 2) : Neuron | st : 0,x : 0.0,
-    t : 0.0 > < neuron(0, 3) : Neuron | st : 0,x : 0.0,t : 0.0 > < neuron(0, 4)
-    : Neuron | st : 0,x : 0.0,t : 0.0 > < neuron(0, 5) : Neuron | st : 0,x :
-    0.0,t : 0.0 > < neuron(0, 6) : Neuron | st : 0,x : 0.0,t : 0.0 > < neuron(
-    0, 7) : Neuron | st : 0,x : 0.0,t : 0.0 > < neuron(0, 8) : Neuron | st : 0,
-    x : 0.0,t : 0.0 > < neuron(0, 9) : Neuron | st : 0,x : 0.0,t : 0.0 > <
-    neuron(0, 10) : Neuron | st : 0,x : 0.0,t : 0.0 > < neuron(0, 11) : Neuron
-    | st : 0,x : 0.0,t : 0.0 > < neuron(0, 12) : Neuron | st : 0,x : 0.0,t :
-    0.0 > < neuron(0, 13) : Neuron | st : 0,x : 0.0,t : 0.0 > < neuron(0, 14) :
-    Neuron | st : 0,x : 0.0,t : 0.0 > < neuron(0, 15) : Neuron | st : 0,x :
-    0.0,t : 0.0 > < neuron(0, 16) : Neuron | st : 0,x : 0.0,t : 0.0 > < neuron(
-    1, 1) : NeuronTR | st : 2,x : 6.9138420343346815e-2,t : 0.0,dt : 0.0 > <
-    neuron(1, 2) : NeuronTR | st : 2,x : 6.9138420343346815e-2,t : 0.0,dt : 0.0
-    > < neuron(1, 3) : NeuronTR | st : 2,x : 6.9138420343346815e-2,t : 0.0,dt :
-    0.0 > < neuron(1, 4) : NeuronTR | st : 2,x : 6.9138420343346815e-2,t : 0.0,
-    dt : 0.0 > < neuron(1, 5) : NeuronTR | st : 2,x : 6.9138420343346815e-2,t :
-    0.0,dt : 0.0 > < neuron(1, 6) : NeuronTR | st : 2,x :
-    6.9138420343346815e-2,t : 0.0,dt : 0.0 > < neuron(1, 7) : NeuronTR | st :
-    2,x : 6.9138420343346815e-2,t : 0.0,dt : 0.0 > < neuron(1, 8) : NeuronTR |
-    st : 2,x : 6.9138420343346815e-2,t : 0.0,dt : 0.0 > < neuron(1, 9) :
-    NeuronTR | st : 2,x : 6.9138420343346815e-2,t : 0.0,dt : 0.0 > < neuron(1,
-    10) : NeuronTR | st : 2,x : 6.9138420343346815e-2,t : 0.0,dt : 0.0 > <
-    neuron(1, 11) : NeuronTR | st : 2,x : 6.9138420343346815e-2,t : 0.0,dt :
-    0.0 > < neuron(1, 12) : NeuronTR | st : 2,x : 6.9138420343346815e-2,t :
-    0.0,dt : 0.0 > < neuron(1, 13) : NeuronTR | st : 2,x :
-    6.9138420343346815e-2,t : 0.0,dt : 0.0 > < neuron(1, 14) : NeuronTR | st :
-    2,x : 6.9138420343346815e-2,t : 0.0,dt : 0.0 > < neuron(1, 15) : NeuronTR |
-    st : 2,x : 6.9138420343346815e-2,t : 0.0,dt : 0.0 > < neuron(1, 16) :
-    NeuronTR | st : 2,x : 6.9138420343346815e-2,t : 0.0,dt : 0.0 > < neuron(1,
-    17) : NeuronTR | st : 2,x : 6.9138420343346815e-2,t : 0.0,dt : 0.0 > <
-    neuron(1, 18) : NeuronTR | st : 2,x : 6.9138420343346815e-2,t : 0.0,dt :
-    0.0 > < neuron(1, 19) : NeuronTR | st : 2,x : 6.9138420343346815e-2,t :
-    0.0,dt : 0.0 > < neuron(1, 20) : NeuronTR | st : 2,x :
-    6.9138420343346815e-2,t : 0.0,dt : 0.0 > < neuron(1, 21) : NeuronTR | st :
-    2,x : 6.9138420343346815e-2,t : 0.0,dt : 0.0 > < neuron(1, 22) : NeuronTR |
-    st : 2,x : 6.9138420343346815e-2,t : 0.0,dt : 0.0 > < neuron(1, 23) :
-    NeuronTR | st : 2,x : 6.9138420343346815e-2,t : 0.0,dt : 0.0 > < neuron(1,
-    24) : NeuronTR | st : 2,x : 6.9138420343346815e-2,t : 0.0,dt : 0.0 > <
-    neuron(1, 25) : NeuronTR | st : 2,x : 6.9138420343346815e-2,t : 0.0,dt :
-    0.0 > < neuron(2, 1) : NeuronTR | st : 2,x : 6.9138420343346815e-2,t : 0.0,
-    dt : 0.0 > < link(1, 1, 1) : Link | st : 0,w : -4.8250885999999998e-1 > <
-    link(1, 1, 2) : Link | st : 0,w : 4.5363079000000001e-1 > < link(1, 1, 3) :
-    Link | st : 0,w : 6.5476949000000007e-2 > < link(1, 1, 4) : Link | st : 0,w
-    : 4.3467395999999998e-2 > < link(1, 1, 5) : Link | st : 0,w : -1.6729622e-1
-    > < link(1, 1, 6) : Link | st : 0,w : -2.3036128e-1 > < link(1, 1, 7) :
-    Link | st : 0,w : 1.3381515999999999e-1 > < link(1, 1, 8) : Link | st : 0,w
-    : -2.1399963e-1 > < link(1, 1, 9) : Link | st : 0,w : 1.9002638999999999e-1
-    > < link(1, 1, 10) : Link | st : 0,w : 7.1749896999999996e-1 > < link(1, 1,
-    11) : Link | st : 0,w : -2.3380265e-1 > < link(1, 1, 12) : Link | st : 0,w
-    : 3.5712835999999998e-1 > < link(1, 1, 13) : Link | st : 0,w :
-    -3.5198135999999998e-2 > < link(1, 1, 14) : Link | st : 0,w :
-    4.8261042999999998e-1 > < link(1, 1, 15) : Link | st : 0,w : 5.5852667e-1 >
-    < link(1, 1, 16) : Link | st : 0,w : -1.6582959e-1 > < link(1, 1, 17) :
-    Link | st : 0,w : -4.9911758000000001e-2 > < link(1, 1, 18) : Link | st :
-    0,w : -3.6971164000000001e-1 > < link(1, 1, 19) : Link | st : 0,w :
-    -5.1237763000000003e-1 > < link(1, 1, 20) : Link | st : 0,w :
-    5.5481842000000003e-1 > < link(1, 1, 21) : Link | st : 0,w :
-    6.3157585000000005e-1 > < link(1, 1, 22) : Link | st : 0,w :
-    -4.9380343999999998e-1 > < link(1, 1, 23) : Link | st : 0,w :
-    -1.4786949999999999e-1 > < link(1, 1, 24) : Link | st : 0,w :
-    -1.9407065000000001e-1 > < link(1, 1, 25) : Link | st : 0,w : 1.700585e-1 >
-    < link(1, 2, 1) : Link | st : 0,w : -4.4826933999999999e-2 > < link(1, 2,
-    2) : Link | st : 0,w : 4.5776920999999998e-2 > < link(1, 2, 3) : Link | st
-    : 0,w : 2.9223078e-2 > < link(1, 2, 4) : Link | st : 0,w :
-    5.9537450999999998e-2 > < link(1, 2, 5) : Link | st : 0,w :
-    1.6405951999999999e-1 > < link(1, 2, 6) : Link | st : 0,w :
-    -1.1279635999999999e-2 > < link(1, 2, 7) : Link | st : 0,w :
-    -3.5346444999999997e-2 > < link(1, 2, 8) : Link | st : 0,w : 1.0725564e-1 >
-    < link(1, 2, 9) : Link | st : 0,w : -5.2926832e-2 > < link(1, 2, 10) : Link
-    | st : 0,w : 1.5820788e-1 > < link(1, 2, 11) : Link | st : 0,w :
-    7.2903150999999999e-2 > < link(1, 2, 12) : Link | st : 0,w :
-    -5.9759258000000003e-2 > < link(1, 2, 13) : Link | st : 0,w :
-    2.0281611999999999e-1 > < link(1, 2, 14) : Link | st : 0,w : 1.202497e-1 >
-    < link(1, 2, 15) : Link | st : 0,w : 1.8195336000000001e-1 > < link(1, 2,
-    16) : Link | st : 0,w : 6.3132543999999999e-2 > < link(1, 2, 17) : Link |
-    st : 0,w : -8.6814812000000005e-2 > < link(1, 2, 18) : Link | st : 0,w :
-    -6.4270008000000003e-2 > < link(1, 2, 19) : Link | st : 0,w :
-    5.1192664999999998e-2 > < link(1, 2, 20) : Link | st : 0,w :
-    4.3654303999999998e-2 > < link(1, 2, 21) : Link | st : 0,w :
-    5.3618013999999999e-2 > < link(1, 2, 22) : Link | st : 0,w :
-    -1.9159470000000001e-2 > < link(1, 2, 23) : Link | st : 0,w :
-    9.7175410000000004e-2 > < link(1, 2, 24) : Link | st : 0,w :
-    4.9255175999999998e-2 > < link(1, 2, 25) : Link | st : 0,w :
-    -7.8692358000000004e-2 > < link(1, 3, 1) : Link | st : 0,w :
-    1.3258318999999999e-1 > < link(1, 3, 2) : Link | st : 0,w :
-    1.0180802999999999e-1 > < link(1, 3, 3) : Link | st : 0,w :
-    2.0102560999999999e-1 > < link(1, 3, 4) : Link | st : 0,w :
-    3.0447945999999998e-1 > < link(1, 3, 5) : Link | st : 0,w :
-    6.2239462999999995e-1 > < link(1, 3, 6) : Link | st : 0,w :
-    8.8694734999999997e-2 > < link(1, 3, 7) : Link | st : 0,w :
-    2.4663424999999999e-2 > < link(1, 3, 8) : Link | st : 0,w :
-    6.9796879000000001e-1 > < link(1, 3, 9) : Link | st : 0,w : 1.3975233e-2 >
-    < link(1, 3, 10) : Link | st : 0,w : -3.2033525000000002e-1 > < link(1, 3,
-    11) : Link | st : 0,w : 4.4200972999999999e-1 > < link(1, 3, 12) : Link |
-    st : 0,w : 4.7744172000000001e-1 > < link(1, 3, 13) : Link | st : 0,w :
-    8.1055710999999997e-1 > < link(1, 3, 14) : Link | st : 0,w :
-    7.8016735000000004e-1 > < link(1, 3, 15) : Link | st : 0,w :
-    3.9475781000000001e-2 > < link(1, 3, 16) : Link | st : 0,w :
-    8.5006663000000005e-1 > < link(1, 3, 17) : Link | st : 0,w :
-    -2.9759448999999999e-1 > < link(1, 3, 18) : Link | st : 0,w :
-    -1.5125367000000001e-1 > < link(1, 3, 19) : Link | st : 0,w : 1.1660556e-1
-    > < link(1, 3, 20) : Link | st : 0,w : 4.3522923000000002e-1 > < link(1, 3,
-    21) : Link | st : 0,w : 2.0026077999999999e-2 > < link(1, 3, 22) : Link |
-    st : 0,w : -2.0143962000000001e-2 > < link(1, 3, 23) : Link | st : 0,w :
-    8.3609149999999999e-1 > < link(1, 3, 24) : Link | st : 0,w :
-    5.5712368999999995e-1 > < link(1, 3, 25) : Link | st : 0,w :
-    2.2174590999999999e-1 > < link(1, 4, 1) : Link | st : 0,w : 2.5645087e-1 >
-    < link(1, 4, 2) : Link | st : 0,w : 1.5522453999999999e-1 > < link(1, 4, 3)
-    : Link | st : 0,w : 1.2266391e-1 > < link(1, 4, 4) : Link | st : 0,w :
-    2.2085179999999999e-1 > < link(1, 4, 5) : Link | st : 0,w :
-    2.0907213999999999e-1 > < link(1, 4, 6) : Link | st : 0,w : 1.390402e-2 > <
-    link(1, 4, 7) : Link | st : 0,w : 1.809857e-1 > < link(1, 4, 8) : Link | st
-    : 0,w : 4.6988373e-1 > < link(1, 4, 9) : Link | st : 0,w : 2.0711568e-1 > <
-    link(1, 4, 10) : Link | st : 0,w : 3.7347101999999999e-1 > < link(1, 4, 11)
-    : Link | st : 0,w : 3.3101559000000003e-1 > < link(1, 4, 12) : Link | st :
-    0,w : 3.2512754999999999e-1 > < link(1, 4, 13) : Link | st : 0,w :
-    5.0137925999999999e-1 > < link(1, 4, 14) : Link | st : 0,w :
-    5.1894527999999995e-1 > < link(1, 4, 15) : Link | st : 0,w :
-    2.9263288999999998e-1 > < link(1, 4, 16) : Link | st : 0,w :
-    4.4475098000000002e-1 > < link(1, 4, 17) : Link | st : 0,w :
-    3.7773913999999997e-1 > < link(1, 4, 18) : Link | st : 0,w :
-    3.9934556999999998e-1 > < link(1, 4, 19) : Link | st : 0,w :
-    1.7021281999999999e-1 > < link(1, 4, 20) : Link | st : 0,w :
-    2.1956387999999999e-1 > < link(1, 4, 21) : Link | st : 0,w :
-    2.9777843999999998e-1 > < link(1, 4, 22) : Link | st : 0,w :
-    1.3096670999999999e-1 > < link(1, 4, 23) : Link | st : 0,w :
-    5.2833386999999998e-1 > < link(1, 4, 24) : Link | st : 0,w : 3.8735353e-1 >
-    < link(1, 4, 25) : Link | st : 0,w : 1.2016875e-1 > < link(1, 5, 1) : Link
-    | st : 0,w : 3.0054800999999999e-2 > < link(1, 5, 2) : Link | st : 0,w :
-    -3.4962154000000001e-3 > < link(1, 5, 3) : Link | st : 0,w :
-    6.2130810999999999e-4 > < link(1, 5, 4) : Link | st : 0,w :
-    -6.7645965999999997e-3 > < link(1, 5, 5) : Link | st : 0,w :
-    6.3299027999999993e-2 > < link(1, 5, 6) : Link | st : 0,w :
-    -7.2959157999999996e-2 > < link(1, 5, 7) : Link | st : 0,w :
-    1.7493183999999998e-2 > < link(1, 5, 8) : Link | st : 0,w :
-    -6.4651289000000001e-2 > < link(1, 5, 9) : Link | st : 0,w : -1.4477771e-3
-    > < link(1, 5, 10) : Link | st : 0,w : 2.762003e-2 > < link(1, 5, 11) :
-    Link | st : 0,w : -3.3028697000000003e-2 > < link(1, 5, 12) : Link | st :
-    0,w : 6.6975847000000005e-2 > < link(1, 5, 13) : Link | st : 0,w :
-    6.3989856999999997e-2 > < link(1, 5, 14) : Link | st : 0,w :
-    -6.6345965000000007e-2 > < link(1, 5, 15) : Link | st : 0,w :
-    -6.3189094000000003e-3 > < link(1, 5, 16) : Link | st : 0,w :
-    -4.9521804000000003e-2 > < link(1, 5, 17) : Link | st : 0,w :
-    2.9569407999999998e-2 > < link(1, 5, 18) : Link | st : 0,w :
-    -5.5848110999999999e-2 > < link(1, 5, 19) : Link | st : 0,w : 2.6331166e-2
-    > < link(1, 5, 20) : Link | st : 0,w : 2.4975779e-2 > < link(1, 5, 21) :
-    Link | st : 0,w : -1.3529772000000001e-2 > < link(1, 5, 22) : Link | st :
-    0,w : 2.4303141e-2 > < link(1, 5, 23) : Link | st : 0,w :
-    -3.1109208999999999e-2 > < link(1, 5, 24) : Link | st : 0,w :
-    -5.1552704999999997e-2 > < link(1, 5, 25) : Link | st : 0,w : 1.6081208e-2
-    > < link(1, 6, 1) : Link | st : 0,w : -1.3636577999999999e-1 > < link(1, 6,
-    2) : Link | st : 0,w : -1.3724760999999999e-1 > < link(1, 6, 3) : Link | st
-    : 0,w : -6.4232714999999996e-2 > < link(1, 6, 4) : Link | st : 0,w :
-    -8.8713701000000006e-2 > < link(1, 6, 5) : Link | st : 0,w :
-    -3.7025770999999999e-2 > < link(1, 6, 6) : Link | st : 0,w : -1.21224e-1 >
-    < link(1, 6, 7) : Link | st : 0,w : -8.3693983999999999e-2 > < link(1, 6,
-    8) : Link | st : 0,w : -4.4380945999999999e-1 > < link(1, 6, 9) : Link | st
-    : 0,w : -1.1201754999999999e-1 > < link(1, 6, 10) : Link | st : 0,w :
-    -7.6612681000000002e-2 > < link(1, 6, 11) : Link | st : 0,w :
-    -1.6731713000000001e-1 > < link(1, 6, 12) : Link | st : 0,w : -1.1904388e-1
-    > < link(1, 6, 13) : Link | st : 0,w : -1.4593774000000001e-1 > < link(1,
-    6, 14) : Link | st : 0,w : -3.5479100000000002e-1 > < link(1, 6, 15) : Link
-    | st : 0,w : -3.4805732e-1 > < link(1, 6, 16) : Link | st : 0,w :
-    -4.1677543e-1 > < link(1, 6, 17) : Link | st : 0,w : -2.3380105000000001e-1
-    > < link(1, 6, 18) : Link | st : 0,w : 3.5789305e-2 > < link(1, 6, 19) :
-    Link | st : 0,w : -1.8809117e-2 > < link(1, 6, 20) : Link | st : 0,w :
-    -1.1571481e-1 > < link(1, 6, 21) : Link | st : 0,w : -2.6927278999999998e-1
-    > < link(1, 6, 22) : Link | st : 0,w : -1.5565050999999999e-1 > < link(1,
-    6, 23) : Link | st : 0,w : -4.1143405e-1 > < link(1, 6, 24) : Link | st :
-    0,w : -2.3565032e-1 > < link(1, 6, 25) : Link | st : 0,w :
-    -1.3407902999999999e-1 > < link(1, 7, 1) : Link | st : 0,w :
-    2.4272144000000001e-1 > < link(1, 7, 2) : Link | st : 0,w :
-    -5.0955110999999997e-1 > < link(1, 7, 3) : Link | st : 0,w :
-    -1.8939335000000002e-2 > < link(1, 7, 4) : Link | st : 0,w :
-    -3.7684322999999999e-2 > < link(1, 7, 5) : Link | st : 0,w : -1.2490796e-1
-    > < link(1, 7, 6) : Link | st : 0,w : -4.062644e-2 > < link(1, 7, 7) : Link
-    | st : 0,w : -3.1583468000000003e-2 > < link(1, 7, 8) : Link | st : 0,w :
-    -1.0873561e-1 > < link(1, 7, 9) : Link | st : 0,w : -2.7193848e-2 > < link(
-    1, 7, 10) : Link | st : 0,w : -2.4428916000000001e-1 > < link(1, 7, 11) :
-    Link | st : 0,w : -6.1608736000000001e-3 > < link(1, 7, 12) : Link | st :
-    0,w : -1.6503407e-1 > < link(1, 7, 13) : Link | st : 0,w :
-    -1.5828291999999999e-1 > < link(1, 7, 14) : Link | st : 0,w :
-    -2.0240923999999999e-1 > < link(1, 7, 15) : Link | st : 0,w : -8.2698172e-2
-    > < link(1, 7, 16) : Link | st : 0,w : -1.8851209999999999e-1 > < link(1,
-    7, 17) : Link | st : 0,w : 1.7582956999999999e-1 > < link(1, 7, 18) : Link
-    | st : 0,w : 2.9690749999999999e-1 > < link(1, 7, 19) : Link | st : 0,w :
-    2.4052391000000001e-1 > < link(1, 7, 20) : Link | st : 0,w :
-    2.0950521999999999e-2 > < link(1, 7, 21) : Link | st : 0,w :
-    -2.6071395000000003e-1 > < link(1, 7, 22) : Link | st : 0,w :
-    7.0733092999999997e-2 > < link(1, 7, 23) : Link | st : 0,w :
-    -2.1472669999999999e-1 > < link(1, 7, 24) : Link | st : 0,w :
-    -5.1220171000000002e-2 > < link(1, 7, 25) : Link | st : 0,w :
-    4.7011708999999999e-2 > < link(1, 8, 1) : Link | st : 0,w :
-    -2.7816793000000001e-1 > < link(1, 8, 2) : Link | st : 0,w :
-    -5.4496043000000001e-2 > < link(1, 8, 3) : Link | st : 0,w :
-    -9.3587701999999998e-3 > < link(1, 8, 4) : Link | st : 0,w : -1.0551629e-2
-    > < link(1, 8, 5) : Link | st : 0,w : -1.3891397999999999e-1 > < link(1, 8,
-    6) : Link | st : 0,w : 4.0754447999999999e-2 > < link(1, 8, 7) : Link | st
-    : 0,w : 3.2584163999999999e-4 > < link(1, 8, 8) : Link | st : 0,w :
-    -1.2667983999999999e-1 > < link(1, 8, 9) : Link | st : 0,w : -1.5215044e-2
-    > < link(1, 8, 10) : Link | st : 0,w : 3.0890680999999998e-1 > < link(1, 8,
-    11) : Link | st : 0,w : 2.6820797e-2 > < link(1, 8, 12) : Link | st : 0,w :
-    2.4190706000000001e-1 > < link(1, 8, 13) : Link | st : 0,w :
-    6.0684611999999999e-2 > < link(1, 8, 14) : Link | st : 0,w :
-    7.6706650000000001e-2 > < link(1, 8, 15) : Link | st : 0,w :
-    -1.8766513000000001e-1 > < link(1, 8, 16) : Link | st : 0,w :
-    3.0587205999999998e-4 > < link(1, 8, 17) : Link | st : 0,w :
-    -3.1133364000000002e-1 > < link(1, 8, 18) : Link | st : 0,w :
-    3.6879001000000002e-2 > < link(1, 8, 19) : Link | st : 0,w :
-    -4.7547438999999997e-2 > < link(1, 8, 20) : Link | st : 0,w :
-    9.4353449999999995e-3 > < link(1, 8, 21) : Link | st : 0,w :
-    -8.2401901999999999e-2 > < link(1, 8, 22) : Link | st : 0,w :
-    -2.5971258000000003e-1 > < link(1, 8, 23) : Link | st : 0,w :
-    5.4533600000000002e-2 > < link(1, 8, 24) : Link | st : 0,w : 1.2721559e-2 >
-    < link(1, 8, 25) : Link | st : 0,w : -1.6823922999999999e-1 > < link(1, 9,
-    1) : Link | st : 0,w : -9.5399354000000006e-2 > < link(1, 9, 2) : Link | st
-    : 0,w : -2.6468405e-1 > < link(1, 9, 3) : Link | st : 0,w :
-    -3.8216232000000003e-2 > < link(1, 9, 4) : Link | st : 0,w : -1.0941405e-1
-    > < link(1, 9, 5) : Link | st : 0,w : -2.8412532000000001e-1 > < link(1, 9,
-    6) : Link | st : 0,w : -2.3538706000000001e-1 > < link(1, 9, 7) : Link | st
-    : 0,w : -1.952916e-2 > < link(1, 9, 8) : Link | st : 0,w :
-    -4.0063943000000002e-1 > < link(1, 9, 9) : Link | st : 0,w :
-    -3.1759904999999998e-2 > < link(1, 9, 10) : Link | st : 0,w :
-    -5.4206498999999997e-1 > < link(1, 9, 11) : Link | st : 0,w : -2.1461616e-1
-    > < link(1, 9, 12) : Link | st : 0,w : -1.3749475999999999e-1 > < link(1,
-    9, 13) : Link | st : 0,w : -3.2752081999999999e-1 > < link(1, 9, 14) : Link
-    | st : 0,w : -9.1058665000000005e-1 > < link(1, 9, 15) : Link | st : 0,w :
-    -6.6399487999999995e-1 > < link(1, 9, 16) : Link | st : 0,w :
-    -3.9377152999999998e-1 > < link(1, 9, 17) : Link | st : 0,w : -1.2678833e-1
-    > < link(1, 9, 18) : Link | st : 0,w : 3.7000417000000002e-1 > < link(1, 9,
-    19) : Link | st : 0,w : -5.7511806999999998e-2 > < link(1, 9, 20) : Link |
-    st : 0,w : 5.3519089999999998e-2 > < link(1, 9, 21) : Link | st : 0,w :
-    -1.0444349999999999e-1 > < link(1, 9, 22) : Link | st : 0,w :
-    -7.3302148999999997e-2 > < link(1, 9, 23) : Link | st : 0,w :
-    -4.3084381999999999e-1 > < link(1, 9, 24) : Link | st : 0,w :
-    -2.4978075999999999e-1 > < link(1, 9, 25) : Link | st : 0,w : -9.6291794e-2
-    > < link(1, 10, 1) : Link | st : 0,w : -7.0415658000000006e-2 > < link(1,
-    10, 2) : Link | st : 0,w : -2.4252910999999999e-1 > < link(1, 10, 3) : Link
-    | st : 0,w : -2.9711251000000001e-2 > < link(1, 10, 4) : Link | st : 0,w :
-    -5.8185524000000002e-2 > < link(1, 10, 5) : Link | st : 0,w :
-    -1.4001933999999999e-1 > < link(1, 10, 6) : Link | st : 0,w : -8.4081928e-2
-    > < link(1, 10, 7) : Link | st : 0,w : -2.7132468999999999e-2 > < link(1,
-    10, 8) : Link | st : 0,w : -2.6838788000000002e-1 > < link(1, 10, 9) : Link
-    | st : 0,w : -4.8907921e-2 > < link(1, 10, 10) : Link | st : 0,w :
-    -1.3302188000000001e-1 > < link(1, 10, 11) : Link | st : 0,w :
-    -8.7433412000000002e-2 > < link(1, 10, 12) : Link | st : 0,w :
-    -4.6315345000000001e-2 > < link(1, 10, 13) : Link | st : 0,w :
-    -1.4034942e-1 > < link(1, 10, 14) : Link | st : 0,w :
-    -3.4955465000000002e-1 > < link(1, 10, 15) : Link | st : 0,w :
-    -3.2078648999999998e-1 > < link(1, 10, 16) : Link | st : 0,w :
-    -2.5259250999999999e-1 > < link(1, 10, 17) : Link | st : 0,w :
-    -1.2256299e-1 > < link(1, 10, 18) : Link | st : 0,w : 1.8796557e-1 > <
-    link(1, 10, 19) : Link | st : 0,w : 3.3708174e-2 > < link(1, 10, 20) : Link
-    | st : 0,w : -1.3062172e-2 > < link(1, 10, 21) : Link | st : 0,w :
-    -1.8304382999999999e-1 > < link(1, 10, 22) : Link | st : 0,w :
-    -1.0628433e-1 > < link(1, 10, 23) : Link | st : 0,w : -2.444171e-1 > <
-    link(1, 10, 24) : Link | st : 0,w : -1.3801374e-1 > < link(1, 10, 25) :
-    Link | st : 0,w : -8.8757499000000004e-2 > < link(1, 11, 1) : Link | st :
-    0,w : 1.3910428e-1 > < link(1, 11, 2) : Link | st : 0,w :
-    -2.6353010999999998e-1 > < link(1, 11, 3) : Link | st : 0,w : 2.4795357e-3
-    > < link(1, 11, 4) : Link | st : 0,w : 4.2505146000000001e-2 > < link(1,
-    11, 5) : Link | st : 0,w : 1.9086378000000001e-2 > < link(1, 11, 6) : Link
-    | st : 0,w : -2.0859523999999999e-1 > < link(1, 11, 7) : Link | st : 0,w :
-    -4.1555674999999997e-1 > < link(1, 11, 8) : Link | st : 0,w : -1.9183021e-1
-    > < link(1, 11, 9) : Link | st : 0,w : -4.8758867e-1 > < link(1, 11, 10) :
-    Link | st : 0,w : 4.6531241000000001e-1 > < link(1, 11, 11) : Link | st :
-    0,w : -2.1427430000000001e-2 > < link(1, 11, 12) : Link | st : 0,w :
-    3.2903698999999997e-1 > < link(1, 11, 13) : Link | st : 0,w :
-    6.2252315000000003e-2 > < link(1, 11, 14) : Link | st : 0,w : 1.0603777e-1
-    > < link(1, 11, 15) : Link | st : 0,w : 1.9308839999999999e-1 > < link(1,
-    11, 16) : Link | st : 0,w : -1.4537547000000001e-1 > < link(1, 11, 17) :
-    Link | st : 0,w : -6.4611510999999999e-1 > < link(1, 11, 18) : Link | st :
-    0,w : -1.3279252e-2 > < link(1, 11, 19) : Link | st : 0,w :
-    -5.3164526999999995e-1 > < link(1, 11, 20) : Link | st : 0,w :
-    -1.9218741e-1 > < link(1, 11, 21) : Link | st : 0,w :
-    -6.2448486999999997e-2 > < link(1, 11, 22) : Link | st : 0,w :
-    -2.0800690999999999e-1 > < link(1, 11, 23) : Link | st : 0,w : 1.2041912e-2
-    > < link(1, 11, 24) : Link | st : 0,w : -4.4953236000000001e-2 > < link(1,
-    11, 25) : Link | st : 0,w : 8.4527683000000006e-2 > < link(1, 12, 1) : Link
-    | st : 0,w : -1.068838e-1 > < link(1, 12, 2) : Link | st : 0,w :
-    -3.8846903000000002e-2 > < link(1, 12, 3) : Link | st : 0,w :
-    -6.9136902999999998e-3 > < link(1, 12, 4) : Link | st : 0,w :
-    -1.8173291000000001e-2 > < link(1, 12, 5) : Link | st : 0,w : -1.6544749e-1
-    > < link(1, 12, 6) : Link | st : 0,w : -3.3421347000000001e-1 > < link(1,
-    12, 7) : Link | st : 0,w : 1.2564838e-1 > < link(1, 12, 8) : Link | st : 0,
-    w : -4.5611686000000001e-1 > < link(1, 12, 9) : Link | st : 0,w :
-    9.2323689e-2 > < link(1, 12, 10) : Link | st : 0,w : 2.5664131000000001e-1
-    > < link(1, 12, 11) : Link | st : 0,w : -6.2395206999999997e-1 > < link(1,
-    12, 12) : Link | st : 0,w : -1.0889541e-1 > < link(1, 12, 13) : Link | st :
-    0,w : 1.0504848999999999e-1 > < link(1, 12, 14) : Link | st : 0,w :
-    -1.950524e-2 > < link(1, 12, 15) : Link | st : 0,w : 1.8403069999999999e-1
-    > < link(1, 12, 16) : Link | st : 0,w : -1.455649e-1 > < link(1, 12, 17) :
-    Link | st : 0,w : 4.8463033999999999e-1 > < link(1, 12, 18) : Link | st :
-    0,w : 5.8877288999999999e-2 > < link(1, 12, 19) : Link | st : 0,w :
-    5.0879631999999997e-1 > < link(1, 12, 20) : Link | st : 0,w :
-    -5.0437089000000002e-1 > < link(1, 12, 21) : Link | st : 0,w :
-    -1.6298156999999999e-1 > < link(1, 12, 22) : Link | st : 0,w :
-    3.3064664999999999e-1 > < link(1, 12, 23) : Link | st : 0,w :
-    -3.2444118999999999e-1 > < link(1, 12, 24) : Link | st : 0,w :
-    -4.7587604e-1 > < link(1, 12, 25) : Link | st : 0,w : 5.901554e-1 > < link(
-    1, 13, 1) : Link | st : 0,w : 4.7281938000000001e-1 > < link(1, 13, 2) :
-    Link | st : 0,w : 1.9153423999999999e-1 > < link(1, 13, 3) : Link | st : 0,
-    w : 8.5376613000000004e-2 > < link(1, 13, 4) : Link | st : 0,w :
-    8.5133887000000005e-2 > < link(1, 13, 5) : Link | st : 0,w :
-    1.9701186000000001e-1 > < link(1, 13, 6) : Link | st : 0,w : 1.2214658e-1 >
-    < link(1, 13, 7) : Link | st : 0,w : 3.2138585999999997e-2 > < link(1, 13,
-    8) : Link | st : 0,w : 3.7975241999999998e-1 > < link(1, 13, 9) : Link | st
-    : 0,w : 1.0808732e-1 > < link(1, 13, 10) : Link | st : 0,w :
-    3.3193122999999998e-2 > < link(1, 13, 11) : Link | st : 0,w :
-    7.7789015000000003e-2 > < link(1, 13, 12) : Link | st : 0,w :
-    -8.4347167000000001e-2 > < link(1, 13, 13) : Link | st : 0,w :
-    -1.6991265e-1 > < link(1, 13, 14) : Link | st : 0,w :
-    -1.9536096999999999e-1 > < link(1, 13, 15) : Link | st : 0,w :
-    2.3121957000000001e-1 > < link(1, 13, 16) : Link | st : 0,w :
-    5.6813286999999997e-2 > < link(1, 13, 17) : Link | st : 0,w : -9.6958663e-2
-    > < link(1, 13, 18) : Link | st : 0,w : 2.0913715999999999e-1 > < link(1,
-    13, 19) : Link | st : 0,w : -3.8007310999999999e-1 > < link(1, 13, 20) :
-    Link | st : 0,w : 2.0511879e-1 > < link(1, 13, 21) : Link | st : 0,w :
-    -1.0078555e-1 > < link(1, 13, 22) : Link | st : 0,w : 4.0298223999999999e-1
-    > < link(1, 13, 23) : Link | st : 0,w : -1.337643e-2 > < link(1, 13, 24) :
-    Link | st : 0,w : 4.4336537000000002e-2 > < link(1, 13, 25) : Link | st :
-    0,w : 5.2530763000000003e-3 > < link(1, 14, 1) : Link | st : 0,w :
-    -2.238359e-1 > < link(1, 14, 2) : Link | st : 0,w : -5.7868461000000003e-2
-    > < link(1, 14, 3) : Link | st : 0,w : -6.9099404000000003e-2 > < link(1,
-    14, 4) : Link | st : 0,w : -1.5376818e-1 > < link(1, 14, 5) : Link | st :
-    0,w : -1.5646114e-1 > < link(1, 14, 6) : Link | st : 0,w :
-    9.9998047999999995e-1 > < link(1, 14, 7) : Link | st : 0,w :
-    1.1835693999999999e-1 > < link(1, 14, 8) : Link | st : 0,w :
-    1.5426480000000001e-1 > < link(1, 14, 9) : Link | st : 0,w : 1.0484011e-1 >
-    < link(1, 14, 10) : Link | st : 0,w : -8.2841667999999993e-2 > < link(1,
-    14, 11) : Link | st : 0,w : -6.6945162000000003e-3 > < link(1, 14, 12) :
-    Link | st : 0,w : -3.7290371000000003e-2 > < link(1, 14, 13) : Link | st :
-    0,w : -3.2678415999999999e-1 > < link(1, 14, 14) : Link | st : 0,w :
-    4.6191678e-2 > < link(1, 14, 15) : Link | st : 0,w : 2.3833608000000001e-1
-    > < link(1, 14, 16) : Link | st : 0,w : -2.3909841000000001e-1 > < link(1,
-    14, 17) : Link | st : 0,w : 7.8104229000000003e-1 > < link(1, 14, 18) :
-    Link | st : 0,w : 1.1895500000000001e-1 > < link(1, 14, 19) : Link | st :
-    0,w : 3.2825639000000001e-1 > < link(1, 14, 20) : Link | st : 0,w :
-    8.9498240000000007e-2 > < link(1, 14, 21) : Link | st : 0,w : -3.8783403e-1
-    > < link(1, 14, 22) : Link | st : 0,w : -2.5245633000000001e-1 > < link(1,
-    14, 23) : Link | st : 0,w : -3.9988072000000002e-1 > < link(1, 14, 24) :
-    Link | st : 0,w : -2.4541921e-1 > < link(1, 14, 25) : Link | st : 0,w :
-    -7.5652438e-1 > < link(1, 15, 1) : Link | st : 0,w : 7.3820063000000002e-1
-    > < link(1, 15, 2) : Link | st : 0,w : 2.136305e-1 > < link(1, 15, 3) :
-    Link | st : 0,w : 1.3954169999999999e-1 > < link(1, 15, 4) : Link | st : 0,
-    w : 2.4933548e-1 > < link(1, 15, 5) : Link | st : 0,w :
-    3.5942428999999998e-1 > < link(1, 15, 6) : Link | st : 0,w :
-    4.1970162999999999e-1 > < link(1, 15, 7) : Link | st : 0,w : 4.4781809e-1 >
-    < link(1, 15, 8) : Link | st : 0,w : 6.9008170999999996e-1 > < link(1, 15,
-    9) : Link | st : 0,w : 4.5542819000000001e-1 > < link(1, 15, 10) : Link |
-    st : 0,w : 3.0227010999999998e-1 > < link(1, 15, 11) : Link | st : 0,w :
-    4.2087366999999998e-1 > < link(1, 15, 12) : Link | st : 0,w :
-    6.6034135000000005e-1 > < link(1, 15, 13) : Link | st : 0,w :
-    5.9364503000000002e-1 > < link(1, 15, 14) : Link | st : 0,w :
-    8.4479515999999999e-1 > < link(1, 15, 15) : Link | st : 0,w : 2.4325379e-1
-    > < link(1, 15, 16) : Link | st : 0,w : 3.2752713999999999e-1 > < link(1,
-    15, 17) : Link | st : 0,w : 2.6579112999999999e-1 > < link(1, 15, 18) :
-    Link | st : 0,w : 8.4258551000000004e-1 > < link(1, 15, 19) : Link | st :
-    0,w : 4.4163178999999997e-2 > < link(1, 15, 20) : Link | st : 0,w :
-    4.3635884000000003e-1 > < link(1, 15, 21) : Link | st : 0,w :
-    7.9807419000000002e-1 > < link(1, 15, 22) : Link | st : 0,w : 6.3756404e-1
-    > < link(1, 15, 23) : Link | st : 0,w : 2.0929529999999999e-1 > < link(1,
-    15, 24) : Link | st : 0,w : 2.5872353999999997e-1 > < link(1, 15, 25) :
-    Link | st : 0,w : 3.1124352e-1 > < link(1, 16, 1) : Link | st : 0,w :
-    7.8893439999999995e-2 > < link(1, 16, 2) : Link | st : 0,w :
-    1.8663658999999999e-1 > < link(1, 16, 3) : Link | st : 0,w :
-    1.4644549000000001e-1 > < link(1, 16, 4) : Link | st : 0,w :
-    1.9404489999999999e-1 > < link(1, 16, 5) : Link | st : 0,w :
-    2.2962532999999999e-1 > < link(1, 16, 6) : Link | st : 0,w : 2.1910767e-1 >
-    < link(1, 16, 7) : Link | st : 0,w : -2.4428796e-1 > < link(1, 16, 8) :
-    Link | st : 0,w : 4.9479793e-1 > < link(1, 16, 9) : Link | st : 0,w :
-    -3.1729137000000002e-1 > < link(1, 16, 10) : Link | st : 0,w :
-    -1.1202294e-1 > < link(1, 16, 11) : Link | st : 0,w : 3.8063111999999999e-1
-    > < link(1, 16, 12) : Link | st : 0,w : -6.8418433999999995e-1 > < link(1,
-    16, 13) : Link | st : 0,w : 1.3662742999999999e-1 > < link(1, 16, 14) :
-    Link | st : 0,w : 1.3588505000000001e-1 > < link(1, 16, 15) : Link | st :
-    0,w : 2.3512490999999999e-1 > < link(1, 16, 16) : Link | st : 0,w :
-    5.5071300999999995e-1 > < link(1, 16, 17) : Link | st : 0,w :
-    -5.8849065999999998e-2 > < link(1, 16, 18) : Link | st : 0,w :
-    -6.1977541999999997e-1 > < link(1, 16, 19) : Link | st : 0,w :
-    -2.9267369000000001e-2 > < link(1, 16, 20) : Link | st : 0,w :
-    -2.0958864999999999e-1 > < link(1, 16, 21) : Link | st : 0,w :
-    -3.7896109e-1 > < link(1, 16, 22) : Link | st : 0,w : 1.8258695e-1 > <
-    link(1, 16, 23) : Link | st : 0,w : 6.9691460000000005e-1 > < link(1, 16,
-    24) : Link | st : 0,w : 5.1827369000000001e-1 > < link(1, 16, 25) : Link |
-    st : 0,w : -1.7912133e-1 > < link(2, 1, 1) : Link | st : 0,w : 6.2689021e-1
-    > < link(2, 2, 1) : Link | st : 0,w : -1.4514256000000001 > < link(2, 3, 1)
-    : Link | st : 0,w : -1.3101202999999999 > < link(2, 4, 1) : Link | st : 0,w
-    : -6.4610635000000005e-1 > < link(2, 5, 1) : Link | st : 0,w :
-    -9.3806551000000005e-1 > < link(2, 6, 1) : Link | st : 0,w : -1.6305813 > <
-    link(2, 7, 1) : Link | st : 0,w : -1.0686268e-1 > < link(2, 8, 1) : Link |
-    st : 0,w : 1.0691993 > < link(2, 9, 1) : Link | st : 0,w :
-    7.0732379999999997e-2 > < link(2, 10, 1) : Link | st : 0,w : 1.5866312 > <
-    link(2, 11, 1) : Link | st : 0,w : 5.8055288999999999e-1 > < link(2, 12, 1)
-    : Link | st : 0,w : 1.2042482000000001 > < link(2, 13, 1) : Link | st : 0,w
-    : 6.5998047999999998e-1 > < link(2, 14, 1) : Link | st : 0,w :
-    1.2338062000000001 > < link(2, 15, 1) : Link | st : 0,w : 7.9085231e-1 > <
-    link(2, 16, 1) : Link | st : 0,w : 5.2127067000000005e-1 > < link(2, 17, 1)
-    : Link | st : 0,w : 1.6457244 > < link(2, 18, 1) : Link | st : 0,w :
-    9.8959204000000001e-1 > < link(2, 19, 1) : Link | st : 0,w : 1.6130673 > <
-    link(2, 20, 1) : Link | st : 0,w : 1.2082090000000001 > < link(2, 21, 1) :
-    Link | st : 0,w : 1.169929 > < link(2, 22, 1) : Link | st : 0,w :
-    7.2341290000000003e-1 > < link(2, 23, 1) : Link | st : 0,w :
-    5.8300167000000003e-1 > < link(2, 24, 1) : Link | st : 0,w :
-    4.4453142000000001e-1 > < link(2, 25, 1) : Link | st : 0,w :
-    2.0685801000000001 > inputPattern(1, 1, 9.7e+1) inputPattern(1, 2, 3.0)
-    inputPattern(1, 3, 2.0e+1) inputPattern(1, 4, 3.0) inputPattern(1, 5,
-    6.25e-1) inputPattern(1, 6, 4.1164999999999999e+1) inputPattern(1, 7,
-    4.1497500000000002e+1) inputPattern(1, 8, 4.3170000000000002e+1)
-    inputPattern(1, 9, 4.0957500000000003e+1) inputPattern(1, 10,
-    4.1697499999999998e+1) inputPattern(1, 11, -2.809e+1) inputPattern(1, 12,
-    -1.7649999999999999e+1) inputPattern(1, 13, 8.9000000000000004)
-    inputPattern(1, 14, 1.98) inputPattern(1, 15, 2.8e+1) inputPattern(1, 16,
-    5.8899999999999999e+1) inputPattern(2, 1, 5.4e+1) inputPattern(2, 2, 2.0)
-    inputPattern(2, 3, 2.2e+1) inputPattern(2, 4, 0.0) inputPattern(2, 5,
-    8.8239999999999996e-1) inputPattern(2, 6, 4.3200000000000003e+1)
-    inputPattern(2, 7, 4.3477499999999999e+1) inputPattern(2, 8, 4.34925e+1)
-    inputPattern(2, 9, 4.25625e+1) inputPattern(2, 10, 4.3183100000000003e+1)
-    inputPattern(2, 11, 7.2769999999999996e+1) inputPattern(2, 12,
-    7.1099999999999994e+1) inputPattern(2, 13, 4.9719999999999999e+1)
-    inputPattern(2, 14, 6.4769999999999996e+1) inputPattern(2, 15, 2.8e+1)
-    inputPattern(2, 16, 6.0700000000000003e+1) inputPattern(3, 1, 4.6e+1)
-    inputPattern(3, 2, 2.0) inputPattern(3, 3, 2.1e+1) inputPattern(3, 4, 1.0)
-    inputPattern(3, 5, 0.0) inputPattern(3, 6, 4.1e+1) inputPattern(3, 7,
-    4.2567500000000003e+1) inputPattern(3, 8, 4.2450000000000003e+1)
-    inputPattern(3, 9, 4.2299999999999997e+1) inputPattern(3, 10, 4.20794e+1)
-    inputPattern(3, 11, -2.3e+1) inputPattern(3, 12, -1.9e+1) inputPattern(3,
-    13, 8.0) inputPattern(3, 14, 1.0e+1) inputPattern(3, 15, 4.9e+1)
-    inputPattern(3, 16, 6.3e+1) inputPattern(4, 1, 5.6e+1) inputPattern(4, 2,
-    2.0) inputPattern(4, 3, 2.1e+1) inputPattern(4, 4, 0.0) inputPattern(4, 5,
-    0.0) inputPattern(4, 6, 3.96175e+1) inputPattern(4, 7,
-    3.9685000000000002e+1) inputPattern(4, 8, 3.975e+1) inputPattern(4, 9,
-    3.8615000000000002e+1) inputPattern(4, 10, 3.9416899999999998e+1)
-    inputPattern(4, 11, -1.7e+1) inputPattern(4, 12, -7.0) inputPattern(4, 13,
-    4.0) inputPattern(4, 14, 1.9e+1) inputPattern(4, 15, 3.3e+1) inputPattern(
-    4, 16, 6.4e+1) inputPattern(5, 1, 5.6e+1) inputPattern(5, 2, 3.0)
-    inputPattern(5, 3, 2.5e+1) inputPattern(5, 4, 2.0) inputPattern(5, 5,
-    4.375e-1) inputPattern(5, 6, 4.2600000000000001e+1) inputPattern(5, 7,
-    4.21175e+1) inputPattern(5, 8, 4.2357500000000002e+1) inputPattern(5, 9,
-    4.3789999999999999e+1) inputPattern(5, 10, 4.2716299999999997e+1)
-    inputPattern(5, 11, -1.9e+1) inputPattern(5, 12, -3.2e+1) inputPattern(5,
-    13, 1.7e+1) inputPattern(5, 14, 2.9e+1) inputPattern(5, 15, 6.9e+1)
-    inputPattern(5, 16, 6.4e+1) inputPattern(6, 1, 6.4e+1) inputPattern(6, 2,
-    2.0) inputPattern(6, 3, 2.4e+1) inputPattern(6, 4, 1.0) inputPattern(6, 5,
-    1.429e-1) inputPattern(6, 6, 3.81875e+1) inputPattern(6, 7,
-    3.8517499999999998e+1) inputPattern(6, 8, 3.8545000000000002e+1)
-    inputPattern(6, 9, 3.6292499999999997e+1) inputPattern(6, 10,
-    3.7885599999999997e+1) inputPattern(6, 11, -9.0) inputPattern(6, 12,
-    -1.9e+1) inputPattern(6, 13, 1.9e+1) inputPattern(6, 14, 1.5e+1)
-    inputPattern(6, 15, 4.4e+1) inputPattern(6, 16, 6.5e+1) inputPattern(7, 1,
-    5.8e+1) inputPattern(7, 2, 2.0) inputPattern(7, 3, 1.2e+1) inputPattern(7,
-    4, 1.0) inputPattern(7, 5, 4.0000000000000002e-1) inputPattern(7, 6,
-    4.0399999999999999e+1) inputPattern(7, 7, 4.0622500000000002e+1)
-    inputPattern(7, 8, 4.1142499999999998e+1) inputPattern(7, 9,
-    4.0899999999999999e+1) inputPattern(7, 10, 4.0766199999999998e+1)
-    inputPattern(7, 11, -1.5380000000000001e+1) inputPattern(7, 12,
-    -6.2199999999999998) inputPattern(7, 13, 1.3220000000000001e+1)
-    inputPattern(7, 14, 2.123e+1) inputPattern(7, 15, 4.8e+1) inputPattern(7,
-    16, 6.6299999999999997e+1) inputPattern(8, 1, 4.5e+1) inputPattern(8, 2,
-    3.0) inputPattern(8, 3, 2.3e+1) inputPattern(8, 4, 0.0) inputPattern(8, 5,
-    1.875e-1) inputPattern(8, 6, 4.2450000000000003e+1) inputPattern(8, 7,
-    4.1707500000000003e+1) inputPattern(8, 8, 4.2827500000000001e+1)
-    inputPattern(8, 9, 4.2212499999999999e+1) inputPattern(8, 10,
-    4.2299399999999999e+1) inputPattern(8, 11, -3.1099999999999999)
-    inputPattern(8, 12, 1.8629999999999999e+1) inputPattern(8, 13, 1.342e+1)
-    inputPattern(8, 14, 4.29) inputPattern(8, 15, 2.0e+1) inputPattern(8, 16,
-    6.65e+1) inputPattern(9, 1, 3.6e+1) inputPattern(9, 2, 3.0) inputPattern(9,
-    3, 2.3e+1) inputPattern(9, 4, 0.0) inputPattern(9, 5,
-    7.1400000000000005e-2) inputPattern(9, 6, 3.875e+1) inputPattern(9, 7,
-    4.0664999999999999e+1) inputPattern(9, 8, 3.8164999999999999e+1)
-    inputPattern(9, 9, 3.9799999999999997e+1) inputPattern(9, 10,
-    3.9344999999999999e+1) inputPattern(9, 11, -9.0) inputPattern(9, 12, 2.0)
-    inputPattern(9, 13, 5.0) inputPattern(9, 14, 1.5e+1) inputPattern(9, 15,
-    2.1e+1) inputPattern(9, 16, 6.8e+1) inputPattern(10, 1, 7.6e+1)
-    inputPattern(10, 2, 2.0) inputPattern(10, 3, 2.6e+1) inputPattern(10, 4,
-    1.0) inputPattern(10, 5, 0.0) inputPattern(10, 6, 4.0024999999999999e+1)
-    inputPattern(10, 7, 3.9057499999999997e+1) inputPattern(10, 8,
-    4.0585000000000001e+1) inputPattern(10, 9, 4.0979999999999997e+1)
-    inputPattern(10, 10, 4.0161900000000003e+1) inputPattern(10, 11, -1.6e+1)
-    inputPattern(10, 12, -1.1e+1) inputPattern(10, 13, 2.2e+1) inputPattern(10,
-    14, 2.8e+1) inputPattern(10, 15, 6.0e+1) inputPattern(10, 16, 6.9e+1)
-    inputPattern(11, 1, 3.9e+1) inputPattern(11, 2, 2.0) inputPattern(11, 3,
-    2.4e+1) inputPattern(11, 4, 1.0) inputPattern(11, 5, 2.0000000000000001e-1)
-    inputPattern(11, 6, 4.1e+1) inputPattern(11, 7, 4.1700000000000003e+1)
-    inputPattern(11, 8, 4.1702500000000001e+1) inputPattern(11, 9, 4.3e+1)
-    inputPattern(11, 10, 4.18506e+1) inputPattern(11, 11, -7.0) inputPattern(
-    11, 12, -2.1e+1) inputPattern(11, 13, 1.5e+1) inputPattern(11, 14, 2.7e+1)
-    inputPattern(11, 15, 6.3e+1) inputPattern(11, 16, 6.9e+1) inputPattern(12,
-    1, 6.1e+1) inputPattern(12, 2, 2.0) inputPattern(12, 3, 2.3e+1)
-    inputPattern(12, 4, 2.0) inputPattern(12, 5, 4.2859999999999998e-1)
-    inputPattern(12, 6, 3.8149999999999999e+1) inputPattern(12, 7,
-    4.0039999999999999e+1) inputPattern(12, 8, 3.8700000000000003e+1)
-    inputPattern(12, 9, 4.0032499999999999e+1) inputPattern(12, 10,
-    3.9230600000000003e+1) inputPattern(12, 11, -6.0) inputPattern(12, 12,
-    -1.3e+1) inputPattern(12, 13, 1.0e+1) inputPattern(12, 14, 1.7e+1)
-    inputPattern(12, 15, 4.9e+1) inputPattern(12, 16, 6.9e+1) inputPattern(13,
-    1, 4.0e+1) inputPattern(13, 2, 2.0) inputPattern(13, 3, 2.0e+1)
-    inputPattern(13, 4, 0.0) inputPattern(13, 5, 0.0) inputPattern(13, 6,
-    4.1350000000000001e+1) inputPattern(13, 7, 4.2057499999999997e+1)
-    inputPattern(13, 8, 4.1780000000000001e+1) inputPattern(13, 9,
-    4.3549999999999997e+1) inputPattern(13, 10, 4.2184399999999997e+1)
-    inputPattern(13, 11, -7.0899999999999999) inputPattern(13, 12,
-    2.1400000000000001) inputPattern(13, 13, -3.2400000000000002) inputPattern(
-    13, 14, 9.9399999999999995) inputPattern(13, 15, 1.6e+1) inputPattern(13,
-    16, 6.9599999999999994e+1) inputPattern(14, 1, 4.6e+1) inputPattern(14, 2,
-    2.0) inputPattern(14, 3, 2.2e+1) inputPattern(14, 4, 0.0) inputPattern(14,
-    5, 8.75e-1) inputPattern(14, 6, 4.15e+1) inputPattern(14, 7,
-    4.1037500000000001e+1) inputPattern(14, 8, 4.2515000000000001e+1)
-    inputPattern(14, 9, 4.3762500000000003e+1) inputPattern(14, 10,
-    4.2203699999999998e+1) inputPattern(14, 11, -4.5) inputPattern(14, 12,
-    8.7100000000000009) inputPattern(14, 13, 4.9800000000000004) inputPattern(
-    14, 14, 7.1500000000000004) inputPattern(14, 15, 1.7e+1) inputPattern(14,
-    16, 6.9700000000000003e+1) inputPattern(15, 1, 4.7e+1) inputPattern(15, 2,
-    2.0) inputPattern(15, 3, 2.2e+1) inputPattern(15, 4, 3.0) inputPattern(15,
-    5, 0.0) inputPattern(15, 6, 3.6e+1) inputPattern(15, 7,
-    3.3467500000000001e+1) inputPattern(15, 8, 3.9857500000000002e+1)
-    inputPattern(15, 9, 2.7949200000000001e+1) inputPattern(15, 10,
-    3.4318600000000004e+1) inputPattern(15, 11, -2.4e+1) inputPattern(15, 12,
-    2.0) inputPattern(15, 13, 1.8e+1) inputPattern(15, 14, 1.2e+1)
-    inputPattern(15, 15, 5.3e+1) inputPattern(15, 16, 7.0e+1) inputPattern(16,
-    1, 5.3e+1) inputPattern(16, 2, 2.0) inputPattern(16, 3, 2.0e+1)
-    inputPattern(16, 4, 0.0) inputPattern(16, 5, 0.0) inputPattern(16, 6,
-    4.2700000000000003e+1) inputPattern(16, 7, 4.25625e+1) inputPattern(16, 8,
-    4.1787500000000001e+1) inputPattern(16, 9, 4.2327500000000001e+1)
-    inputPattern(16, 10, 4.23444e+1) inputPattern(16, 11, -1.25) inputPattern(
-    16, 12, -5.9999999999999998e-2) inputPattern(16, 13, 6.6699999999999999)
-    inputPattern(16, 14, 1.0039999999999999e+1) inputPattern(16, 15, 2.0e+1)
-    inputPattern(16, 16, 7.05e+1) inputPattern(17, 1, 4.7e+1) inputPattern(17,
-    2, 2.0) inputPattern(17, 3, 2.1e+1) inputPattern(17, 4, 0.0) inputPattern(
-    17, 5, 8.0000000000000004e-1) inputPattern(17, 6, 4.1049999999999997e+1)
-    inputPattern(17, 7, 4.175e+1) inputPattern(17, 8, 4.1634999999999998e+1)
-    inputPattern(17, 9, 4.3399999999999999e+1) inputPattern(17, 10,
-    4.1958799999999997e+1) inputPattern(17, 11, -1.2e+1) inputPattern(17, 12,
-    -1.0) inputPattern(17, 13, 1.1e+1) inputPattern(17, 14, 1.3e+1)
-    inputPattern(17, 15, 3.6e+1) inputPattern(17, 16, 7.1e+1) inputPattern(18,
-    1, 6.2e+1) inputPattern(18, 2, 2.0) inputPattern(18, 3, 2.5e+1)
-    inputPattern(18, 4, 2.0) inputPattern(18, 5, 4.2859999999999998e-1)
-    inputPattern(18, 6, 3.9414999999999999e+1) inputPattern(18, 7,
-    3.9372500000000002e+1) inputPattern(18, 8, 4.0907499999999999e+1)
-    inputPattern(18, 9, 3.9977499999999999e+1) inputPattern(18, 10,
-    3.9918100000000003e+1) inputPattern(18, 11, -1.4e+1) inputPattern(18, 12,
-    -8.0) inputPattern(18, 13, 2.7e+1) inputPattern(18, 14, 6.0) inputPattern(
-    18, 15, 5.1e+1) inputPattern(18, 16, 7.1e+1) inputPattern(19, 1, 5.8e+1)
-    inputPattern(19, 2, 2.0) inputPattern(19, 3, 2.5e+1) inputPattern(19, 4,
-    2.0) inputPattern(19, 5, 9.2859999999999998e-1) inputPattern(19, 6,
-    3.9799999999999997e+1) inputPattern(19, 7, 4.05e+1) inputPattern(19, 8,
-    3.8792499999999997e+1) inputPattern(19, 9, 4.0450000000000003e+1)
-    inputPattern(19, 10, 3.9885599999999997e+1) inputPattern(19, 11,
-    -8.3599999999999994) inputPattern(19, 12, -9.3000000000000005e-1)
-    inputPattern(19, 13, 2.8190000000000001e+1) inputPattern(19, 14,
-    1.0960000000000001e+1) inputPattern(19, 15, 5.0e+1) inputPattern(19, 16,
-    7.1799999999999997e+1) inputPattern(20, 1, 6.3e+1) inputPattern(20, 2, 2.0)
-    inputPattern(20, 3, 2.5e+1) inputPattern(20, 4, 1.0) inputPattern(20, 5,
-    6.6699999999999995e-2) inputPattern(20, 6, 2.6774999999999999e+1)
-    inputPattern(20, 7, 2.5600000000000001e+1) inputPattern(20, 8,
-    2.6274999999999999e+1) inputPattern(20, 9, 2.60625e+1) inputPattern(20, 10,
-    2.6178100000000001e+1) inputPattern(20, 11, -1.6e+1) inputPattern(20, 12,
-    0.0) inputPattern(20, 13, 1.6e+1) inputPattern(20, 14, 2.4e+1)
-    inputPattern(20, 15, 4.8e+1) inputPattern(20, 16, 7.3e+1) inputPattern(21,
-    1, 6.8e+1) inputPattern(21, 2, 1.0) inputPattern(21, 3, 2.8e+1)
-    inputPattern(21, 4, 1.0) inputPattern(21, 5, 3.125e-1) inputPattern(21, 6,
-    4.1317500000000003e+1) inputPattern(21, 7, 4.28125e+1) inputPattern(21, 8,
-    4.2092500000000001e+1) inputPattern(21, 9, 4.31875e+1) inputPattern(21, 10,
-    4.2352499999999999e+1) inputPattern(21, 11, -1.3e+1) inputPattern(21, 12,
-    2.0e+1) inputPattern(21, 13, 1.1e+1) inputPattern(21, 14, 1.3e+1)
-    inputPattern(21, 15, 2.8e+1) inputPattern(21, 16, 7.4e+1) inputPattern(22,
-    1, 2.8e+1) inputPattern(22, 2, 3.0) inputPattern(22, 3, 2.6e+1)
-    inputPattern(22, 4, 2.0) inputPattern(22, 5, 5.0e-1) inputPattern(22, 6,
-    4.0299999999999997e+1) inputPattern(22, 7, 4.1147500000000001e+1)
-    inputPattern(22, 8, 4.1225000000000001e+1) inputPattern(22, 9, 4.275e+1)
-    inputPattern(22, 10, 4.1355600000000003e+1) inputPattern(22, 11, -1.6e+1)
-    inputPattern(22, 12, 1.1e+1) inputPattern(22, 13, 1.3e+1) inputPattern(22,
-    14, 2.3e+1) inputPattern(22, 15, 2.9e+1) inputPattern(22, 16, 7.4e+1)
-    inputPattern(23, 1, 5.9e+1) inputPattern(23, 2, 3.0) inputPattern(23, 3,
-    2.3e+1) inputPattern(23, 4, 1.0) inputPattern(23, 5, 5.0e-1) inputPattern(
-    23, 6, 3.72425e+1) inputPattern(23, 7, 3.52575e+1) inputPattern(23, 8,
-    3.6217500000000001e+1) inputPattern(23, 9, 3.7715000000000003e+1)
-    inputPattern(23, 10, 3.66081e+1) inputPattern(23, 11, -1.5e+1)
-    inputPattern(23, 12, 2.6e+1) inputPattern(23, 13, 2.2e+1) inputPattern(23,
-    14, 1.9e+1) inputPattern(23, 15, 5.7e+1) inputPattern(23, 16, 7.4e+1)
-    inputPattern(24, 1, 6.7e+1) inputPattern(24, 2, 2.0) inputPattern(24, 3,
-    1.6e+1) inputPattern(24, 4, 1.0) inputPattern(24, 5, 2.5e-1) inputPattern(
-    24, 6, 4.0149999999999999e+1) inputPattern(24, 7, 4.1350000000000001e+1)
-    inputPattern(24, 8, 4.1174999999999997e+1) inputPattern(24, 9, 4.0e+1)
-    inputPattern(24, 10, 4.0668799999999997e+1) inputPattern(24, 11, -7.0)
-    inputPattern(24, 12, 1.0) inputPattern(24, 13, 4.2e+1) inputPattern(24, 14,
-    2.7e+1) inputPattern(24, 15, 8.3e+1) inputPattern(24, 16, 7.4e+1)
-    inputPattern(25, 1, 6.0e+1) inputPattern(25, 2, 3.0) inputPattern(25, 3,
-    2.6e+1) inputPattern(25, 4, 3.0) inputPattern(25, 5, 7.6670000000000005e-1)
-    inputPattern(25, 6, 6.75) inputPattern(25, 7, 1.1875e+1) inputPattern(25,
-    8, 1.93125e+1) inputPattern(25, 9, 9.125) inputPattern(25, 10,
-    1.1765599999999999e+1) inputPattern(25, 11, -1.45e+1) inputPattern(25, 12,
-    -4.0300000000000002) inputPattern(25, 13, 1.269e+1) inputPattern(25, 14,
-    3.0899999999999999e+1) inputPattern(25, 15, 5.6e+1) inputPattern(25, 16,
-    7.45e+1) inputPattern(26, 1, 6.1e+1) inputPattern(26, 2, 3.0) inputPattern(
-    26, 3, 2.3e+1) inputPattern(26, 4, 1.0) inputPattern(26, 5, 0.0)
-    inputPattern(26, 6, 3.9149999999999999e+1) inputPattern(26, 7,
-    3.9877499999999998e+1) inputPattern(26, 8, 3.8152500000000003e+1)
-    inputPattern(26, 9, 3.9397500000000001e+1) inputPattern(26, 10,
-    3.9144399999999997e+1) inputPattern(26, 11, -6.0) inputPattern(26, 12, 9.0)
-    inputPattern(26, 13, 3.0e+1) inputPattern(26, 14, 1.1e+1) inputPattern(26,
-    15, 4.6e+1) inputPattern(26, 16, 7.5e+1) inputPattern(27, 1, 5.5e+1)
-    inputPattern(27, 2, 1.0) inputPattern(27, 3, 2.1e+1) inputPattern(27, 4,
-    0.0) inputPattern(27, 5, 7.1400000000000005e-2) inputPattern(27, 6,
-    3.7049999999999997e+1) inputPattern(27, 7, 3.6085000000000001e+1)
-    inputPattern(27, 8, 3.8835000000000001e+1) inputPattern(27, 9,
-    4.0100000000000001e+1) inputPattern(27, 10, 3.8017499999999998e+1)
-    inputPattern(27, 11, 1.6e+1) inputPattern(27, 12, 1.1e+1) inputPattern(27,
-    13, 1.1e+1) inputPattern(27, 14, 1.8e+1) inputPattern(27, 15, 1.2e+1)
-    inputPattern(27, 16, 7.5e+1) inputPattern(28, 1, 8.5e+1) inputPattern(28,
-    2, 1.0) inputPattern(28, 3, 4.0e+1) inputPattern(28, 4, 2.0) inputPattern(
-    28, 5, 8.0000000000000004e-1) inputPattern(28, 6, 3.96175e+1) inputPattern(
-    28, 7, 4.1359999999999999e+1) inputPattern(28, 8, 4.1542499999999997e+1)
-    inputPattern(28, 9, 4.2762500000000003e+1) inputPattern(28, 10,
-    4.1320599999999999e+1) inputPattern(28, 11, -2.0) inputPattern(28, 12, 8.0)
-    inputPattern(28, 13, 2.0e+1) inputPattern(28, 14, 1.2e+1) inputPattern(28,
-    15, 5.0e+1) inputPattern(28, 16, 7.5e+1) inputPattern(29, 1, 4.0e+1)
-    inputPattern(29, 2, 2.0) inputPattern(29, 3, 2.2e+1) inputPattern(29, 4,
-    0.0) inputPattern(29, 5, 0.0) inputPattern(29, 6, 4.1875e+1) inputPattern(
-    29, 7, 4.1125e+1) inputPattern(29, 8, 4.1592500000000001e+1) inputPattern(
-    29, 9, 4.0450000000000003e+1) inputPattern(29, 10, 4.1260599999999997e+1)
-    inputPattern(29, 11, -1.8e+1) inputPattern(29, 12, 4.0) inputPattern(29,
-    13, 2.7e+1) inputPattern(29, 14, 1.6e+1) inputPattern(29, 15, 6.1e+1)
-    inputPattern(29, 16, 7.5e+1) inputPattern(30, 1, 7.6e+1) inputPattern(30,
-    2, 2.0) inputPattern(30, 3, 2.1e+1) inputPattern(30, 4, 1.0) inputPattern(
-    30, 5, 1.176e-1) inputPattern(30, 6, 3.6795000000000002e+1) inputPattern(
-    30, 7, 3.65e+1) inputPattern(30, 8, 3.5409999999999997e+1) inputPattern(30,
-    9, 3.6082500000000003e+1) inputPattern(30, 10, 3.6196899999999999e+1)
-    inputPattern(30, 11, -1.0e+1) inputPattern(30, 12, 9.0) inputPattern(30,
-    13, 1.6e+1) inputPattern(30, 14, 1.8e+1) inputPattern(30, 15, 4.4e+1)
-    inputPattern(30, 16, 7.5e+1) inputPattern(31, 1, 6.6e+1) inputPattern(31,
-    2, 1.0) inputPattern(31, 3, 6.0e+1) inputPattern(31, 4, 3.0) inputPattern(
-    31, 5, 2.3999999999999999e-1) inputPattern(31, 6, 1.1375) inputPattern(31,
-    7, 7.8150000000000004) inputPattern(31, 8, 6.5599999999999996)
-    inputPattern(31, 9, 1.417e+1) inputPattern(31, 10, 7.4206000000000003)
-    inputPattern(31, 11, -2.1e+1) inputPattern(31, 12, -1.5e+1) inputPattern(
-    31, 13, 2.6e+1) inputPattern(31, 14, 1.6e+1) inputPattern(31, 15, 7.5e+1)
-    inputPattern(31, 16, 7.5e+1) inputPattern(32, 1, 6.5e+1) inputPattern(32,
-    2, 2.0) inputPattern(32, 3, 2.5e+1) inputPattern(32, 4, 1.0) inputPattern(
-    32, 5, 6.25e-2) inputPattern(32, 6, 4.2950000000000003e+1) inputPattern(32,
-    7, 4.25625e+1) inputPattern(32, 8, 4.2792499999999997e+1) inputPattern(32,
-    9, 4.2362499999999997e+1) inputPattern(32, 10, 4.2666899999999998e+1)
-    inputPattern(32, 11, -6.71) inputPattern(32, 12, 1.9649999999999999e+1)
-    inputPattern(32, 13, 1.6949999999999999e+1) inputPattern(32, 14, 1.866e+1)
-    inputPattern(32, 15, 4.8e+1) inputPattern(32, 16, 7.55e+1) inputPattern(33,
-    1, 3.7e+1) inputPattern(33, 2, 2.0) inputPattern(33, 3, 2.1e+1)
-    inputPattern(33, 4, 0.0) inputPattern(33, 5, 0.0) inputPattern(33, 6,
-    4.325e+1) inputPattern(33, 7, 4.3664999999999999e+1) inputPattern(33, 8,
-    3.3447499999999998e+1) inputPattern(33, 9, 4.2112499999999997e+1)
-    inputPattern(33, 10, 4.0618699999999997e+1) inputPattern(33, 11,
-    5.3899999999999997) inputPattern(33, 12, 2.8149999999999999e+1)
-    inputPattern(33, 13, 2.5850000000000001e+1) inputPattern(33, 14,
-    7.3499999999999996) inputPattern(33, 15, 1.7e+1) inputPattern(33, 16,
-    7.7200000000000003e+1) inputPattern(34, 1, 6.6e+1) inputPattern(34, 2, 2.0)
-    inputPattern(34, 3, 1.8e+1) inputPattern(34, 4, 2.0) inputPattern(34, 5,
-    0.0) inputPattern(34, 6, 4.0912500000000001e+1) inputPattern(34, 7,
-    4.1850000000000001e+1) inputPattern(34, 8, 4.1017499999999998e+1)
-    inputPattern(34, 9, 4.1967500000000001e+1) inputPattern(34, 10,
-    4.1436900000000001e+1) inputPattern(34, 11, 1.3e+1) inputPattern(34, 12,
-    8.0) inputPattern(34, 13, 1.9e+1) inputPattern(34, 14, 1.2e+1)
-    inputPattern(34, 15, 2.6e+1) inputPattern(34, 16, 7.9e+1) inputPattern(35,
-    1, 7.2e+1) inputPattern(35, 2, 2.0) inputPattern(35, 3, 2.6e+1)
-    inputPattern(35, 4, 1.0) inputPattern(35, 5, 0.0) inputPattern(35, 6,
-    3.9397500000000001e+1) inputPattern(35, 7, 3.8852499999999999e+1)
-    inputPattern(35, 8, 3.8664999999999999e+1) inputPattern(35, 9,
-    3.8060000000000002e+1) inputPattern(35, 10, 3.8743699999999997e+1)
-    inputPattern(35, 11, -2.0) inputPattern(35, 12, 1.5e+1) inputPattern(35,
-    13, 1.9e+1) inputPattern(35, 14, 1.5e+1) inputPattern(35, 15, 3.8e+1)
-    inputPattern(35, 16, 7.9e+1) inputPattern(36, 1, 4.0e+1) inputPattern(36,
-    2, 1.0) inputPattern(36, 3, 2.8e+1) inputPattern(36, 4, 1.0) inputPattern(
-    36, 5, 1.333e-1) inputPattern(36, 6, 4.2600000000000001e+1) inputPattern(
-    36, 7, 4.1332500000000003e+1) inputPattern(36, 8, 4.1484999999999999e+1)
-    inputPattern(36, 9, 4.15e+1) inputPattern(36, 10, 4.1729399999999998e+1)
-    inputPattern(36, 11, 1.084e+1) inputPattern(36, 12, -1.533e+1)
-    inputPattern(36, 13, 4.2659999999999997e+1) inputPattern(36, 14,
-    5.6859999999999999e+1) inputPattern(36, 15, 4.6e+1) inputPattern(36, 16,
-    8.0e+1) inputPattern(37, 1, 6.0e+1) inputPattern(37, 2, 2.0) inputPattern(
-    37, 3, 2.2e+1) inputPattern(37, 4, 0.0) inputPattern(37, 5,
-    5.2939999999999998e-1) inputPattern(37, 6, 4.2649999999999999e+1)
-    inputPattern(37, 7, 4.4e+1) inputPattern(37, 8, 4.2712499999999999e+1)
-    inputPattern(37, 9, 4.2362499999999997e+1) inputPattern(37, 10,
-    4.2931199999999997e+1) inputPattern(37, 11, 6.0499999999999998)
-    inputPattern(37, 12, 3.2329999999999998e+1) inputPattern(37, 13,
-    1.6690000000000001e+1) inputPattern(37, 14, 1.8390000000000001e+1)
-    inputPattern(37, 15, 2.8e+1) inputPattern(37, 16, 8.1900000000000006e+1)
-    inputPattern(38, 1, 5.0e+1) inputPattern(38, 2, 1.0) inputPattern(38, 3,
-    2.5e+1) inputPattern(38, 4, 0.0) inputPattern(38, 5, 1.429e-1)
-    inputPattern(38, 6, 4.1100000000000001e+1) inputPattern(38, 7, 4.01325e+1)
-    inputPattern(38, 8, 4.1984999999999999e+1) inputPattern(38, 9, 4.41875e+1)
-    inputPattern(38, 10, 4.1851300000000002e+1) inputPattern(38, 11, 2.0)
-    inputPattern(38, 12, 3.3e+1) inputPattern(38, 13, 1.4e+1) inputPattern(38,
-    14, 1.9e+1) inputPattern(38, 15, 2.3e+1) inputPattern(38, 16, 8.2e+1)
-    inputPattern(39, 1, 5.8e+1) inputPattern(39, 2, 1.0) inputPattern(39, 3,
-    2.5e+1) inputPattern(39, 4, 1.0) inputPattern(39, 5, 8.6670000000000003e-1)
-    inputPattern(39, 6, 3.9284999999999997e+1) inputPattern(39, 7,
-    3.8817500000000003e+1) inputPattern(39, 8, 3.7567500000000003e+1)
-    inputPattern(39, 9, 4.1829999999999998e+1) inputPattern(39, 10, 3.9375e+1)
-    inputPattern(39, 11, -1.3e+1) inputPattern(39, 12, 2.1e+1) inputPattern(39,
-    13, 2.2e+1) inputPattern(39, 14, 2.9e+1) inputPattern(39, 15, 4.7e+1)
-    inputPattern(39, 16, 8.2e+1) inputPattern(40, 1, 7.6e+1) inputPattern(40,
-    2, 1.0) inputPattern(40, 3, 2.7e+1) inputPattern(40, 4, 1.0) inputPattern(
-    40, 5, 0.0) inputPattern(40, 6, 4.0590000000000003e+1) inputPattern(40, 7,
-    4.2350000000000001e+1) inputPattern(40, 8, 4.1517499999999998e+1)
-    inputPattern(40, 9, 4.1817500000000003e+1) inputPattern(40, 10,
-    4.1568800000000003e+1) inputPattern(40, 11, 2.0) inputPattern(40, 12,
-    -1.2e+1) inputPattern(40, 13, 4.2e+1) inputPattern(40, 14, 4.6e+1)
-    inputPattern(40, 15, 5.5e+1) inputPattern(40, 16, 8.2e+1) inputPattern(41,
-    1, 6.7e+1) inputPattern(41, 2, 2.0) inputPattern(41, 3, 2.6e+1)
-    inputPattern(41, 4, 2.0) inputPattern(41, 5, 3.3329999999999999e-1)
-    inputPattern(41, 6, 4.0700000000000003e+1) inputPattern(41, 7,
-    4.0539999999999999e+1) inputPattern(41, 8, 4.0697499999999998e+1)
-    inputPattern(41, 9, 4.2262500000000003e+1) inputPattern(41, 10,
-    4.1049999999999997e+1) inputPattern(41, 11, 2.3829999999999998e+1)
-    inputPattern(41, 12, 1.434e+1) inputPattern(41, 13, 2.518e+1) inputPattern(
-    41, 14, 1.524e+1) inputPattern(41, 15, 1.3e+1) inputPattern(41, 16,
-    8.2299999999999997e+1) inputPattern(42, 1, 5.4e+1) inputPattern(42, 2, 2.0)
-    inputPattern(42, 3, 2.4e+1) inputPattern(42, 4, 0.0) inputPattern(42, 5,
-    0.0) inputPattern(42, 6, 3.975e+1) inputPattern(42, 7,
-    4.1215000000000003e+1) inputPattern(42, 8, 4.1414999999999999e+1)
-    inputPattern(42, 9, 4.1805e+1) inputPattern(42, 10, 4.1046300000000002e+1)
-    inputPattern(42, 11, 8.0) inputPattern(42, 12, 3.0e+1) inputPattern(42, 13,
-    1.7e+1) inputPattern(42, 14, 2.5e+1) inputPattern(42, 15, 2.8e+1)
-    inputPattern(42, 16, 8.4e+1) inputPattern(43, 1, 4.9e+1) inputPattern(43,
-    2, 2.0) inputPattern(43, 3, 2.3e+1) inputPattern(43, 4, 1.0) inputPattern(
-    43, 5, 0.0) inputPattern(43, 6, 4.1549999999999997e+1) inputPattern(43, 7,
-    4.2200000000000003e+1) inputPattern(43, 8, 4.1484999999999999e+1)
-    inputPattern(43, 9, 4.3350000000000001e+1) inputPattern(43, 10,
-    4.2146299999999997e+1) inputPattern(43, 11, 7.0) inputPattern(43, 12,
-    4.1e+1) inputPattern(43, 13, 1.3e+1) inputPattern(43, 14, 3.3e+1)
-    inputPattern(43, 15, 1.8e+1) inputPattern(43, 16, 8.4e+1) inputPattern(44,
-    1, 4.9e+1) inputPattern(44, 2, 2.0) inputPattern(44, 3, 2.1e+1)
-    inputPattern(44, 4, 1.0) inputPattern(44, 5, 6.25e-1) inputPattern(44, 6,
-    4.2450000000000003e+1) inputPattern(44, 7, 4.18125e+1) inputPattern(44, 8,
-    4.2317500000000003e+1) inputPattern(44, 9, 4.3e+1) inputPattern(44, 10,
-    4.2395000000000003e+1) inputPattern(44, 11, 2.2e+1) inputPattern(44, 12,
-    2.9e+1) inputPattern(44, 13, 3.0e+1) inputPattern(44, 14, 1.3e+1)
-    inputPattern(44, 15, 1.6e+1) inputPattern(44, 16, 8.6e+1) inputPattern(45,
-    1, 7.2e+1) inputPattern(45, 2, 2.0) inputPattern(45, 3, 2.2e+1)
-    inputPattern(45, 4, 1.0) inputPattern(45, 5, 7.1400000000000005e-2)
-    inputPattern(45, 6, 4.01175e+1) inputPattern(45, 7, 3.8302500000000002e+1)
-    inputPattern(45, 8, 4.1049999999999997e+1) inputPattern(45, 9, 3.80625e+1)
-    inputPattern(45, 10, 3.9383099999999999e+1) inputPattern(45, 11, 2.2e+1)
-    inputPattern(45, 12, 2.9e+1) inputPattern(45, 13, 3.4e+1) inputPattern(45,
-    14, 2.2e+1) inputPattern(45, 15, 2.7e+1) inputPattern(45, 16, 8.6e+1)
-    inputPattern(46, 1, 6.1e+1) inputPattern(46, 2, 2.0) inputPattern(46, 3,
-    2.4e+1) inputPattern(46, 4, 1.0) inputPattern(46, 5, 5.625e-1)
-    inputPattern(46, 6, 4.2649999999999999e+1) inputPattern(46, 7, 4.23125e+1)
-    inputPattern(46, 8, 4.3305e+1) inputPattern(46, 9, 4.3549999999999997e+1)
-    inputPattern(46, 10, 4.29544e+1) inputPattern(46, 11,
-    1.3609999999999999e+1) inputPattern(46, 12, 3.9979999999999997e+1)
-    inputPattern(46, 13, 2.8329999999999998e+1) inputPattern(46, 14,
-    1.6050000000000001e+1) inputPattern(46, 15, 4.0e+1) inputPattern(46, 16,
-    8.7700000000000003e+1) inputPattern(47, 1, 7.7e+1) inputPattern(47, 2, 2.0)
-    inputPattern(47, 3, 2.6e+1) inputPattern(47, 4, 1.0) inputPattern(47, 5,
-    0.0) inputPattern(47, 6, 3.8015000000000001e+1) inputPattern(47, 7,
-    3.8950000000000003e+1) inputPattern(47, 8, 3.8115000000000002e+1)
-    inputPattern(47, 9, 4.2814999999999998e+1) inputPattern(47, 10,
-    3.9473799999999997e+1) inputPattern(47, 11, 8.0) inputPattern(47, 12,
-    3.5e+1) inputPattern(47, 13, 2.9e+1) inputPattern(47, 14, 2.9e+1)
-    inputPattern(47, 15, 3.8e+1) inputPattern(47, 16, 8.8e+1) inputPattern(48,
-    1, 4.0e+1) inputPattern(48, 2, 3.0) inputPattern(48, 3, 2.6e+1)
-    inputPattern(48, 4, 1.0) inputPattern(48, 5, 1.176e-1) inputPattern(48, 6,
-    4.35e+1) inputPattern(48, 7, 4.4e+1) inputPattern(48, 8,
-    4.3289999999999999e+1) inputPattern(48, 9, 4.4289999999999999e+1)
-    inputPattern(48, 10, 4.3770000000000003e+1) inputPattern(48, 11,
-    3.4939999999999998e+1) inputPattern(48, 12, 2.723e+1) inputPattern(48, 13,
-    3.8880000000000003e+1) inputPattern(48, 14, 1.602e+1) inputPattern(48, 15,
-    1.4e+1) inputPattern(48, 16, 9.0e+1) inputPattern(49, 1, 5.3e+1)
-    inputPattern(49, 2, 3.0) inputPattern(49, 3, 2.4e+1) inputPattern(49, 4,
-    1.0) inputPattern(49, 5, 6.25e-1) inputPattern(49, 6,
-    4.1350000000000001e+1) inputPattern(49, 7, 4.1227499999999999e+1)
-    inputPattern(49, 8, 4.3012500000000003e+1) inputPattern(49, 9,
-    4.2515000000000001e+1) inputPattern(49, 10, 4.2026200000000003e+1)
-    inputPattern(49, 11, 2.382e+1) inputPattern(49, 12, 3.2e+1) inputPattern(
-    49, 13, 2.9949999999999999e+1) inputPattern(49, 14, 1.8390000000000001e+1)
-    inputPattern(49, 15, 1.9e+1) inputPattern(49, 16, 9.0700000000000003e+1)
-    inputPattern(50, 1, 3.3e+1) inputPattern(50, 2, 3.0) inputPattern(50, 3,
-    2.3e+1) inputPattern(50, 4, 0.0) inputPattern(50, 5, 0.0) inputPattern(50,
-    6, 4.3299999999999997e+1) inputPattern(50, 7, 4.4350000000000001e+1)
-    inputPattern(50, 8, 4.3234999999999999e+1) inputPattern(50, 9, 4.4875e+1)
-    inputPattern(50, 10, 4.3939999999999998e+1) inputPattern(50, 11, 2.3e+1)
-    inputPattern(50, 12, 4.3e+1) inputPattern(50, 13, 3.3e+1) inputPattern(50,
-    14, 1.8e+1) inputPattern(50, 15, 2.1e+1) inputPattern(50, 16, 9.4e+1)
-    inputPattern(51, 1, 5.5e+1) inputPattern(51, 2, 2.0) inputPattern(51, 3,
-    2.0e+1) inputPattern(51, 4, 0.0) inputPattern(51, 5, 4.118e-1)
-    inputPattern(51, 6, 4.2799999999999997e+1) inputPattern(51, 7, 4.39375e+1)
-    inputPattern(51, 8, 4.3305e+1) inputPattern(51, 9, 4.44375e+1)
-    inputPattern(51, 10, 4.3619999999999997e+1) inputPattern(51, 11,
-    5.4719999999999999e+1) inputPattern(51, 12, 6.4439999999999998e+1)
-    inputPattern(51, 13, 4.282e+1) inputPattern(51, 14, 4.2409999999999997e+1)
-    inputPattern(51, 15, 2.1e+1) inputPattern(51, 16, 1.097e+2) inputPattern(
-    52, 1, 3.2e+1) inputPattern(52, 2, 2.0) inputPattern(52, 3, 2.3e+1)
-    inputPattern(52, 4, 1.0) inputPattern(52, 5, 0.0) inputPattern(52, 6,
-    3.9017499999999998e+1) inputPattern(52, 7, 3.9685000000000002e+1)
-    inputPattern(52, 8, 3.8875e+1) inputPattern(52, 9, 4.0792499999999997e+1)
-    inputPattern(52, 10, 3.9592500000000001e+1) inputPattern(52, 11, 3.3e+1)
-    inputPattern(52, 12, 5.1e+1) inputPattern(52, 13, 3.4e+1) inputPattern(52,
-    14, 2.5e+1) inputPattern(52, 15, 2.5e+1) inputPattern(52, 16, 1.12e+2)
-    inputPattern(53, 1, 6.0e+1) inputPattern(53, 2, 1.0) inputPattern(53, 3,
-    2.0e+1) inputPattern(53, 4, 2.0) inputPattern(53, 5, 2.0000000000000001e-1)
-    inputPattern(53, 6, 4.0600000000000001e+1) inputPattern(53, 7,
-    4.2149999999999999e+1) inputPattern(53, 8, 4.1417499999999997e+1)
-    inputPattern(53, 9, 4.125e+1) inputPattern(53, 10, 4.1354399999999998e+1)
-    inputPattern(53, 11, 4.8e+1) inputPattern(53, 12, 5.9e+1) inputPattern(53,
-    13, 3.7e+1) inputPattern(53, 14, 7.6e+1) inputPattern(53, 15, 3.3e+1)
-    inputPattern(53, 16, 1.17e+2) netStatus(53, 53, 1, 106) outputPattern(1, 1,
-    1.0, 0) outputPattern(2, 1, 4.0000000000000002e-1, 0) outputPattern(3, 1,
-    8.0000000000000004e-1, 0) outputPattern(4, 1, 4.0000000000000002e-1, 0)
-    outputPattern(5, 1, 8.0000000000000004e-1, 0) outputPattern(6, 1, 1.0, 0)
-    outputPattern(7, 1, 8.0000000000000004e-1, 0) outputPattern(8, 1,
-    2.0000000000000001e-1, 0) outputPattern(9, 1, 2.0000000000000001e-1, 0)
-    outputPattern(10, 1, 1.0, 0) outputPattern(11, 1, 1.0, 0) outputPattern(12,
-    1, 1.0, 0) outputPattern(13, 1, 0.0, 0) outputPattern(14, 1,
-    2.0000000000000001e-1, 0) outputPattern(15, 1, 1.0, 0) outputPattern(16, 1,
-    0.0, 0) outputPattern(17, 1, 4.0000000000000002e-1, 0) outputPattern(18, 1,
-    1.0, 0) outputPattern(19, 1, 1.0, 0) outputPattern(20, 1, 1.0, 0)
-    outputPattern(21, 1, 5.9999999999999998e-1, 0) outputPattern(22, 1,
-    8.0000000000000004e-1, 0) outputPattern(23, 1, 1.0, 0) outputPattern(24, 1,
-    1.0, 0) outputPattern(25, 1, 1.0, 0) outputPattern(26, 1, 1.0, 0)
-    outputPattern(27, 1, 2.0000000000000001e-1, 0) outputPattern(28, 1, 1.0, 0)
-    outputPattern(29, 1, 5.9999999999999998e-1, 0) outputPattern(30, 1,
-    8.0000000000000004e-1, 0) outputPattern(31, 1, 1.0, 0) outputPattern(32, 1,
-    8.0000000000000004e-1, 0) outputPattern(33, 1, 2.0000000000000001e-1, 0)
-    outputPattern(34, 1, 8.0000000000000004e-1, 0) outputPattern(35, 1,
-    5.9999999999999998e-1, 0) outputPattern(36, 1, 8.0000000000000004e-1, 0)
-    outputPattern(37, 1, 4.0000000000000002e-1, 0) outputPattern(38, 1,
-    2.0000000000000001e-1, 0) outputPattern(39, 1, 1.0, 0) outputPattern(40, 1,
-    1.0, 0) outputPattern(41, 1, 8.0000000000000004e-1, 0) outputPattern(42, 1,
-    1.0, 0) outputPattern(43, 1, 5.9999999999999998e-1, 0) outputPattern(44, 1,
-    5.9999999999999998e-1, 0) outputPattern(45, 1, 5.9999999999999998e-1, 0)
-    outputPattern(46, 1, 1.0, 0) outputPattern(47, 1, 5.9999999999999998e-1, 0)
-    outputPattern(48, 1, 5.9999999999999998e-1, 0) outputPattern(49, 1,
-    5.9999999999999998e-1, 0) outputPattern(50, 1, 2.0000000000000001e-1, 0)
-    outputPattern(51, 1, 0.0, 0) outputPattern(52, 1, 5.9999999999999998e-1, 0)
-    outputPattern(53, 1, 8.0000000000000004e-1, 0)
+rewrites: 109872
+result Configuration: < net(1) : Net | e : 2.1039649842679586e-2, r : true, st
+    : 1 > < net(2) : Net | e : 2.0234099704920516e-3, r : true, st : 1 > < net(
+    3) : Net | e : -4.3519314612847637e-3, r : true, st : 1 > < net(4) : Net |
+    e : 3.2797738442629787e-3, r : true, st : 1 > < net(5) : Net | e :
+    -4.7705232036379441e-2, r : true, st : 1 > < net(6) : Net | e :
+    2.0298493436666676e-2, r : true, st : 1 > < net(7) : Net | e :
+    -8.1929268779344921e-3, r : true, st : 1 > < net(8) : Net | e :
+    -4.5028430183166601e-4, r : true, st : 1 > < net(9) : Net | e :
+    -4.3543527192897724e-3, r : true, st : 1 > < net(10) : Net | e :
+    1.5503044197870519e-2, r : true, st : 1 > < net(11) : Net | e :
+    3.0463947132200908e-2, r : true, st : 1 > < net(12) : Net | e :
+    2.2343790718039158e-2, r : true, st : 1 > < net(13) : Net | e :
+    -3.8227542239958362e-2, r : true, st : 1 > < net(14) : Net | e :
+    1.1689134432636306e-2, r : true, st : 1 > < net(15) : Net | e :
+    8.5010268177317938e-3, r : true, st : 1 > < net(16) : Net | e :
+    -4.4247564408422556e-2, r : true, st : 1 > < net(17) : Net | e :
+    1.7432818098877534e-3, r : true, st : 1 > < net(18) : Net | e :
+    1.2962222549519953e-2, r : true, st : 1 > < net(19) : Net | e :
+    1.7711571996811171e-2, r : true, st : 1 > < net(20) : Net | e :
+    1.0798580008189895e-2, r : true, st : 1 > < net(21) : Net | e :
+    7.0919477510545947e-3, r : true, st : 1 > < net(22) : Net | e :
+    -4.5785887924917335e-3, r : true, st : 1 > < net(23) : Net | e :
+    1.3417440865730601e-3, r : true, st : 1 > < net(24) : Net | e :
+    1.65535257871674e-3, r : true, st : 1 > < net(25) : Net | e :
+    4.3392095867097469e-3, r : true, st : 1 > < net(26) : Net | e :
+    3.4893896223801124e-2, r : true, st : 1 > < net(27) : Net | e :
+    -1.9561650005775477e-4, r : true, st : 1 > < net(28) : Net | e :
+    1.1078536837307529e-2, r : true, st : 1 > < net(29) : Net | e :
+    -3.870509713762349e-3, r : true, st : 1 > < net(30) : Net | e :
+    -7.9367538380000768e-3, r : true, st : 1 > < net(31) : Net | e :
+    5.0649087197718323e-4, r : true, st : 1 > < net(32) : Net | e :
+    -1.9263286659098822e-2, r : true, st : 1 > < net(33) : Net | e :
+    -3.201741485725329e-3, r : true, st : 1 > < net(34) : Net | e :
+    -9.5371105657882094e-4, r : true, st : 1 > < net(35) : Net | e :
+    3.2697098270062508e-4, r : true, st : 1 > < net(36) : Net | e :
+    7.6337859993569346e-4, r : true, st : 1 > < net(37) : Net | e :
+    7.6179239032403423e-4, r : true, st : 1 > < net(38) : Net | e :
+    -1.1464662926728514e-2, r : true, st : 1 > < net(39) : Net | e :
+    2.0715110057385688e-2, r : true, st : 1 > < net(40) : Net | e :
+    2.0890906874994841e-2, r : true, st : 1 > < net(41) : Net | e :
+    -5.220275173591582e-3, r : true, st : 1 > < net(42) : Net | e :
+    9.3945459202710357e-2, r : true, st : 1 > < net(43) : Net | e :
+    -7.7027815272198152e-3, r : true, st : 1 > < net(44) : Net | e :
+    3.7022777662677475e-3, r : true, st : 1 > < net(45) : Net | e :
+    9.3770873049914272e-4, r : true, st : 1 > < net(46) : Net | e :
+    1.1697198221464866e-2, r : true, st : 1 > < net(47) : Net | e :
+    -5.0703148576342061e-3, r : true, st : 1 > < net(48) : Net | e :
+    1.3132495248809883e-3, r : true, st : 1 > < net(49) : Net | e :
+    2.1899375120491227e-2, r : true, st : 1 > < net(50) : Net | e :
+    2.1091192778509904e-2, r : true, st : 1 > < net(51) : Net | e :
+    -2.3585937163837972e-2, r : true, st : 1 > < net(52) : Net | e :
+    -1.5223385983777038e-2, r : true, st : 1 > < net(53) : Net | e :
+    -3.7434578632343785e-3, r : true, st : 1 > < neuron(0, 1) : NeuronTR | st :
+    1, x : 6.0e+1, t : 0.0, dt : 0.0 > < neuron(0, 2) : NeuronTR | st : 1, x :
+    1.0, t : 0.0, dt : 0.0 > < neuron(0, 3) : NeuronTR | st : 1, x : 2.0e+1, t
+    : 0.0, dt : 0.0 > < neuron(0, 4) : NeuronTR | st : 1, x : 2.0, t : 0.0, dt
+    : 0.0 > < neuron(0, 5) : NeuronTR | st : 1, x : 2.0000000000000001e-1, t :
+    0.0, dt : 0.0 > < neuron(0, 6) : NeuronTR | st : 1, x :
+    4.0600000000000001e+1, t : 0.0, dt : 0.0 > < neuron(0, 7) : NeuronTR | st :
+    1, x : 4.2149999999999999e+1, t : 0.0, dt : 0.0 > < neuron(0, 8) : NeuronTR
+    | st : 1, x : 4.1417499999999997e+1, t : 0.0, dt : 0.0 > < neuron(0, 9) :
+    NeuronTR | st : 1, x : 4.125e+1, t : 0.0, dt : 0.0 > < neuron(0, 10) :
+    NeuronTR | st : 1, x : 4.1354399999999998e+1, t : 0.0, dt : 0.0 > < neuron(
+    0, 11) : NeuronTR | st : 1, x : 4.8e+1, t : 0.0, dt : 0.0 > < neuron(0, 12)
+    : NeuronTR | st : 1, x : 5.9e+1, t : 0.0, dt : 0.0 > < neuron(0, 13) :
+    NeuronTR | st : 1, x : 3.7e+1, t : 0.0, dt : 0.0 > < neuron(0, 14) :
+    NeuronTR | st : 1, x : 7.6e+1, t : 0.0, dt : 0.0 > < neuron(0, 15) :
+    NeuronTR | st : 1, x : 3.3e+1, t : 0.0, dt : 0.0 > < neuron(0, 16) :
+    NeuronTR | st : 1, x : 1.17e+2, t : 0.0, dt : 0.0 > < neuron(1, 1) :
+    NeuronTR | st : 1, x : 4.7393718516534e-4, t : 0.0, dt :
+    8.2266985635096789e-19 > < neuron(1, 2) : NeuronTR | st : 1, x :
+    1.3428578825310238e-3, t : 0.0, dt : -7.1802881618096063e-13 > < neuron(1,
+    3) : NeuronTR | st : 1, x : 9.9999998961002168e-1, t : 0.0, dt :
+    -2.1258825233684225e-10 > < neuron(1, 4) : NeuronTR | st : 1, x :
+    9.999999726265062e-1, t : 0.0, dt : -2.435889551463318e-10 > < neuron(1, 5)
+    : NeuronTR | st : 1, x : 1.2781567534266128e-2, t : 0.0, dt :
+    -1.3841752306269614e-7 > < neuron(1, 6) : NeuronTR | st : 1, x : 1.0, t :
+    0.0, dt : -8.6633512716603544e-5 > < neuron(1, 7) : NeuronTR | st : 1, x :
+    6.532079565695173e-8, t : 0.0, dt : -1.3119561863015598e-10 > < neuron(1,
+    8) : NeuronTR | st : 1, x : 9.9999944246280426e-1, t : 0.0, dt :
+    4.7479220981612719e-5 > < neuron(1, 9) : NeuronTR | st : 1, x :
+    5.1279901304622843e-13, t : 0.0, dt : 2.2224617996652586e-11 > < neuron(1,
+    10) : NeuronTR | st : 1, x : 9.9999999999999978e-1, t : 0.0, dt :
+    4.2766638438113879e-12 > < neuron(1, 11) : NeuronTR | st : 1, x :
+    7.4480287480772581e-2, t : 0.0, dt : 6.7505403856170214e-10 > < neuron(1,
+    12) : NeuronTR | st : 1, x : 5.0547790892674957e-16, t : 0.0, dt :
+    1.3438269512626701e-5 > < neuron(1, 13) : NeuronTR | st : 1, x :
+    4.5622315693805697e-2, t : 0.0, dt : 2.9254879438747365e-5 > < neuron(1,
+    14) : NeuronTR | st : 1, x : 9.9999977930013506e-1, t : 0.0, dt :
+    1.3357974804539419e-11 > < neuron(1, 15) : NeuronTR | st : 1, x : 1.0, t :
+    0.0, dt : 3.9611091502179712e-5 > < neuron(1, 16) : NeuronTR | st : 1, x :
+    7.2917060631180128e-2, t : 0.0, dt : 6.2768709523121338e-6 > < neuron(1,
+    17) : NeuronTR | st : 1, x : 9.9999999488379099e-1, t : 0.0, dt :
+    1.9576608749201629e-14 > < neuron(1, 18) : NeuronTR | st : 1, x :
+    1.1836536419574766e-6, t : 0.0, dt : 5.213982581061252e-10 > < neuron(1,
+    19) : NeuronTR | st : 1, x : 2.1041076531354303e-5, t : 0.0, dt :
+    2.0928939916955761e-21 > < neuron(1, 20) : NeuronTR | st : 1, x :
+    9.6805074867508734e-1, t : 0.0, dt : 0.0 > < neuron(1, 21) : NeuronTR | st
+    : 1, x : 8.0382156098899161e-29, t : 0.0, dt : 3.3959366204767674e-15 > <
+    neuron(1, 22) : NeuronTR | st : 1, x : 1.9317851868727749e-3, t : 0.0, dt :
+    5.0521766486680367e-22 > < neuron(1, 23) : NeuronTR | st : 1, x :
+    2.514448401421059e-3, t : 0.0, dt : 3.3214597250482263e-5 > < neuron(1, 24)
+    : NeuronTR | st : 1, x : 5.1623375047159562e-4, t : 0.0, dt :
+    2.9868272760880077e-9 > < neuron(1, 25) : NeuronTR | st : 1, x :
+    6.4291152866625891e-16, t : 0.0, dt : 9.2347650753013373e-11 > < neuron(2,
+    1) : NeuronTR | st : 1, x : 8.0374345786323442e-1, t : 0.0, dt :
+    4.3335330965543664e-4 > < link(1, 1, 1) : LinkTR | st : 0, w :
+    -4.8250885999999998e-1, w+1 : -4.8250885999999998e-1 > < link(1, 1, 2) :
+    LinkTR | st : 0, w : 4.5363078999895529e-1, w+1 : 4.5363079000000001e-1 > <
+    link(1, 1, 3) : LinkTR | st : 0, w : 6.54769486906841e-2, w+1 :
+    6.5476949000000007e-2 > < link(1, 1, 4) : LinkTR | st : 0, w :
+    4.3467395645578069e-2, w+1 : 4.3467395999999998e-2 > < link(1, 1, 5) :
+    LinkTR | st : 0, w : -1.6729642139749606e-1, w+1 : -1.6729622e-1 > < link(
+    1, 1, 6) : LinkTR | st : 0, w : -2.3048733176100267e-1, w+1 : -2.3036128e-1
+    > < link(1, 1, 7) : LinkTR | st : 0, w : 1.3381515980911035e-1, w+1 :
+    1.3381515999999999e-1 > < link(1, 1, 8) : LinkTR | st : 0, w :
+    -2.1393054773347175e-1, w+1 : -2.1399963e-1 > < link(1, 1, 9) : LinkTR | st
+    : 0, w : 1.9002639003233682e-1, w+1 : 1.9002638999999999e-1 > < link(1, 1,
+    10) : LinkTR | st : 0, w : 7.1749897000622254e-1, w+1 :
+    7.1749896999999996e-1 > < link(1, 1, 11) : LinkTR | st : 0, w :
+    -2.3380264901779638e-1, w+1 : -2.3380265e-1 > < link(1, 1, 12) : LinkTR |
+    st : 0, w : 3.5714791268214086e-1, w+1 : 3.5712835999999998e-1 > < link(1,
+    1, 13) : LinkTR | st : 0, w : -3.5155570150416621e-2, w+1 :
+    -3.5198135999999998e-2 > < link(1, 1, 14) : LinkTR | st : 0, w :
+    4.8261043001943582e-1, w+1 : 4.8261042999999998e-1 > < link(1, 1, 15) :
+    LinkTR | st : 0, w : 5.5858430413813565e-1, w+1 : 5.5852667e-1 > < link(1,
+    1, 16) : LinkTR | st : 0, w : -1.6582045715276439e-1, w+1 : -1.6582959e-1 >
+    < link(1, 1, 17) : LinkTR | st : 0, w : -4.9911757999971516e-2, w+1 :
+    -4.9911758000000001e-2 > < link(1, 1, 18) : LinkTR | st : 0, w :
+    -3.6971163924136552e-1, w+1 : -3.6971164000000001e-1 > < link(1, 1, 19) :
+    LinkTR | st : 0, w : -5.1237763000000003e-1, w+1 : -5.1237763000000003e-1 >
+    < link(1, 1, 20) : LinkTR | st : 0, w : 5.5481842000000003e-1, w+1 :
+    5.5481842000000003e-1 > < link(1, 1, 21) : LinkTR | st : 0, w :
+    6.3157585000000505e-1, w+1 : 6.3157585000000005e-1 > < link(1, 1, 22) :
+    LinkTR | st : 0, w : -4.9380343999999998e-1, w+1 : -4.9380343999999998e-1 >
+    < link(1, 1, 23) : LinkTR | st : 0, w : -1.4782117276100054e-1, w+1 :
+    -1.4786949999999999e-1 > < link(1, 1, 24) : LinkTR | st : 0, w :
+    -1.9407064565416632e-1, w+1 : -1.9407065000000001e-1 > < link(1, 1, 25) :
+    LinkTR | st : 0, w : 1.7005850013436583e-1, w+1 : 1.700585e-1 > < link(1,
+    2, 1) : LinkTR | st : 0, w : -4.4826933999999999e-2, w+1 :
+    -4.4826933999999999e-2 > < link(1, 2, 2) : LinkTR | st : 0, w :
+    4.5776920999967684e-2, w+1 : 4.5776920999999998e-2 > < link(1, 2, 3) :
+    LinkTR | st : 0, w : 2.9223077990433527e-2, w+1 : 2.9223078e-2 > < link(1,
+    2, 4) : LinkTR | st : 0, w : 5.9537450989038496e-2, w+1 :
+    5.9537450999999998e-2 > < link(1, 2, 5) : LinkTR | st : 0, w :
+    1.6405951377121145e-1, w+1 : 1.6405951999999999e-1 > < link(1, 2, 6) :
+    LinkTR | st : 0, w : -1.1283534508072247e-2, w+1 : -1.1279635999999999e-2 >
+    < link(1, 2, 7) : LinkTR | st : 0, w : -3.5346445005903802e-2, w+1 :
+    -3.5346444999999997e-2 > < link(1, 2, 8) : LinkTR | st : 0, w :
+    1.0725777656494417e-1, w+1 : 1.0725564e-1 > < link(1, 2, 9) : LinkTR | st :
+    0, w : -5.292683199899989e-2, w+1 : -5.2926832e-2 > < link(1, 2, 10) :
+    LinkTR | st : 0, w : 1.5820788000019245e-1, w+1 : 1.5820788e-1 > < link(1,
+    2, 11) : LinkTR | st : 0, w : 7.2903151030377436e-2, w+1 :
+    7.2903150999999999e-2 > < link(1, 2, 12) : LinkTR | st : 0, w :
+    -5.9758653277871936e-2, w+1 : -5.9759258000000003e-2 > < link(1, 2, 13) :
+    LinkTR | st : 0, w : 2.0281743646957473e-1, w+1 : 2.0281611999999999e-1 > <
+    link(1, 2, 14) : LinkTR | st : 0, w : 1.202497000006011e-1, w+1 :
+    1.202497e-1 > < link(1, 2, 15) : LinkTR | st : 0, w :
+    1.8195514249911759e-1, w+1 : 1.8195336000000001e-1 > < link(1, 2, 16) :
+    LinkTR | st : 0, w : 6.3132826459192853e-2, w+1 : 6.3132543999999999e-2 > <
+    link(1, 2, 17) : LinkTR | st : 0, w : -8.6814811999999131e-2, w+1 :
+    -8.6814812000000005e-2 > < link(1, 2, 18) : LinkTR | st : 0, w :
+    -6.4270007976537077e-2, w+1 : -6.4270008000000003e-2 > < link(1, 2, 19) :
+    LinkTR | st : 0, w : 5.1192664999999998e-2, w+1 : 5.1192664999999998e-2 > <
+    link(1, 2, 20) : LinkTR | st : 0, w : 4.3654303999999998e-2, w+1 :
+    4.3654303999999998e-2 > < link(1, 2, 21) : LinkTR | st : 0, w :
+    5.3618014000000151e-2, w+1 : 5.3618013999999999e-2 > < link(1, 2, 22) :
+    LinkTR | st : 0, w : -1.9159470000000001e-2, w+1 : -1.9159470000000001e-2 >
+    < link(1, 2, 23) : LinkTR | st : 0, w : 9.717690465687627e-2, w+1 :
+    9.7175410000000004e-2 > < link(1, 2, 24) : LinkTR | st : 0, w :
+    4.9255176134407226e-2, w+1 : 4.9255175999999998e-2 > < link(1, 2, 25) :
+    LinkTR | st : 0, w : -7.8692357995844356e-2, w+1 : -7.8692358000000004e-2 >
+    < link(1, 3, 1) : LinkTR | st : 0, w : 1.3258318999999999e-1, w+1 :
+    1.3258318999999999e-1 > < link(1, 3, 2) : LinkTR | st : 0, w :
+    1.0180802999978458e-1, w+1 : 1.0180802999999999e-1 > < link(1, 3, 3) :
+    LinkTR | st : 0, w : 2.0102560993622351e-1, w+1 : 2.0102560999999999e-1 > <
+    link(1, 3, 4) : LinkTR | st : 0, w : 3.0447945992692327e-1, w+1 :
+    3.0447945999999998e-1 > < link(1, 3, 5) : LinkTR | st : 0, w :
+    6.2239458847474305e-1, w+1 : 6.2239462999999995e-1 > < link(1, 3, 6) :
+    LinkTR | st : 0, w : 8.8668744946185013e-2, w+1 : 8.8694734999999997e-2 > <
+    link(1, 3, 7) : LinkTR | st : 0, w : 2.4663424960641313e-2, w+1 :
+    2.4663424999999999e-2 > < link(1, 3, 8) : LinkTR | st : 0, w :
+    6.9798303376629445e-1, w+1 : 6.9796879000000001e-1 > < link(1, 3, 9) :
+    LinkTR | st : 0, w : 1.3975233006667385e-2, w+1 : 1.3975233e-2 > < link(1,
+    3, 10) : LinkTR | st : 0, w : -3.2033524999871704e-1, w+1 :
+    -3.2033525000000002e-1 > < link(1, 3, 11) : LinkTR | st : 0, w :
+    4.4200973020251622e-1, w+1 : 4.4200972999999999e-1 > < link(1, 3, 12) :
+    LinkTR | st : 0, w : 4.7744575148085378e-1, w+1 : 4.7744172000000001e-1 > <
+    link(1, 3, 13) : LinkTR | st : 0, w : 8.1056588646383154e-1, w+1 :
+    8.1055710999999997e-1 > < link(1, 3, 14) : LinkTR | st : 0, w :
+    7.8016735000400739e-1, w+1 : 7.8016735000000004e-1 > < link(1, 3, 15) :
+    LinkTR | st : 0, w : 3.9487664327450656e-2, w+1 : 3.9475781000000001e-2 > <
+    link(1, 3, 16) : LinkTR | st : 0, w : 8.5006851306128572e-1, w+1 :
+    8.5006663000000005e-1 > < link(1, 3, 17) : LinkTR | st : 0, w :
+    -2.9759448999999411e-1, w+1 : -2.9759448999999999e-1 > < link(1, 3, 18) :
+    LinkTR | st : 0, w : -1.5125366984358052e-1, w+1 : -1.5125367000000001e-1 >
+    < link(1, 3, 19) : LinkTR | st : 0, w : 1.1660556e-1, w+1 : 1.1660556e-1 >
+    < link(1, 3, 20) : LinkTR | st : 0, w : 4.3522923000000002e-1, w+1 :
+    4.3522923000000002e-1 > < link(1, 3, 21) : LinkTR | st : 0, w :
+    2.0026078000001019e-2, w+1 : 2.0026077999999999e-2 > < link(1, 3, 22) :
+    LinkTR | st : 0, w : -2.0143962000000001e-2, w+1 : -2.0143962000000001e-2 >
+    < link(1, 3, 23) : LinkTR | st : 0, w : 8.361014643791751e-1, w+1 :
+    8.3609149999999999e-1 > < link(1, 3, 24) : LinkTR | st : 0, w :
+    5.5712369089604818e-1, w+1 : 5.5712368999999995e-1 > < link(1, 3, 25) :
+    LinkTR | st : 0, w : 2.2174591002770427e-1, w+1 : 2.2174590999999999e-1 > <
+    link(1, 4, 1) : LinkTR | st : 0, w : 2.5645087e-1, w+1 : 2.5645087e-1 > <
+    link(1, 4, 2) : LinkTR | st : 0, w : 1.5522453999996769e-1, w+1 :
+    1.5522453999999999e-1 > < link(1, 4, 3) : LinkTR | st : 0, w :
+    1.2266390999043353e-1, w+1 : 1.2266391e-1 > < link(1, 4, 4) : LinkTR | st :
+    0, w : 2.2085179998903848e-1, w+1 : 2.2085179999999999e-1 > < link(1, 4, 5)
+    : LinkTR | st : 0, w : 2.0907213377121145e-1, w+1 : 2.0907213999999999e-1 >
+    < link(1, 4, 6) : LinkTR | st : 0, w : 1.3900121491927752e-2, w+1 :
+    1.390402e-2 > < link(1, 4, 7) : LinkTR | st : 0, w : 1.8098569999409619e-1,
+    w+1 : 1.809857e-1 > < link(1, 4, 8) : LinkTR | st : 0, w :
+    4.6988586656494419e-1, w+1 : 4.6988373e-1 > < link(1, 4, 9) : LinkTR | st :
+    0, w : 2.0711568000100011e-1, w+1 : 2.0711568e-1 > < link(1, 4, 10) :
+    LinkTR | st : 0, w : 3.7347102000019244e-1, w+1 : 3.7347101999999999e-1 > <
+    link(1, 4, 11) : LinkTR | st : 0, w : 3.3101559003037745e-1, w+1 :
+    3.3101559000000003e-1 > < link(1, 4, 12) : LinkTR | st : 0, w :
+    3.2512815472212808e-1, w+1 : 3.2512754999999999e-1 > < link(1, 4, 13) :
+    LinkTR | st : 0, w : 5.0138057646957479e-1, w+1 : 5.0137925999999999e-1 > <
+    link(1, 4, 14) : LinkTR | st : 0, w : 5.1894528000060103e-1, w+1 :
+    5.1894527999999995e-1 > < link(1, 4, 15) : LinkTR | st : 0, w :
+    2.9263467249911757e-1, w+1 : 2.9263288999999998e-1 > < link(1, 4, 16) :
+    LinkTR | st : 0, w : 4.4475126245919289e-1, w+1 : 4.4475098000000002e-1 > <
+    link(1, 4, 17) : LinkTR | st : 0, w : 3.7773914000000086e-1, w+1 :
+    3.7773913999999997e-1 > < link(1, 4, 18) : LinkTR | st : 0, w :
+    3.9934557002346288e-1, w+1 : 3.9934556999999998e-1 > < link(1, 4, 19) :
+    LinkTR | st : 0, w : 1.7021281999999999e-1, w+1 : 1.7021281999999999e-1 > <
+    link(1, 4, 20) : LinkTR | st : 0, w : 2.1956387999999999e-1, w+1 :
+    2.1956387999999999e-1 > < link(1, 4, 21) : LinkTR | st : 0, w :
+    2.9777844000000014e-1, w+1 : 2.9777843999999998e-1 > < link(1, 4, 22) :
+    LinkTR | st : 0, w : 1.3096670999999999e-1, w+1 : 1.3096670999999999e-1 > <
+    link(1, 4, 23) : LinkTR | st : 0, w : 5.2833536465687625e-1, w+1 :
+    5.2833386999999998e-1 > < link(1, 4, 24) : LinkTR | st : 0, w :
+    3.8735353013440721e-1, w+1 : 3.8735353e-1 > < link(1, 4, 25) : LinkTR | st
+    : 0, w : 1.2016875000415565e-1, w+1 : 1.2016875e-1 > < link(1, 5, 1) :
+    LinkTR | st : 0, w : 3.0054800999999999e-2, w+1 : 3.0054800999999999e-2 > <
+    link(1, 5, 2) : LinkTR | st : 0, w : -3.4962154000067317e-3, w+1 :
+    -3.4962154000000001e-3 > < link(1, 5, 3) : LinkTR | st : 0, w :
+    6.2130810800698508e-4, w+1 : 6.2130810999999999e-4 > < link(1, 5, 4) :
+    LinkTR | st : 0, w : -6.764596602283646e-3, w+1 : -6.7645965999999997e-3 >
+    < link(1, 5, 5) : LinkTR | st : 0, w : 6.3299026702335712e-2, w+1 :
+    6.3299027999999993e-2 > < link(1, 5, 6) : LinkTR | st : 0, w :
+    -7.2959970189181711e-2, w+1 : -7.2959157999999996e-2 > < link(1, 5, 7) :
+    LinkTR | st : 0, w : 1.7493183998770038e-2, w+1 : 1.7493183999999998e-2 > <
+    link(1, 5, 8) : LinkTR | st : 0, w : -6.4650843882303299e-2, w+1 :
+    -6.4651289000000001e-2 > < link(1, 5, 9) : LinkTR | st : 0, w :
+    -1.4477770997916441e-3, w+1 : -1.4477771e-3 > < link(1, 5, 10) : LinkTR |
+    st : 0, w : 2.7620030000040093e-2, w+1 : 2.762003e-2 > < link(1, 5, 11) :
+    LinkTR | st : 0, w : -3.3028696993671371e-2, w+1 : -3.3028697000000003e-2 >
+    < link(1, 5, 12) : LinkTR | st : 0, w : 6.697597298377668e-2, w+1 :
+    6.6975847000000005e-2 > < link(1, 5, 13) : LinkTR | st : 0, w :
+    6.3990131264494737e-2, w+1 : 6.3989856999999997e-2 > < link(1, 5, 14) :
+    LinkTR | st : 0, w : -6.6345964999874774e-2, w+1 : -6.6345965000000007e-2 >
+    < link(1, 5, 15) : LinkTR | st : 0, w : -6.3185380460171678e-3, w+1 :
+    -6.3189094000000003e-3 > < link(1, 5, 16) : LinkTR | st : 0, w :
+    -4.9521745154334822e-2, w+1 : -4.9521804000000003e-2 > < link(1, 5, 17) :
+    LinkTR | st : 0, w : 2.9569408000000182e-2, w+1 : 2.9569407999999998e-2 > <
+    link(1, 5, 18) : LinkTR | st : 0, w : -5.5848110995111888e-2, w+1 :
+    -5.5848110999999999e-2 > < link(1, 5, 19) : LinkTR | st : 0, w :
+    2.6331166e-2, w+1 : 2.6331166e-2 > < link(1, 5, 20) : LinkTR | st : 0, w :
+    2.4975779e-2, w+1 : 2.4975779e-2 > < link(1, 5, 21) : LinkTR | st : 0, w :
+    -1.3529771999999969e-2, w+1 : -1.3529772000000001e-2 > < link(1, 5, 22) :
+    LinkTR | st : 0, w : 2.4303141e-2, w+1 : 2.4303141e-2 > < link(1, 5, 23) :
+    LinkTR | st : 0, w : -3.1108897613150777e-2, w+1 : -3.1109208999999999e-2 >
+    < link(1, 5, 24) : LinkTR | st : 0, w : -5.1552704971998493e-2, w+1 :
+    -5.1552704999999997e-2 > < link(1, 5, 25) : LinkTR | st : 0, w :
+    1.6081208000865758e-2, w+1 : 1.6081208e-2 > < link(1, 6, 1) : LinkTR | st :
+    0, w : -1.3636577999999999e-1, w+1 : -1.3636577999999999e-1 > < link(1, 6,
+    2) : LinkTR | st : 0, w : -1.3724761000044336e-1, w+1 :
+    -1.3724760999999999e-1 > < link(1, 6, 3) : LinkTR | st : 0, w :
+    -6.4232715131267923e-2, w+1 : -6.4232714999999996e-2 > < link(1, 6, 4) :
+    LinkTR | st : 0, w : -8.8713701150410093e-2, w+1 : -8.8713701000000006e-2 >
+    < link(1, 6, 5) : LinkTR | st : 0, w : -3.7025856469360054e-2, w+1 :
+    -3.7025770999999999e-2 > < link(1, 6, 6) : LinkTR | st : 0, w :
+    -1.2127749402826468e-1, w+1 : -1.21224e-1 > < link(1, 6, 7) : LinkTR | st :
+    0, w : -8.3693984081010017e-2, w+1 : -8.3693983999999999e-2 > < link(1, 6,
+    8) : LinkTR | st : 0, w : -4.4378014276802435e-1, w+1 :
+    -4.4380945999999999e-1 > < link(1, 6, 9) : LinkTR | st : 0, w :
+    -1.1201754998627685e-1, w+1 : -1.1201754999999999e-1 > < link(1, 6, 10) :
+    LinkTR | st : 0, w : -7.6612680997359267e-2, w+1 : -7.6612681000000002e-2 >
+    < link(1, 6, 11) : LinkTR | st : 0, w : -1.6731712958317102e-1, w+1 :
+    -1.6731713000000001e-1 > < link(1, 6, 12) : LinkTR | st : 0, w :
+    -1.190355822045327e-1, w+1 : -1.1904388e-1 > < link(1, 6, 13) : LinkTR | st
+    : 0, w : -1.4591967584331858e-1, w+1 : -1.4593774000000001e-1 > < link(1,
+    6, 14) : LinkTR | st : 0, w : -3.5479099999175179e-1, w+1 :
+    -3.5479100000000002e-1 > < link(1, 6, 15) : LinkTR | st : 0, w :
+    -3.4803286114127469e-1, w+1 : -3.4805732e-1 > < link(1, 6, 16) : LinkTR |
+    st : 0, w : -4.1677155418910872e-1, w+1 : -4.1677543e-1 > < link(1, 6, 17)
+    : LinkTR | st : 0, w : -2.3380104999998791e-1, w+1 : -2.3380105000000001e-1
+    > < link(1, 6, 18) : LinkTR | st : 0, w : 3.578930532195039e-2, w+1 :
+    3.5789305e-2 > < link(1, 6, 19) : LinkTR | st : 0, w : -1.8809117e-2, w+1 :
+    -1.8809117e-2 > < link(1, 6, 20) : LinkTR | st : 0, w : -1.1571481e-1, w+1
+    : -1.1571481e-1 > < link(1, 6, 21) : LinkTR | st : 0, w :
+    -2.6927278999999787e-1, w+1 : -2.6927278999999998e-1 > < link(1, 6, 22) :
+    LinkTR | st : 0, w : -1.5565050999999999e-1, w+1 : -1.5565050999999999e-1 >
+    < link(1, 6, 23) : LinkTR | st : 0, w : -4.1141354081656273e-1, w+1 :
+    -4.1143405e-1 > < link(1, 6, 24) : LinkTR | st : 0, w :
+    -2.3565031815570883e-1, w+1 : -2.3565032e-1 > < link(1, 6, 25) : LinkTR |
+    st : 0, w : -1.3407902994297763e-1, w+1 : -1.3407902999999999e-1 > < link(
+    1, 7, 1) : LinkTR | st : 0, w : 2.4272144000000001e-1, w+1 :
+    2.4272144000000001e-1 > < link(1, 7, 2) : LinkTR | st : 0, w :
+    -5.0955111000044695e-1, w+1 : -5.0955110999999997e-1 > < link(1, 7, 3) :
+    LinkTR | st : 0, w : -1.8939335132328216e-2, w+1 : -1.8939335000000002e-2 >
+    < link(1, 7, 4) : LinkTR | st : 0, w : -3.7684323151624989e-2, w+1 :
+    -3.7684322999999999e-2 > < link(1, 7, 5) : LinkTR | st : 0, w :
+    -1.2490804615971744e-1, w+1 : -1.2490796e-1 > < link(1, 7, 6) : LinkTR | st
+    : 0, w : -4.0680366112909358e-2, w+1 : -4.062644e-2 > < link(1, 7, 7) :
+    LinkTR | st : 0, w : -3.1583468081664359e-2, w+1 : -3.1583468000000003e-2 >
+    < link(1, 7, 8) : LinkTR | st : 0, w : -1.0870605596540973e-1, w+1 :
+    -1.0873561e-1 > < link(1, 7, 9) : LinkTR | st : 0, w :
+    -2.7193847986166007e-2, w+1 : -2.7193848e-2 > < link(1, 7, 10) : LinkTR |
+    st : 0, w : -2.4428915999733794e-1, w+1 : -2.4428916000000001e-1 > < link(
+    1, 7, 11) : LinkTR | st : 0, w : -6.1608731798041758e-3, w+1 :
+    -6.1608736000000001e-3 > < link(1, 7, 12) : LinkTR | st : 0, w :
+    -1.650257051811635e-1, w+1 : -1.6503407e-1 > < link(1, 7, 13) : LinkTR | st
+    : 0, w : -1.5826470993460734e-1, w+1 : -1.5828291999999999e-1 > < link(1,
+    7, 14) : LinkTR | st : 0, w : -2.0240923999168514e-1, w+1 :
+    -2.0240923999999999e-1 > < link(1, 7, 15) : LinkTR | st : 0, w :
+    -8.2673515580955828e-2, w+1 : -8.2698172e-2 > < link(1, 7, 16) : LinkTR |
+    st : 0, w : -1.8850819288321483e-1, w+1 : -1.8851209999999999e-1 > < link(
+    1, 7, 17) : LinkTR | st : 0, w : 1.7582957000001218e-1, w+1 :
+    1.7582956999999999e-1 > < link(1, 7, 18) : LinkTR | st : 0, w :
+    2.9690750032455088e-1, w+1 : 2.9690749999999999e-1 > < link(1, 7, 19) :
+    LinkTR | st : 0, w : 2.4052391000000001e-1, w+1 : 2.4052391000000001e-1 > <
+    link(1, 7, 20) : LinkTR | st : 0, w : 2.0950521999999999e-2, w+1 :
+    2.0950521999999999e-2 > < link(1, 7, 21) : LinkTR | st : 0, w :
+    -2.6071394999999792e-1, w+1 : -2.6071395000000003e-1 > < link(1, 7, 22) :
+    LinkTR | st : 0, w : 7.0733092999999997e-2, w+1 : 7.0733092999999997e-2 > <
+    link(1, 7, 23) : LinkTR | st : 0, w : -2.1470602515875897e-1, w+1 :
+    -2.1472669999999999e-1 > < link(1, 7, 24) : LinkTR | st : 0, w :
+    -5.1220169140812032e-2, w+1 : -5.1220171000000002e-2 > < link(1, 7, 25) :
+    LinkTR | st : 0, w : 4.7011709057482948e-2, w+1 : 4.7011708999999999e-2 > <
+    link(1, 8, 1) : LinkTR | st : 0, w : -2.7816793000000001e-1, w+1 :
+    -2.7816793000000001e-1 > < link(1, 8, 2) : LinkTR | st : 0, w :
+    -5.4496043000464962e-2, w+1 : -5.4496043000000001e-2 > < link(1, 8, 3) :
+    LinkTR | st : 0, w : -9.3587703376615226e-3, w+1 : -9.3587701999999998e-3 >
+    < link(1, 8, 4) : LinkTR | st : 0, w : -1.0551629157736027e-2, w+1 :
+    -1.0551629e-2 > < link(1, 8, 5) : LinkTR | st : 0, w :
+    -1.3891406963226705e-1, w+1 : -1.3891397999999999e-1 > < link(1, 8, 6) :
+    LinkTR | st : 0, w : 4.0698348468840365e-2, w+1 : 4.0754447999999999e-2 > <
+    link(1, 8, 7) : LinkTR | st : 0, w : 3.2584155504427714e-4, w+1 :
+    3.2584163999999999e-4 > < link(1, 8, 8) : LinkTR | st : 0, w :
+    -1.2664909483045333e-1, w+1 : -1.2667983999999999e-1 > < link(1, 8, 9) :
+    LinkTR | st : 0, w : -1.5215043985608448e-2, w+1 : -1.5215044e-2 > < link(
+    1, 8, 10) : LinkTR | st : 0, w : 3.0890681000276932e-1, w+1 :
+    3.0890680999999998e-1 > < link(1, 8, 11) : LinkTR | st : 0, w :
+    2.6820797437131245e-2, w+1 : 2.6820797e-2 > < link(1, 8, 12) : LinkTR | st
+    : 0, w : 2.4191576195142292e-1, w+1 : 2.4190706000000001e-1 > < link(1, 8,
+    13) : LinkTR | st : 0, w : 6.070355599718056e-2, w+1 :
+    6.0684611999999999e-2 > < link(1, 8, 14) : LinkTR | st : 0, w :
+    7.6706650008649957e-2, w+1 : 7.6706650000000001e-2 > < link(1, 8, 15) :
+    LinkTR | st : 0, w : -1.8763947983769777e-1, w+1 : -1.8766513000000001e-1 >
+    < link(1, 8, 16) : LinkTR | st : 0, w : 3.0993664778516971e-4, w+1 :
+    3.0587205999999998e-4 > < link(1, 8, 17) : LinkTR | st : 0, w :
+    -3.1133363999998737e-1, w+1 : -3.1133364000000002e-1 > < link(1, 8, 18) :
+    LinkTR | st : 0, w : 3.6879001337631445e-2, w+1 : 3.6879001000000002e-2 > <
+    link(1, 8, 19) : LinkTR | st : 0, w : -4.7547438999999997e-2, w+1 :
+    -4.7547438999999997e-2 > < link(1, 8, 20) : LinkTR | st : 0, w :
+    9.4353449999999995e-3, w+1 : 9.4353449999999995e-3 > < link(1, 8, 21) :
+    LinkTR | st : 0, w : -8.2401901999997806e-2, w+1 : -8.2401901999999999e-2 >
+    < link(1, 8, 22) : LinkTR | st : 0, w : -2.5971258000000003e-1, w+1 :
+    -2.5971258000000003e-1 > < link(1, 8, 23) : LinkTR | st : 0, w :
+    5.4555108112449555e-2, w+1 : 5.4533600000000002e-2 > < link(1, 8, 24) :
+    LinkTR | st : 0, w : 1.2721560934120003e-2, w+1 : 1.2721559e-2 > < link(1,
+    8, 25) : LinkTR | st : 0, w : -1.6823922994020027e-1, w+1 :
+    -1.6823922999999999e-1 > < link(1, 9, 1) : LinkTR | st : 0, w :
+    -9.5399354000000006e-2, w+1 : -9.5399354000000006e-2 > < link(1, 9, 2) :
+    LinkTR | st : 0, w : -2.6468405000044115e-1, w+1 : -2.6468405e-1 > < link(
+    1, 9, 3) : LinkTR | st : 0, w : -3.8216232130606251e-2, w+1 :
+    -3.8216232000000003e-2 > < link(1, 9, 4) : LinkTR | st : 0, w :
+    -1.0941405014965191e-1, w+1 : -1.0941405e-1 > < link(1, 9, 5) : LinkTR | st
+    : 0, w : -2.8412540503853551e-1, w+1 : -2.8412532000000001e-1 > < link(1,
+    9, 6) : LinkTR | st : 0, w : -2.3544028438145637e-1, w+1 :
+    -2.3538706000000001e-1 > < link(1, 9, 7) : LinkTR | st : 0, w :
+    -1.9529160080601668e-2, w+1 : -1.952916e-2 > < link(1, 9, 8) : LinkTR | st
+    : 0, w : -4.0061026054709969e-1, w+1 : -4.0063943000000002e-1 > < link(1,
+    9, 9) : LinkTR | st : 0, w : -3.1759904986346024e-2, w+1 :
+    -3.1759904999999998e-2 > < link(1, 9, 10) : LinkTR | st : 0, w :
+    -5.4206498999737251e-1, w+1 : -5.4206498999999997e-1 > < link(1, 9, 11) :
+    LinkTR | st : 0, w : -2.1461615958527211e-1, w+1 : -2.1461616e-1 > < link(
+    1, 9, 12) : LinkTR | st : 0, w : -1.3748650403114654e-1, w+1 :
+    -1.3749475999999999e-1 > < link(1, 9, 13) : LinkTR | st : 0, w :
+    -3.2750284689913078e-1, w+1 : -3.2752081999999999e-1 > < link(1, 9, 14) :
+    LinkTR | st : 0, w : -9.105866499917934e-1, w+1 : -9.1058665000000005e-1 >
+    < link(1, 9, 15) : LinkTR | st : 0, w : -6.6397054443079695e-1, w+1 :
+    -6.6399487999999995e-1 > < link(1, 9, 16) : LinkTR | st : 0, w :
+    -3.9376767372586952e-1, w+1 : -3.9377152999999998e-1 > < link(1, 9, 17) :
+    LinkTR | st : 0, w : -1.2678832999998799e-1, w+1 : -1.2678833e-1 > < link(
+    1, 9, 18) : LinkTR | st : 0, w : 3.7000417032032756e-1, w+1 :
+    3.7000417000000002e-1 > < link(1, 9, 19) : LinkTR | st : 0, w :
+    -5.7511806999999998e-2, w+1 : -5.7511806999999998e-2 > < link(1, 9, 20) :
+    LinkTR | st : 0, w : 5.3519089999999998e-2, w+1 : 5.3519089999999998e-2 > <
+    link(1, 9, 21) : LinkTR | st : 0, w : -1.0444349999999791e-1, w+1 :
+    -1.0444349999999999e-1 > < link(1, 9, 22) : LinkTR | st : 0, w :
+    -7.3302148999999997e-2, w+1 : -7.3302148999999997e-2 > < link(1, 9, 23) :
+    LinkTR | st : 0, w : -4.3082341419699671e-1, w+1 : -4.3084381999999999e-1 >
+    < link(1, 9, 24) : LinkTR | st : 0, w : -2.4978075816500531e-1, w+1 :
+    -2.4978075999999999e-1 > < link(1, 9, 25) : LinkTR | st : 0, w :
+    -9.6291793943265064e-2, w+1 : -9.6291794e-2 > < link(1, 10, 1) : LinkTR |
+    st : 0, w : -7.0415658000000006e-2, w+1 : -7.0415658000000006e-2 > < link(
+    1, 10, 2) : LinkTR | st : 0, w : -2.4252911000044911e-1, w+1 :
+    -2.4252910999999999e-1 > < link(1, 10, 3) : LinkTR | st : 0, w :
+    -2.971125113296598e-2, w+1 : -2.9711251000000001e-2 > < link(1, 10, 4) :
+    LinkTR | st : 0, w : -5.8185524152355762e-2, w+1 : -5.8185524000000002e-2 >
+    < link(1, 10, 5) : LinkTR | st : 0, w : -1.4001942657497002e-1, w+1 :
+    -1.4001933999999999e-1 > < link(1, 10, 6) : LinkTR | st : 0, w :
+    -8.4136114013447505e-2, w+1 : -8.4081928e-2 > < link(1, 10, 7) : LinkTR |
+    st : 0, w : -2.713246908205794e-2, w+1 : -2.7132468999999999e-2 > < link(1,
+    10, 8) : LinkTR | st : 0, w : -2.6835818352774682e-1, w+1 :
+    -2.6838788000000002e-1 > < link(1, 10, 9) : LinkTR | st : 0, w :
+    -4.8907920986099335e-2, w+1 : -4.8907921e-2 > < link(1, 10, 10) : LinkTR |
+    st : 0, w : -1.3302187999732512e-1, w+1 : -1.3302188000000001e-1 > < link(
+    1, 10, 11) : LinkTR | st : 0, w : -8.7433411577779022e-2, w+1 :
+    -8.7433412000000002e-2 > < link(1, 10, 12) : LinkTR | st : 0, w :
+    -4.6306939866354958e-2, w+1 : -4.6315345000000001e-2 > < link(1, 10, 13) :
+    LinkTR | st : 0, w : -1.4033112216996904e-1, w+1 : -1.4034942e-1 > < link(
+    1, 10, 14) : LinkTR | st : 0, w : -3.4955464999164509e-1, w+1 :
+    -3.4955465000000002e-1 > < link(1, 10, 15) : LinkTR | st : 0, w :
+    -3.2076171474768128e-1, w+1 : -3.2078648999999998e-1 > < link(1, 10, 16) :
+    LinkTR | st : 0, w : -2.5258858405260198e-1, w+1 : -2.5259250999999999e-1 >
+    < link(1, 10, 17) : LinkTR | st : 0, w : -1.2256298999998776e-1, w+1 :
+    -1.2256299e-1 > < link(1, 10, 18) : LinkTR | st : 0, w :
+    1.8796557032611505e-1, w+1 : 1.8796557e-1 > < link(1, 10, 19) : LinkTR | st
+    : 0, w : 3.3708174e-2, w+1 : 3.3708174e-2 > < link(1, 10, 20) : LinkTR | st
+    : 0, w : -1.3062172e-2, w+1 : -1.3062172e-2 > < link(1, 10, 21) : LinkTR |
+    st : 0, w : -1.8304382999999785e-1, w+1 : -1.8304382999999999e-1 > < link(
+    1, 10, 22) : LinkTR | st : 0, w : -1.0628433e-1, w+1 : -1.0628433e-1 > <
+    link(1, 10, 23) : LinkTR | st : 0, w : -2.4439632551496721e-1, w+1 :
+    -2.444171e-1 > < link(1, 10, 24) : LinkTR | st : 0, w :
+    -1.3801373813185155e-1, w+1 : -1.3801374e-1 > < link(1, 10, 25) : LinkTR |
+    st : 0, w : -8.8757498942240012e-2, w+1 : -8.8757499000000004e-2 > < link(
+    1, 11, 1) : LinkTR | st : 0, w : 1.3910428e-1, w+1 : 1.3910428e-1 > < link(
+    1, 11, 2) : LinkTR | st : 0, w : -2.6353010999969745e-1, w+1 :
+    -2.6353010999999998e-1 > < link(1, 11, 3) : LinkTR | st : 0, w :
+    2.4795357895740599e-3, w+1 : 2.4795357e-3 > < link(1, 11, 4) : LinkTR | st
+    : 0, w : 4.2505146102636206e-2, w+1 : 4.2505146000000001e-2 > < link(1, 11,
+    5) : LinkTR | st : 0, w : 1.9086436322223344e-2, w+1 :
+    1.9086378000000001e-2 > < link(1, 11, 6) : LinkTR | st : 0, w :
+    -2.0855873696941685e-1, w+1 : -2.0859523999999999e-1 > < link(1, 11, 7) :
+    LinkTR | st : 0, w : -4.1555674994472069e-1, w+1 : -4.1555674999999997e-1 >
+    < link(1, 11, 8) : LinkTR | st : 0, w : -1.918502153697606e-1, w+1 :
+    -1.9183021e-1 > < link(1, 11, 9) : LinkTR | st : 0, w :
+    -4.8758867000936434e-1, w+1 : -4.8758867e-1 > < link(1, 11, 10) : LinkTR |
+    st : 0, w : 4.6531240999819806e-1, w+1 : 4.6531241000000001e-1 > < link(1,
+    11, 11) : LinkTR | st : 0, w : -2.1427430284434019e-2, w+1 :
+    -2.1427430000000001e-2 > < link(1, 11, 12) : LinkTR | st : 0, w :
+    3.2903132778514083e-1, w+1 : 3.2903698999999997e-1 > < link(1, 11, 13) :
+    LinkTR | st : 0, w : 6.223998845654849e-2, w+1 : 6.2252315000000003e-2 > <
+    link(1, 11, 14) : LinkTR | st : 0, w : 1.0603776999437162e-1, w+1 :
+    1.0603777e-1 > < link(1, 11, 15) : LinkTR | st : 0, w :
+    1.9307170986659555e-1, w+1 : 1.9308839999999999e-1 > < link(1, 11, 16) :
+    LinkTR | st : 0, w : -1.4537811475957577e-1, w+1 : -1.4537547000000001e-1 >
+    < link(1, 11, 17) : LinkTR | st : 0, w : -6.4611511000000821e-1, w+1 :
+    -6.4611510999999999e-1 > < link(1, 11, 18) : LinkTR | st : 0, w :
+    -1.3279252219691156e-2, w+1 : -1.3279252e-2 > < link(1, 11, 19) : LinkTR |
+    st : 0, w : -5.3164526999999995e-1, w+1 : -5.3164526999999995e-1 > < link(
+    1, 11, 20) : LinkTR | st : 0, w : -1.9218741e-1, w+1 : -1.9218741e-1 > <
+    link(1, 11, 21) : LinkTR | st : 0, w : -6.2448487000001426e-2, w+1 :
+    -6.2448486999999997e-2 > < link(1, 11, 22) : LinkTR | st : 0, w :
+    -2.0800690999999999e-1, w+1 : -2.0800690999999999e-1 > < link(1, 11, 23) :
+    LinkTR | st : 0, w : 1.2027917029448509e-2, w+1 : 1.2041912e-2 > < link(1,
+    11, 24) : LinkTR | st : 0, w : -4.4953237258499673e-2, w+1 :
+    -4.4953236000000001e-2 > < link(1, 11, 25) : LinkTR | st : 0, w :
+    8.4527682961089326e-2, w+1 : 8.4527683000000006e-2 > < link(1, 12, 1) :
+    LinkTR | st : 0, w : -1.068838e-1, w+1 : -1.068838e-1 > < link(1, 12, 2) :
+    LinkTR | st : 0, w : -3.8846902999809904e-2, w+1 : -3.8846903000000002e-2 >
+    < link(1, 12, 3) : LinkTR | st : 0, w : -6.91369024371726e-3, w+1 :
+    -6.9136902999999998e-3 > < link(1, 12, 4) : LinkTR | st : 0, w :
+    -1.8173290935509824e-2, w+1 : -1.8173291000000001e-2 > < link(1, 12, 5) :
+    LinkTR | st : 0, w : -1.6544745335396077e-1, w+1 : -1.6544749e-1 > < link(
+    1, 12, 6) : LinkTR | st : 0, w : -3.3419053377750829e-1, w+1 :
+    -3.3421347000000001e-1 > < link(1, 12, 7) : LinkTR | st : 0, w :
+    1.2564838003473405e-1, w+1 : 1.2564838e-1 > < link(1, 12, 8) : LinkTR | st
+    : 0, w : -4.561294301237549e-1, w+1 : -4.5611686000000001e-1 > < link(1,
+    12, 9) : LinkTR | st : 0, w : 9.2323688994116027e-2, w+1 : 9.2323689e-2 > <
+    link(1, 12, 10) : LinkTR | st : 0, w : 2.5664130999886775e-1, w+1 :
+    2.5664131000000001e-1 > < link(1, 12, 11) : LinkTR | st : 0, w :
+    -6.2395207017872056e-1, w+1 : -6.2395206999999997e-1 > < link(1, 12, 12) :
+    LinkTR | st : 0, w : -1.0889896778185347e-1, w+1 : -1.0889541e-1 > < link(
+    1, 12, 13) : LinkTR | st : 0, w : 1.0504074477066859e-1, w+1 :
+    1.0504848999999999e-1 > < link(1, 12, 14) : LinkTR | st : 0, w :
+    -1.9505240003536525e-2, w+1 : -1.950524e-2 > < link(1, 12, 15) : LinkTR |
+    st : 0, w : 1.8402021296352478e-1, w+1 : 1.8403069999999999e-1 > < link(1,
+    12, 16) : LinkTR | st : 0, w : -1.4556656180158462e-1, w+1 : -1.455649e-1 >
+    < link(1, 12, 17) : LinkTR | st : 0, w : 4.8463033999999483e-1, w+1 :
+    4.8463033999999999e-1 > < link(1, 12, 18) : LinkTR | st : 0, w :
+    5.8877288861959809e-2, w+1 : 5.8877288999999999e-2 > < link(1, 12, 19) :
+    LinkTR | st : 0, w : 5.0879631999999997e-1, w+1 : 5.0879631999999997e-1 > <
+    link(1, 12, 20) : LinkTR | st : 0, w : -5.0437089000000002e-1, w+1 :
+    -5.0437089000000002e-1 > < link(1, 12, 21) : LinkTR | st : 0, w :
+    -1.6298157000000088e-1, w+1 : -1.6298156999999999e-1 > < link(1, 12, 22) :
+    LinkTR | st : 0, w : 3.3064664999999999e-1, w+1 : 3.3064664999999999e-1 > <
+    link(1, 12, 23) : LinkTR | st : 0, w : -3.2444998356462207e-1, w+1 :
+    -3.2444118999999999e-1 > < link(1, 12, 24) : LinkTR | st : 0, w :
+    -4.7587604079076251e-1, w+1 : -4.7587604e-1 > < link(1, 12, 25) : LinkTR |
+    st : 0, w : 5.90155399975551e-1, w+1 : 5.901554e-1 > < link(1, 13, 1) :
+    LinkTR | st : 0, w : 4.7281938000000001e-1, w+1 : 4.7281938000000001e-1 > <
+    link(1, 13, 2) : LinkTR | st : 0, w : 1.9153423999990413e-1, w+1 :
+    1.9153423999999999e-1 > < link(1, 13, 3) : LinkTR | st : 0, w :
+    8.537661297161947e-2, w+1 : 8.5376613000000004e-2 > < link(1, 13, 4) :
+    LinkTR | st : 0, w : 8.5133886967480879e-2, w+1 : 8.5133887000000005e-2 > <
+    link(1, 13, 5) : LinkTR | st : 0, w : 1.9701184152126069e-1, w+1 :
+    1.9701186000000001e-1 > < link(1, 13, 6) : LinkTR | st : 0, w :
+    1.2213501442605233e-1, w+1 : 1.2214658e-1 > < link(1, 13, 7) : LinkTR | st
+    : 0, w : 3.2138585982485382e-2, w+1 : 3.2138585999999997e-2 > < link(1, 13,
+    8) : LinkTR | st : 0, w : 3.7975875847600105e-1, w+1 :
+    3.7975241999999998e-1 > < link(1, 13, 9) : LinkTR | st : 0, w :
+    1.0808732000296699e-1, w+1 : 1.0808732e-1 > < link(1, 13, 10) : LinkTR | st
+    : 0, w : 3.319312300057093e-2, w+1 : 3.3193122999999998e-2 > < link(1, 13,
+    11) : LinkTR | st : 0, w : 7.778901509011972e-2, w+1 :
+    7.7789015000000003e-2 > < link(1, 13, 12) : LinkTR | st : 0, w :
+    -8.4345372991020059e-2, w+1 : -8.4347167000000001e-2 > < link(1, 13, 13) :
+    LinkTR | st : 0, w : -1.6990874447359491e-1, w+1 : -1.6991265e-1 > < link(
+    1, 13, 14) : LinkTR | st : 0, w : -1.953609699982167e-1, w+1 :
+    -1.9536096999999999e-1 > < link(1, 13, 15) : LinkTR | st : 0, w :
+    2.3122485808071555e-1, w+1 : 2.3121957000000001e-1 > < link(1, 13, 16) :
+    LinkTR | st : 0, w : 5.6814124962272131e-2, w+1 : 5.6813286999999997e-2 > <
+    link(1, 13, 17) : LinkTR | st : 0, w : -9.6958662999997391e-2, w+1 :
+    -9.6958663e-2 > < link(1, 13, 18) : LinkTR | st : 0, w :
+    2.0913716006960664e-1, w+1 : 2.0913715999999999e-1 > < link(1, 13, 19) :
+    LinkTR | st : 0, w : -3.8007310999999999e-1, w+1 : -3.8007310999999999e-1 >
+    < link(1, 13, 20) : LinkTR | st : 0, w : 2.0511879e-1, w+1 : 2.0511879e-1 >
+    < link(1, 13, 21) : LinkTR | st : 0, w : -1.0078554999999954e-1, w+1 :
+    -1.0078555e-1 > < link(1, 13, 22) : LinkTR | st : 0, w :
+    4.0298223999999999e-1, w+1 : 4.0298223999999999e-1 > < link(1, 13, 23) :
+    LinkTR | st : 0, w : -1.337199585126706e-2, w+1 : -1.337643e-2 > < link(1,
+    13, 24) : LinkTR | st : 0, w : 4.4336537398741445e-2, w+1 :
+    4.4336537000000002e-2 > < link(1, 13, 25) : LinkTR | st : 0, w :
+    5.253076312328412e-3, w+1 : 5.2530763000000003e-3 > < link(1, 14, 1) :
+    LinkTR | st : 0, w : -2.238359e-1, w+1 : -2.238359e-1 > < link(1, 14, 2) :
+    LinkTR | st : 0, w : -5.7868461000021326e-2, w+1 : -5.7868461000000003e-2 >
+    < link(1, 14, 3) : LinkTR | st : 0, w : -6.9099404006313869e-2, w+1 :
+    -6.9099404000000003e-2 > < link(1, 14, 4) : LinkTR | st : 0, w :
+    -1.5376818000723461e-1, w+1 : -1.5376818e-1 > < link(1, 14, 5) : LinkTR |
+    st : 0, w : -1.5646114411100043e-1, w+1 : -1.5646114e-1 > < link(1, 14, 6)
+    : LinkTR | st : 0, w : 9.9997790698467226e-1, w+1 : 9.9998047999999995e-1 >
+    < link(1, 14, 7) : LinkTR | st : 0, w : 1.1835693999610349e-1, w+1 :
+    1.1835693999999999e-1 > < link(1, 14, 8) : LinkTR | st : 0, w :
+    1.5426621013286315e-1, w+1 : 1.5426480000000001e-1 > < link(1, 14, 9) :
+    LinkTR | st : 0, w : 1.0484011000066007e-1, w+1 : 1.0484011e-1 > < link(1,
+    14, 10) : LinkTR | st : 0, w : -8.284166799987297e-2, w+1 :
+    -8.2841667999999993e-2 > < link(1, 14, 11) : LinkTR | st : 0, w :
+    -6.6945161799508955e-3, w+1 : -6.6945162000000003e-3 > < link(1, 14, 12) :
+    LinkTR | st : 0, w : -3.728997188339548e-2, w+1 : -3.7290371000000003e-2 >
+    < link(1, 14, 13) : LinkTR | st : 0, w : -3.2678329113008064e-1, w+1 :
+    -3.2678415999999999e-1 > < link(1, 14, 14) : LinkTR | st : 0, w :
+    4.6191678000396731e-2, w+1 : 4.6191678e-2 > < link(1, 14, 15) : LinkTR | st
+    : 0, w : 2.3833725644941761e-1, w+1 : 2.3833608000000001e-1 > < link(1, 14,
+    16) : LinkTR | st : 0, w : -2.3909822357693272e-1, w+1 :
+    -2.3909841000000001e-1 > < link(1, 14, 17) : LinkTR | st : 0, w :
+    7.8104229000000058e-1, w+1 : 7.8104229000000003e-1 > < link(1, 14, 18) :
+    LinkTR | st : 0, w : 1.1895500001548553e-1, w+1 : 1.1895500000000001e-1 > <
+    link(1, 14, 19) : LinkTR | st : 0, w : 3.2825639000000001e-1, w+1 :
+    3.2825639000000001e-1 > < link(1, 14, 20) : LinkTR | st : 0, w :
+    8.9498240000000007e-2, w+1 : 8.9498240000000007e-2 > < link(1, 14, 21) :
+    LinkTR | st : 0, w : -3.8783402999999989e-1, w+1 : -3.8783403e-1 > < link(
+    1, 14, 22) : LinkTR | st : 0, w : -2.5245633000000001e-1, w+1 :
+    -2.5245633000000001e-1 > < link(1, 14, 23) : LinkTR | st : 0, w :
+    -3.9987973352646167e-1, w+1 : -3.9988072000000002e-1 > < link(1, 14, 24) :
+    LinkTR | st : 0, w : -2.4541920991129124e-1, w+1 : -2.4541921e-1 > < link(
+    1, 14, 25) : LinkTR | st : 0, w : -7.565243799972573e-1, w+1 :
+    -7.5652438e-1 > < link(1, 15, 1) : LinkTR | st : 0, w :
+    7.3820063000000002e-1, w+1 : 7.3820063000000002e-1 > < link(1, 15, 2) :
+    LinkTR | st : 0, w : 2.1363049999969844e-1, w+1 : 2.136305e-1 > < link(1,
+    15, 3) : LinkTR | st : 0, w : 1.3954169991071291e-1, w+1 :
+    1.3954169999999999e-1 > < link(1, 15, 4) : LinkTR | st : 0, w :
+    2.4933547989769264e-1, w+1 : 2.4933548e-1 > < link(1, 15, 5) : LinkTR | st
+    : 0, w : 3.5942423186464029e-1, w+1 : 3.5942428999999998e-1 > < link(1, 15,
+    6) : LinkTR | st : 0, w : 4.1966524392465904e-1, w+1 :
+    4.1970162999999999e-1 > < link(1, 15, 7) : LinkTR | st : 0, w :
+    4.4781808994489786e-1, w+1 : 4.4781809e-1 > < link(1, 15, 8) : LinkTR | st
+    : 0, w : 6.901016512728122e-1, w+1 : 6.9008170999999996e-1 > < link(1, 15,
+    9) : LinkTR | st : 0, w : 4.5542819000933438e-1, w+1 :
+    4.5542819000000001e-1 > < link(1, 15, 10) : LinkTR | st : 0, w :
+    3.0227011000179616e-1, w+1 : 3.0227010999999998e-1 > < link(1, 15, 11) :
+    LinkTR | st : 0, w : 4.2087367028352268e-1, w+1 : 4.2087366999999998e-1 > <
+    link(1, 15, 12) : LinkTR | st : 0, w : 6.603469940731953e-1, w+1 :
+    6.6034135000000005e-1 > < link(1, 15, 13) : LinkTR | st : 0, w :
+    5.9365731704936431e-1, w+1 : 5.9364503000000002e-1 > < link(1, 15, 14) :
+    LinkTR | st : 0, w : 8.4479516000561039e-1, w+1 : 8.4479515999999999e-1 > <
+    link(1, 15, 15) : LinkTR | st : 0, w : 2.432704266584309e-1, w+1 :
+    2.4325379e-1 > < link(1, 15, 16) : LinkTR | st : 0, w :
+    3.2752977628579999e-1, w+1 : 3.2752713999999999e-1 > < link(1, 15, 17) :
+    LinkTR | st : 0, w : 2.657911300000082e-1, w+1 : 2.6579112999999999e-1 > <
+    link(1, 15, 18) : LinkTR | st : 0, w : 8.4258551021898731e-1, w+1 :
+    8.4258551000000004e-1 > < link(1, 15, 19) : LinkTR | st : 0, w :
+    4.4163178999999997e-2, w+1 : 4.4163178999999997e-2 > < link(1, 15, 20) :
+    LinkTR | st : 0, w : 4.3635884000000003e-1, w+1 : 4.3635884000000003e-1 > <
+    link(1, 15, 21) : LinkTR | st : 0, w : 7.9807419000000146e-1, w+1 :
+    7.9807419000000002e-1 > < link(1, 15, 22) : LinkTR | st : 0, w :
+    6.3756404e-1, w+1 : 6.3756404e-1 > < link(1, 15, 23) : LinkTR | st : 0, w :
+    2.093092501308452e-1, w+1 : 2.0929529999999999e-1 > < link(1, 15, 24) :
+    LinkTR | st : 0, w : 2.5872354125446745e-1, w+1 : 2.5872353999999997e-1 > <
+    link(1, 15, 25) : LinkTR | st : 0, w : 3.1124352003878603e-1, w+1 :
+    3.1124352e-1 > < link(1, 16, 1) : LinkTR | st : 0, w :
+    7.8893439999999995e-2, w+1 : 7.8893439999999995e-2 > < link(1, 16, 2) :
+    LinkTR | st : 0, w : 1.8663658999936561e-1, w+1 : 1.8663658999999999e-1 > <
+    link(1, 16, 3) : LinkTR | st : 0, w : 1.4644548981217828e-1, w+1 :
+    1.4644549000000001e-1 > < link(1, 16, 4) : LinkTR | st : 0, w :
+    1.9404489978478914e-1, w+1 : 1.9404489999999999e-1 > < link(1, 16, 5) :
+    LinkTR | st : 0, w : 2.2962520770811837e-1, w+1 : 2.2962532999999999e-1 > <
+    link(1, 16, 6) : LinkTR | st : 0, w : 2.1903112929151489e-1, w+1 :
+    2.1910767e-1 > < link(1, 16, 7) : LinkTR | st : 0, w :
+    -2.4428796011591133e-1, w+1 : -2.4428796e-1 > < link(1, 16, 8) : LinkTR |
+    st : 0, w : 4.9483987789173728e-1, w+1 : 4.9479793e-1 > < link(1, 16, 9) :
+    LinkTR | st : 0, w : -3.1729136998036456e-1, w+1 : -3.1729137000000002e-1 >
+    < link(1, 16, 10) : LinkTR | st : 0, w : -1.1202293999622157e-1, w+1 :
+    -1.1202294e-1 > < link(1, 16, 11) : LinkTR | st : 0, w :
+    3.8063112059641024e-1, w+1 : 3.8063111999999999e-1 > < link(1, 16, 12) :
+    LinkTR | st : 0, w : -6.8417246728888559e-1, w+1 : -6.8418433999999995e-1 >
+    < link(1, 16, 13) : LinkTR | st : 0, w : 1.3665327668598412e-1, w+1 :
+    1.3662742999999999e-1 > < link(1, 16, 14) : LinkTR | st : 0, w :
+    1.3588505001180179e-1, w+1 : 1.3588505000000001e-1 > < link(1, 16, 15) :
+    LinkTR | st : 0, w : 2.3515990639934217e-1, w+1 : 2.3512490999999999e-1 > <
+    link(1, 16, 16) : LinkTR | st : 0, w : 5.5071855561548633e-1, w+1 :
+    5.5071300999999995e-1 > < link(1, 16, 17) : LinkTR | st : 0, w :
+    -5.88490659999827e-2, w+1 : -5.8849065999999998e-2 > < link(1, 16, 18) :
+    LinkTR | st : 0, w : -6.1977541953934456e-1, w+1 : -6.1977541999999997e-1 >
+    < link(1, 16, 19) : LinkTR | st : 0, w : -2.9267369000000001e-2, w+1 :
+    -2.9267369000000001e-2 > < link(1, 16, 20) : LinkTR | st : 0, w :
+    -2.0958864999999999e-1, w+1 : -2.0958864999999999e-1 > < link(1, 16, 21) :
+    LinkTR | st : 0, w : -3.78961089999997e-1, w+1 : -3.7896109e-1 > < link(1,
+    16, 22) : LinkTR | st : 0, w : 1.8258695e-1, w+1 : 1.8258695e-1 > < link(1,
+    16, 23) : LinkTR | st : 0, w : 6.969439450966709e-1, w+1 :
+    6.9691460000000005e-1 > < link(1, 16, 24) : LinkTR | st : 0, w :
+    5.1827369263886192e-1, w+1 : 5.1827369000000001e-1 > < link(1, 16, 25) :
+    LinkTR | st : 0, w : -1.7912132991841084e-1, w+1 : -1.7912133e-1 > < link(
+    2, 1, 1) : LinkTR | st : 0, w : 6.2689021e-1, w+1 : 6.2689021e-1 > < link(
+    2, 2, 1) : LinkTR | st : 0, w : -1.4514190997003626, w+1 :
+    -1.4514256000000001 > < link(2, 3, 1) : LinkTR | st : 0, w :
+    -1.310113799702789, w+1 : -1.3101202999999999 > < link(2, 4, 1) : LinkTR |
+    st : 0, w : -6.4609984970601042e-1, w+1 : -6.4610635000000005e-1 > < link(
+    2, 5, 1) : LinkTR | st : 0, w : -9.3806550778590059e-1, w+1 :
+    -9.3806551000000005e-1 > < link(2, 6, 1) : LinkTR | st : 0, w :
+    -1.6305803699830443, w+1 : -1.6305813 > < link(2, 7, 1) : LinkTR | st : 0,
+    w : -1.0685617971877076e-1, w+1 : -1.0686268e-1 > < link(2, 8, 1) : LinkTR
+    | st : 0, w : 1.0692050468790295, w+1 : 1.0691993 > < link(2, 9, 1) :
+    LinkTR | st : 0, w : 7.0738880294931722e-2, w+1 : 7.0732379999999997e-2 > <
+    link(2, 10, 1) : LinkTR | st : 0, w : 1.5866377002996044, w+1 : 1.5866312 >
+    < link(2, 11, 1) : LinkTR | st : 0, w : 5.8055939028220316e-1, w+1 :
+    5.8055288999999999e-1 > < link(2, 12, 1) : LinkTR | st : 0, w :
+    1.2042545283661961, w+1 : 1.2042482000000001 > < link(2, 13, 1) : LinkTR |
+    st : 0, w : 6.5998622842988219e-1, w+1 : 6.5998047999999998e-1 > < link(2,
+    14, 1) : LinkTR | st : 0, w : 1.2338127002994825, w+1 : 1.2338062000000001
+    > < link(2, 15, 1) : LinkTR | st : 0, w : 7.9085794338432647e-1, w+1 :
+    7.9085231e-1 > < link(2, 16, 1) : LinkTR | st : 0, w :
+    5.2127085594106126e-1, w+1 : 5.2127067000000005e-1 > < link(2, 17, 1) :
+    LinkTR | st : 0, w : 1.6457244000000002, w+1 : 1.6457244 > < link(2, 18, 1)
+    : LinkTR | st : 0, w : 9.8959204000790324e-1, w+1 : 9.8959204000000001e-1 >
+    < link(2, 19, 1) : LinkTR | st : 0, w : 1.6130673, w+1 : 1.6130673 > <
+    link(2, 20, 1) : LinkTR | st : 0, w : 1.2082155002996449, w+1 :
+    1.2082090000000001 > < link(2, 21, 1) : LinkTR | st : 0, w :
+    1.1699355002996448, w+1 : 1.169929 > < link(2, 22, 1) : LinkTR | st : 0, w
+    : 7.2341290000000003e-1, w+1 : 7.2341290000000003e-1 > < link(2, 23, 1) :
+    LinkTR | st : 0, w : 5.8300715811248538e-1, w+1 : 5.8300167000000003e-1 > <
+    link(2, 24, 1) : LinkTR | st : 0, w : 4.4453792019885757e-1, w+1 :
+    4.4453142000000001e-1 > < link(2, 25, 1) : LinkTR | st : 0, w :
+    2.0685801000006698, w+1 : 2.0685801000000001 > netStatus(53, 53, 1, 106)
+    outputPattern(2, 1, 4.0000000000000002e-1, 1) outputPattern(3, 1,
+    8.0000000000000004e-1, 1) outputPattern(4, 1, 4.0000000000000002e-1, 1)
+    outputPattern(5, 1, 8.0000000000000004e-1, 1) outputPattern(6, 1, 1.0, 1)
+    outputPattern(7, 1, 8.0000000000000004e-1, 1) outputPattern(8, 1,
+    2.0000000000000001e-1, 1) outputPattern(9, 1, 2.0000000000000001e-1, 1)
+    outputPattern(10, 1, 1.0, 1) outputPattern(11, 1, 1.0, 1) outputPattern(12,
+    1, 1.0, 1) outputPattern(13, 1, 0.0, 1) outputPattern(14, 1,
+    2.0000000000000001e-1, 1) outputPattern(15, 1, 1.0, 1) outputPattern(16, 1,
+    0.0, 1) outputPattern(17, 1, 4.0000000000000002e-1, 1) outputPattern(18, 1,
+    1.0, 1) outputPattern(19, 1, 1.0, 1) outputPattern(20, 1, 1.0, 1)
+    outputPattern(21, 1, 5.9999999999999998e-1, 1) outputPattern(22, 1,
+    8.0000000000000004e-1, 1) outputPattern(23, 1, 1.0, 1) outputPattern(24, 1,
+    1.0, 1) outputPattern(25, 1, 1.0, 1) outputPattern(26, 1, 1.0, 1)
+    outputPattern(27, 1, 2.0000000000000001e-1, 1) outputPattern(28, 1, 1.0, 1)
+    outputPattern(29, 1, 5.9999999999999998e-1, 1) outputPattern(30, 1,
+    8.0000000000000004e-1, 1) outputPattern(31, 1, 1.0, 1) outputPattern(32, 1,
+    8.0000000000000004e-1, 1) outputPattern(33, 1, 2.0000000000000001e-1, 1)
+    outputPattern(34, 1, 8.0000000000000004e-1, 1) outputPattern(35, 1,
+    5.9999999999999998e-1, 1) outputPattern(36, 1, 8.0000000000000004e-1, 1)
+    outputPattern(37, 1, 4.0000000000000002e-1, 1) outputPattern(38, 1,
+    2.0000000000000001e-1, 1) outputPattern(39, 1, 1.0, 1) outputPattern(40, 1,
+    1.0, 1) outputPattern(41, 1, 8.0000000000000004e-1, 1) outputPattern(42, 1,
+    1.0, 1) outputPattern(43, 1, 5.9999999999999998e-1, 1) outputPattern(44, 1,
+    5.9999999999999998e-1, 1) outputPattern(45, 1, 5.9999999999999998e-1, 1)
+    outputPattern(46, 1, 1.0, 1) outputPattern(47, 1, 5.9999999999999998e-1, 1)
+    outputPattern(48, 1, 5.9999999999999998e-1, 1) outputPattern(49, 1,
+    5.9999999999999998e-1, 1) outputPattern(50, 1, 2.0000000000000001e-1, 1)
+    outputPattern(51, 1, 0.0, 1) outputPattern(52, 1, 5.9999999999999998e-1, 1)
+    outputPattern(53, 1, 8.0000000000000004e-1, 1)
 
 No more solutions.
-rewrites: 2994
+rewrites: 109872
 Bye.

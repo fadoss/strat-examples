@@ -1,55 +1,55 @@
 ==========================================
-srewrite in EX627-STRAT : < eqs,mtRlS > using compl .
+srewrite in EX627-STRAT : < eqs, mtRlS > using compl .
 
 Solution 1
-rewrites: 6750
-result System: < mtEqS,'f['f['x:S]] -> 'g['x:S] 'f['g['x:S]] -> 'g['f['x:S]] >
+rewrites: 3987
+result System: < mtEqS, 'f['f['x:S]] -> 'g['x:S] 'f['g['x:S]] -> 'g['f['x:S]] >
 
 No more solutions.
-rewrites: 6750
+rewrites: 3987
 ==========================================
-srewrite in EX627-STRAT : < eqs,mtRlS > using N-COMP .
+srewrite in EX627-STRAT : < eqs, mtRlS > using N-COMP .
 
 Solution 1
-rewrites: 2271
-result System: < mtEqS,'f['f['x:S]] -> 'g['x:S] 'f['g['x:S]] -> 'g['f['x:S]] >
+rewrites: 2205
+result System: < mtEqS, 'f['f['x:S]] -> 'g['x:S] 'f['g['x:S]] -> 'g['f['x:S]] >
 
 No more solutions.
-rewrites: 2271
+rewrites: 2205
 ==========================================
-srewrite in EX627-STRAT : < eqs,mtRlS > using S-COMP .
+srewrite in EX627-STRAT : < eqs, mtRlS > using S-COMP .
 
 Solution 1
-rewrites: 2244
-result System: < mtEqS,'f['f['x:S]] -> 'g['x:S] 'f['g['x:S]] -> 'g['f['x:S]] >
+rewrites: 2178
+result System: < mtEqS, 'f['f['x:S]] -> 'g['x:S] 'f['g['x:S]] -> 'g['f['x:S]] >
 
 No more solutions.
-rewrites: 2244
+rewrites: 2178
 ==========================================
-srewrite in EX627-STRAT : < eqs,mtRlS > using ANS-COMP .
+srewrite in EX627-STRAT : < eqs, mtRlS > using ANS-COMP .
 
 Solution 1
-rewrites: 2253
-result System: < mtEqS,'f['f['x:S]] -> 'g['x:S] 'f['g['x:S]] -> 'g['f['x:S]] >
+rewrites: 2234
+result System: < mtEqS, 'f['f['x:S]] -> 'g['x:S] 'f['g['x:S]] -> 'g['f['x:S]] >
 
 No more solutions.
-rewrites: 2253
+rewrites: 2234
 ==========================================
-dsrewrite [1] in EX711-STRAT : < eqs,mtRlS > using S-COMP .
+dsrewrite [1] in EX711-STRAT : < eqs, mtRlS > using S-COMP .
 
 Solution 1
-rewrites: 18613
-result System: < mtEqS,'*['y:S,'*['*['y:S,'z:S],'z1:S]] -> '*['y:S,'z:S] '*['*[
-    'x1:S,'*['x:S,'y:S]],'y:S] -> '*['x:S,'y:S] '*['*['x:S,'y:S],'*['y:S,'z:S]]
-    -> 'y:S >
+rewrites: 18669
+result System: < mtEqS, '*['y:S, '*['*['y:S, 'z:S], 'z1:S]] -> '*['y:S, 'z:S]
+    '*['*['x1:S, '*['x:S, 'y:S]], 'y:S] -> '*['x:S, 'y:S] '*['*['x:S, 'y:S],
+    '*['y:S, 'z:S]] -> 'y:S >
 ==========================================
-dsrewrite [1] in EX74-STRAT : < eqs,mtRlS > using ANS-COMP .
+dsrewrite [1] in EX74-STRAT : < eqs, mtRlS > using ANS-COMP .
 
 Solution 1
-rewrites: 94965
-result System: < mtEqS,'*['e.S,'x:S] -> 'x:S '*['y1:S,'*['I['y1:S],'z3:S]] ->
-    'z3:S '*['y1:S,'I['y1:S]] -> 'e.S '*['z2:S,'e.S] -> 'z2:S '*['*['x:S,'y:S],
-    'z:S] -> '*['x:S,'*['y:S,'z:S]] '*['I['x:S],'x:S] -> 'e.S '*['I['y1:S],'*[
-    'y1:S,'z1:S]] -> 'z1:S 'I['e.S] -> 'e.S 'I['*['y4:S,'y6:S]] -> '*['I[
-    'y6:S],'I['y4:S]] 'I['I['y1:S]] -> 'y1:S >
+rewrites: 95153
+result System: < mtEqS, '*['e.S, 'x:S] -> 'x:S '*['y1:S, '*['I['y1:S], 'z3:S]]
+    -> 'z3:S '*['y1:S, 'I['y1:S]] -> 'e.S '*['z2:S, 'e.S] -> 'z2:S '*['*['x:S,
+    'y:S], 'z:S] -> '*['x:S, '*['y:S, 'z:S]] '*['I['x:S], 'x:S] -> 'e.S '*['I[
+    'y1:S], '*['y1:S, 'z1:S]] -> 'z1:S 'I['e.S] -> 'e.S 'I['*['y4:S, 'y6:S]] ->
+    '*['I['y6:S], 'I['y4:S]] 'I['I['y1:S]] -> 'y1:S >
 Bye.

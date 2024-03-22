@@ -1,69 +1,69 @@
 ==========================================
-srewrite in PROLOG-MAIN : < 'sibling('sally,x{1}) | family > using solve .
+srewrite in PROLOG-MAIN : < 'sibling('sally, x{1}) | family > using solve .
 
 Solution 1
-rewrites: 1347
+rewrites: 1212
 result Configuration: < 8 | nil $ x{1} -> x{3} ; x{2} -> 'sally ; x{3} -> x{8}
     ; x{4} -> x{5} ; x{5} -> 'tom ; x{6} -> 'sally ; x{7} -> x{5} ; x{8} ->
-    'sally | 'mother('jane,'mike) :- nil ; 'mother('sally,'john) :- nil ;
-    'father('tom,'sally) :- nil ; 'father('tom,'erica) :- nil ; 'father('mike,
-    'john) :- nil ; 'sibling(x{1},x{2}) :- 'parent(x{3},x{1}),'parent(x{3},x{
-    2}) ; 'parent(x{1},x{2}) :- 'father(x{1},x{2}) ; 'parent(x{1},x{2}) :-
-    'mother(x{1},x{2}) ; 'relative(x{1},x{2}) :- 'parent(x{1},x{3}),'parent(x{
-    3},x{2}) ; 'relative(x{1},x{2}) :- 'sibling(x{1},x{3}),'relative(x{3},x{2})
-    >
+    'sally | 'mother('jane, 'mike) :- nil ; 'mother('sally, 'john) :- nil ;
+    'father('tom, 'sally) :- nil ; 'father('tom, 'erica) :- nil ; 'father(
+    'mike, 'john) :- nil ; 'sibling(x{1}, x{2}) :- 'parent(x{3}, x{1}),
+    'parent(x{3}, x{2}) ; 'parent(x{1}, x{2}) :- 'father(x{1}, x{2}) ; 'parent(
+    x{1}, x{2}) :- 'mother(x{1}, x{2}) ; 'relative(x{1}, x{2}) :- 'parent(x{1},
+    x{3}), 'parent(x{3}, x{2}) ; 'relative(x{1}, x{2}) :- 'sibling(x{1}, x{3}),
+    'relative(x{3}, x{2}) >
 
 Solution 2
-rewrites: 1395
+rewrites: 1256
 result Configuration: < 8 | nil $ x{1} -> x{3} ; x{2} -> 'sally ; x{3} -> x{8}
     ; x{4} -> x{5} ; x{5} -> 'tom ; x{6} -> 'sally ; x{7} -> x{5} ; x{8} ->
-    'erica | 'mother('jane,'mike) :- nil ; 'mother('sally,'john) :- nil ;
-    'father('tom,'sally) :- nil ; 'father('tom,'erica) :- nil ; 'father('mike,
-    'john) :- nil ; 'sibling(x{1},x{2}) :- 'parent(x{3},x{1}),'parent(x{3},x{
-    2}) ; 'parent(x{1},x{2}) :- 'father(x{1},x{2}) ; 'parent(x{1},x{2}) :-
-    'mother(x{1},x{2}) ; 'relative(x{1},x{2}) :- 'parent(x{1},x{3}),'parent(x{
-    3},x{2}) ; 'relative(x{1},x{2}) :- 'sibling(x{1},x{3}),'relative(x{3},x{2})
-    >
+    'erica | 'mother('jane, 'mike) :- nil ; 'mother('sally, 'john) :- nil ;
+    'father('tom, 'sally) :- nil ; 'father('tom, 'erica) :- nil ; 'father(
+    'mike, 'john) :- nil ; 'sibling(x{1}, x{2}) :- 'parent(x{3}, x{1}),
+    'parent(x{3}, x{2}) ; 'parent(x{1}, x{2}) :- 'father(x{1}, x{2}) ; 'parent(
+    x{1}, x{2}) :- 'mother(x{1}, x{2}) ; 'relative(x{1}, x{2}) :- 'parent(x{1},
+    x{3}), 'parent(x{3}, x{2}) ; 'relative(x{1}, x{2}) :- 'sibling(x{1}, x{3}),
+    'relative(x{3}, x{2}) >
 
 No more solutions.
-rewrites: 1421
+rewrites: 1280
 ==========================================
-srewrite in PROLOG-MAIN : < 'sibling('sally,x{1}) | family > using wsolve .
+srewrite in PROLOG-MAIN : < 'sibling('sally, x{1}) | family > using wsolve .
 
 Solution 1
-rewrites: 1430
+rewrites: 1291
 result Configuration: solution(x{1} -> 'sally)
 
 Solution 2
-rewrites: 1483
+rewrites: 1342
 result Configuration: solution(x{1} -> 'erica)
 
 No more solutions.
-rewrites: 1483
+rewrites: 1342
 ==========================================
-dsrewrite in PROLOG-MAIN : < 'disjoint('cons['4,'cons['3,'nil]],'cons['5,'cons[
-    '3,'nil]]) | sets > using wsolve-neg .
+dsrewrite in PROLOG-MAIN : < 'disjoint('cons['4, 'cons['3, 'nil]], 'cons['5,
+    'cons['3, 'nil]]) | sets > using wsolve-neg .
 
 No solution.
-rewrites: 1141
+rewrites: 1070
 ==========================================
-dsrewrite in PROLOG-MAIN : < 'disjoint('cons['4,'cons['3,'nil]],'cons['5,'cons[
-    '6,'nil]]) | sets > using wsolve-neg .
+dsrewrite in PROLOG-MAIN : < 'disjoint('cons['4, 'cons['3, 'nil]], 'cons['5,
+    'cons['6, 'nil]]) | sets > using wsolve-neg .
 
 Solution 1
-rewrites: 1659
+rewrites: 1548
 result Configuration: solution(empty)
 
 No more solutions.
-rewrites: 1659
+rewrites: 1548
 ==========================================
 srewrite in PROLOG-MAIN : < 'no-children('erica) | family ; negation-bycut ;
-    'no-children(x{1}) :- '\+('parent[x{1},x{2}]) > using wsolve .
+    'no-children(x{1}) :- '\+('parent[x{1}, x{2}]) > using wsolve .
 
 Solution 1
-rewrites: 1162
+rewrites: 1030
 result Configuration: solution(empty)
 
 No more solutions.
-rewrites: 1162
+rewrites: 1030
 Bye.

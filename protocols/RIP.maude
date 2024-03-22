@@ -209,13 +209,13 @@ view Oid from TRIV to CONFIGURATION is
 	sort Elt to Oid .
 endv
 
-mod ROUTER is
+omod ROUTER is
 	protecting CONFIGURATION .
 	protecting NETWORK-ID .
 	protecting RIP-ENTRIES .
 	protecting SET{Oid} .
 
-	op Router : -> Cid [ctor] .
+	class Router | table : RouteTable, interfaces : Interfaces .
 
 	sort Address Interfaces .
 	subsort IPAddr < Address .
@@ -225,10 +225,6 @@ mod ROUTER is
 	op none : -> Interfaces [ctor] .
 	op _|>_ : NetworkId CIDR -> Interfaces [ctor prec 31] .
 	op __ : Interfaces Interfaces -> Interfaces [ctor assoc comm id: none] .
-
-	*** Router attributes
-	op table:_ : RouteTable -> Attribute [ctor gather (&)] .
-	op interfaces:_ : Interfaces -> Attribute [ctor gather (&)] .
 
 	*** Init routing tables based on the configured interfaces.
 	op initTables : Configuration -> Configuration .
@@ -246,8 +242,8 @@ mod ROUTER is
 	eq initTables(NId |> N Ifs) = < normalize(N), zero, NId, 0, 0 > initTables(Ifs) .
 
 	eq initTables((none).Configuration) = none .
-	eq initTables(< I : Router | table: RT, interfaces: Ifs > C) =
-	     < I : Router | table: initTables(Ifs) RT, interfaces: Ifs > initTables(C) .
+	eq initTables(< I : Router | table : RT, interfaces : Ifs > C) =
+	     < I : Router | table : initTables(Ifs) RT, interfaces : Ifs > initTables(C) .
 	eq initTables(O C) = O initTables(C) [owise] .
 
 
@@ -255,11 +251,11 @@ mod ROUTER is
 	op allOids : Configuration -> Set{Oid} .
 
 	eq allOids(none) = empty .
-	eq allOids(< I : Class:Cid | Attrs:AttributeSet > C) = I, allOids(C) .
+	eq allOids(< I : Class:Cid | Attrs:AttributeSet > C) = I, allOids(C) [dnt] .
 	eq allOids(M:Msg C) = allOids(C) .
-endm
+endom
 
-mod RIP is
+omod RIP is
 	protecting ROUTER .
 	protecting IP-MESSAGES .
 
@@ -284,9 +280,9 @@ mod RIP is
 	*** The protocol admits queries for specific routes only, for
 	*** diagnostics, but we do not support this here.
 	rl [request] :
-		< I : Router | interfaces: NId |> A / Mask Ifs, Attrs >
+		< I : Router | interfaces : NId |> A / Mask Ifs >
 	 =>
-		< I : Router | interfaces: NId |> A / Mask Ifs, Attrs >
+		< I : Router | >
 		IPMessage(224 . 0 . 0 . 9, NId, A, ripMsg(1, 2, empty)) .
 
 
@@ -294,20 +290,18 @@ mod RIP is
 	*** Response can be sent as unicast messages, if they are a reply,
 	*** or as multicast messages, if they are unsolicited.
 	rl [readResponse] :
-		< I : Router | table: RT,
-	                       interfaces: NId |> A / Mask Ifs, Attrs >
+		< I : Router | table : RT,
+	                       interfaces : NId |> A / Mask Ifs >
 		IPMessage(A, O, ripMsg(2, 2, RE))
 	=>
-		< I : Router | table: import(O, NId, RE, RT),
-	                       interfaces: NId |> A / Mask Ifs, Attrs > .
+		< I : Router | table : import(O, NId, RE, RT) > .
 
 	crl [readResponse] :
-		< I : Router | table: RT,
-	                       interfaces: NId |> A / Mask Ifs, Attrs >
+		< I : Router | table : RT,
+	                       interfaces : NId |> A / Mask Ifs >
 		IPMessage(224 . 0 . 0 . 9, NId, O, ripMsg(2, 2, RE))
 	=>
-		< I : Router | table: import(O, NId, RE, RT),
-	                       interfaces: NId |> A / Mask Ifs, Attrs >
+		< I : Router | table : import(O, NId, RE, RT) >
 		IPMessage(224 . 0 . 0 . 9, NId, O, ripMsg(2, 2, RE))
 	if O =/= A .
 
@@ -316,28 +310,28 @@ mod RIP is
 	*** a unicast message. Similar rules reply with the split horizont
 	*** and route poisoning measures.
 	crl [reply] :
-		< I : Router | table: RT, interfaces: NId |> A / Mask Ifs, Attrs >
+		< I : Router | table : RT, interfaces : NId |> A / Mask Ifs >
 		IPMessage(224 . 0 . 0 . 9, NId, O, ripMsg(1, 2, empty))
 	=>
-		< I : Router | table: RT, interfaces: NId |> A / Mask Ifs, Attrs >
+		< I : Router | >
 		IPMessage(224 . 0 . 0 . 9, NId, O, ripMsg(1, 2, empty))
 		IPMessage(O, A, ripMsg(2, 2, export(RT)))
 	if O =/= A .
 
 	crl [reply-split] :
-		< I : Router | table: RT, interfaces: NId |> A / Mask Ifs, Attrs >
+		< I : Router | table : RT, interfaces : NId |> A / Mask Ifs >
 		IPMessage(224 . 0 . 0 . 9, NId, O, ripMsg(1, 2, empty))
 	=>
-		< I : Router | table: RT, interfaces: NId |> A / Mask Ifs, Attrs >
+		< I : Router | >
 		IPMessage(224 . 0 . 0 . 9, NId, O, ripMsg(1, 2, empty))
 		IPMessage(O, A, ripMsg(2, 2, export(splitHorizon(O, RT))))
 	if O =/= A .
 
 	crl [reply-poison] :
-		< I : Router | table: RT, interfaces: NId |> A / Mask Ifs, Attrs >
+		< I : Router | table : RT, interfaces : NId |> A / Mask Ifs >
 		IPMessage(224 . 0 . 0 . 9, NId, O, ripMsg(1, 2, empty))
 	=>
-		< I : Router | table: RT, interfaces: NId |> A / Mask Ifs, Attrs >
+		< I : Router | >
 		IPMessage(224 . 0 . 0 . 9, NId, O, ripMsg(1, 2, empty))
 		IPMessage(O, A, ripMsg(2, 2, export(routePoison(O, RT))))
 	if O =/= A .
@@ -345,21 +339,21 @@ mod RIP is
 	*** Send a gratuitous routing information response
 	*** There are also three variants for split horizon and route poisoning.
 	rl [response] :
-		< I : Router | table: RT, interfaces: NId |> A / Mask Ifs, Attrs >
+		< I : Router | table : RT, interfaces : NId |> A / Mask Ifs >
 	=>
-		< I : Router | table: RT, interfaces: NId |> A / Mask Ifs, Attrs >
+		< I : Router | >
 		IPMessage(224 . 0 . 0 . 9, NId, A, ripMsg(2, 2, export(RT))) .
 
 	rl [response-split] :
-		< I : Router | table: RT, interfaces: NId |> A / Mask Ifs, Attrs >
+		< I : Router | table : RT, interfaces : NId |> A / Mask Ifs >
 	=>
-		< I : Router | table: RT, interfaces: NId |> A / Mask Ifs, Attrs >
+		< I : Router | >
 		IPMessage(224 . 0 . 0 . 9, NId, A, ripMsg(2, 2, export(splitHorizon*(NId, RT)))) .
 
 	rl [response-poison] :
-		< I : Router | table: RT, interfaces: NId |> A / Mask Ifs, Attrs >
+		< I : Router | table : RT, interfaces : NId |> A / Mask Ifs >
 	=>
-		< I : Router | table: RT, interfaces: NId |> A / Mask Ifs, Attrs >
+		< I : Router | >
 		IPMessage(224 . 0 . 0 . 9, NId, A, ripMsg(2, 2, export(routePoison*(NId, RT)))) .
 
 
@@ -368,18 +362,18 @@ mod RIP is
 
 	*** Update timer check
 	rl [update-timer] :
-		< I : Router | table: RT, Attrs >
+		< I : Router | table : RT >
 	=>
-		< I : Router | table: updateTimer(RT), Attrs > .
+		< I : Router | table : updateTimer(RT) > .
 
 	*** Accidental situation in which a link is broken
 	crl [break-link] :
-		< I : Router | table: < N, 0 . 0 . 0 . 0, NId, 0, T > RT,
-	                       interfaces: NId |> A / Mask Ifs >
+		< I : Router | table : < N, 0 . 0 . 0 . 0, NId, 0, T > RT,
+	                       interfaces : NId |> A / Mask Ifs >
 	=>
-		< I : Router | table: RT, interfaces: Ifs >
+		< I : Router | table : RT, interfaces : Ifs >
 	if N = normalize(A / Mask) .
-endm
+endom
 
 ***
 *** Parameterized infrastructure for handling multicast messages
@@ -474,7 +468,7 @@ smod RIP-STRAT is
 
 	sd initialRequest(empty) := idle .
 	sd initialRequest((I, IS)) :=
-		try(matchrew D s.t. < J : Router | interfaces: Ifs, Attrs > D' := D /\ I == J
+		try(matchrew D s.t. < J : Router | interfaces : Ifs, Attrs > D' := D /\ I == J
 	              by D using one(initialRequest(I, Ifs))) ;
 	            one(initialRequest(IS)) .
 
@@ -491,7 +485,7 @@ smod RIP-STRAT is
 
 	sd iteration(empty) := handleResponse !  .
 	sd iteration((I, IS)) := (matchrew C s.t.
-			            < I : Router | table: RT, interfaces: Ifs > D := C
+			            < I : Router | table : RT, interfaces : Ifs > D := C
 	                            by C using one(iteration(I, Ifs))) ;
 	                         handleResponse * ;
 	                         iteration(IS) .
@@ -517,13 +511,13 @@ mod EXAMPLES is
 	*** timer. The count to infinity does not happen when using DO or RP.
 
 	eq linear = initTables(
-	             < r1 : Router | table: empty,
-	                             interfaces: netwk(1) |> (1 . 0 . 0 . 1) / 8 >
-	             < r2 : Router | table: empty,
-	                             interfaces: netwk(1) |> (1 . 0 . 0 . 2) / 8
+	             < r1 : Router | table : empty,
+	                             interfaces : netwk(1) |> (1 . 0 . 0 . 1) / 8 >
+	             < r2 : Router | table : empty,
+	                             interfaces : netwk(1) |> (1 . 0 . 0 . 2) / 8
 	                                         netwk(2) |> (2 . 0 . 0 . 2) / 8 >
-	             < r3 : Router | table: empty,
-	                             interfaces: netwk(2) |> (2 . 0 . 0 . 1) / 8 >
+	             < r3 : Router | table : empty,
+	                             interfaces : netwk(2) |> (2 . 0 . 0 . 1) / 8 >
 	          ) .
 
 	*** linear4 <> - <> - <> - <>
@@ -531,16 +525,16 @@ mod EXAMPLES is
 	*** It requires two iterations to converge.
 
 	eq linear4 = initTables(
-	             < r1 : Router | table: empty,
-	                             interfaces: netwk(1) |> (1 . 0 . 0 . 1) / 8 >
-	             < r2 : Router | table: empty,
-	                             interfaces: netwk(1) |> (1 . 0 . 0 . 2) / 8
+	             < r1 : Router | table : empty,
+	                             interfaces : netwk(1) |> (1 . 0 . 0 . 1) / 8 >
+	             < r2 : Router | table : empty,
+	                             interfaces : netwk(1) |> (1 . 0 . 0 . 2) / 8
 	                                         netwk(2) |> (2 . 0 . 0 . 2) / 8 >
-	             < r3 : Router | table: empty,
-	                             interfaces: netwk(2) |> (2 . 0 . 0 . 1) / 8
+	             < r3 : Router | table : empty,
+	                             interfaces : netwk(2) |> (2 . 0 . 0 . 1) / 8
 	                                         netwk(3) |> (3 . 0 . 0 . 1) / 8 >
-	             < r4 : Router | table: empty,
-	                             interfaces: netwk(3) |> (3 . 0 . 0 . 2) / 8 >
+	             < r4 : Router | table : empty,
+	                             interfaces : netwk(3) |> (3 . 0 . 0 . 2) / 8 >
 	          ) .
 
 	*** loop   < >
@@ -548,14 +542,14 @@ mod EXAMPLES is
 	***      <> - <>
 
 	eq loop = initTables(
-		    < r1 : Router | table: empty,
-	                            interfaces: netwk(0) |> (1 . 0 . 0 . 1) / 16
+		    < r1 : Router | table : empty,
+	                            interfaces : netwk(0) |> (1 . 0 . 0 . 1) / 16
 	                                        netwk(1) |> (1 . 1 . 0 . 1) / 16 >
-		    < r2 : Router | table: empty,
-	                            interfaces: netwk(1) |> (1 . 1 . 0 . 2) / 16
+		    < r2 : Router | table : empty,
+	                            interfaces : netwk(1) |> (1 . 1 . 0 . 2) / 16
 	                                        netwk(2) |> (1 . 2 . 0 . 2) / 16 >
-		    < r3 : Router | table: empty,
-	                            interfaces: netwk(2) |> (1 . 2 . 0 . 3) / 16
+		    < r3 : Router | table : empty,
+	                            interfaces : netwk(2) |> (1 . 2 . 0 . 3) / 16
 	                                        netwk(0) |> (1 . 0 . 0 . 3) / 16 >
 		  ) .
 
@@ -566,19 +560,19 @@ mod EXAMPLES is
 	*** .                        <3>   <1>   <2>
 
 	eq break = initTables(
-	             < r1 : Router | table: empty,
-	                             interfaces: netwk(0) |> (1 . 0 . 0 . 1) / 16 >
-	             < r2 : Router | table: empty,
-	                             interfaces: netwk(0) |> (1 . 0 . 0 . 2) / 16
+	             < r1 : Router | table : empty,
+	                             interfaces : netwk(0) |> (1 . 0 . 0 . 1) / 16 >
+	             < r2 : Router | table : empty,
+	                             interfaces : netwk(0) |> (1 . 0 . 0 . 2) / 16
 	                                         netwk(1) |> (1 . 1 . 0 . 2) / 16 >
-	             < r3 : Router | table: empty,
-	                             interfaces: netwk(0) |> (1 . 0 . 0 . 3) / 16
+	             < r3 : Router | table : empty,
+	                             interfaces : netwk(0) |> (1 . 0 . 0 . 3) / 16
 	                                         netwk(2) |> (1 . 2 . 0 . 3) / 16 >
-	             < r4 : Router | table: empty,
-	                             interfaces: netwk(2) |> (1 . 2 . 0 . 4) / 16
+	             < r4 : Router | table : empty,
+	                             interfaces : netwk(2) |> (1 . 2 . 0 . 4) / 16
 	                                         netwk(3) |> (1 . 3 . 0 . 4) / 16 >
-	             < r5 : Router | table: empty,
-	                             interfaces: netwk(1) |> (1 . 1 . 0 . 5) / 16
+	             < r5 : Router | table : empty,
+	                             interfaces : netwk(1) |> (1 . 1 . 0 . 5) / 16
 	                                         netwk(3) |> (1 . 3 . 0 . 5) / 16
 	                                         netwk(4) |> (1 . 4 . 0 . 5) / 16 >
 		   ) .
@@ -616,10 +610,10 @@ mod RIP-PREDS is
 	vars H T : Nat .
 	var  C   : Configuration .
 
-	eq < I : Router | table: < N, G, NId, H, T > RT, interfaces: Ifs > C |= countReaches(H) = true .
+	eq < I : Router | table : < N, G, NId, H, T > RT, interfaces : Ifs > C |= countReaches(H) = true .
 	eq C |= countReaches(H) = false [owise] .
 
-	eq < I : Router | table: < N, G, NId, H, T > RT, interfaces: Ifs > C |= timerReaches(T) = true .
+	eq < I : Router | table : < N, G, NId, H, T > RT, interfaces : Ifs > C |= timerReaches(T) = true .
 	eq C |= timerReaches(T) = false [owise] .
 
 	ceq C |= reachable(I, N) = true if < N, G, NId, H, T > := tableEntry(C, I, N) /\ H < 16 .
@@ -632,7 +626,7 @@ mod RIP-PREDS is
 	subsort Route < Route? .
 	op noRoute : -> Route? [ctor] .
 
-	eq tableEntry(< I : Router | table: < N, G, NId, H, T > RT, interfaces: Ifs > C, I, N) = < N, G, NId, H, T > .
+	eq tableEntry(< I : Router | table : < N, G, NId, H, T > RT, interfaces : Ifs > C, I, N) = < N, G, NId, H, T > .
 	eq tableEntry(C, I, N) = noRoute [owise] .
 endm
 

@@ -1,13 +1,13 @@
 ==========================================
-srewrite [1] in LABYRINTH-BT-STRAT : [7,7] using solve .
+srewrite [1] in LABYRINTH-BT-STRAT : [7, 7] using solve .
 
 Solution 1
 rewrites: 852
-result NeList{Pos}: [7,7] [8,7] [8,8]
+result NeList{Pos}: [7, 7] [8, 7] [8, 8]
 
 Solution 2
 rewrites: 0
-result NeList{Pos}: [7,7] [7,8] [8,8]
+result NeList{Pos}: [7, 7] [7, 8] [8, 8]
 ==========================================
 srewrite [1] in QUEENS-BT-STRAT : nil using solve .
 

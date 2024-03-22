@@ -6,53 +6,48 @@
 
 sload model-checker
 
-mod BAKERY is
+omod BAKERY is
 	protecting NAT .
 	protecting INT .
-	extending CONFIGURATION .
 
-	*** Process objects and their attributes
-	op Process : -> Cid [ctor] .
+	*** Process class
+	class Process | inCS : Bool, turn : Nat .
+
 	op proc : Nat -> Oid [ctor] .
 	op mutex : -> Oid [ctor] .
-
-	op inCS:_ : Bool -> Attribute [ctor gather (&)] .
-	op turn:_ : Nat -> Attribute [ctor gather (&)] .
 
 	*** Counter size
 	op counterSize : -> Nat .
 	eq counterSize = 256 .
 
-	*** Mutex object and its attribute
-	op Mutex : -> Cid [ctor] .
-	op mutex : -> Oid [ctor] .
+	*** Mutex class
+	class Mutex | value : Int .
 
-	op value:_ : Int -> Attribute [ctor gather (&)] .
+	op mutex : -> Oid [ctor] .
 
 	vars P P1 P2      : Oid .
 	vars T T1 T2 M    : Nat .
-	var  Attrs OAttrs : AttributeSet .
 	var  B            : Bool .
 
-	rl [resetTurn] : < P : Process | turn: T, Attrs >
-	              => < P : Process | turn: 0, Attrs > .
-	rl [setTurn] : < P : Process | turn: T, Attrs >
-                    => < P : Process | turn: 1, Attrs > .
-	rl [nextTurn] : < P1 : Process | turn: T1, Attrs > < P2 : Process | turn: T2, OAttrs >
-	             => < P1 : Process | turn: s(T2) rem counterSize, Attrs > < P2 : Process | turn: T2, OAttrs > .
+	rl [resetTurn] : < P : Process | turn : T >
+	              => < P : Process | turn : 0 > .
+	rl [setTurn] : < P : Process | turn : T >
+                    => < P : Process | turn : 1 > .
+	rl [nextTurn] : < P1 : Process | turn : T1 > < P2 : Process | turn : T2 >
+	             => < P1 : Process | turn : s(T2) rem counterSize > < P2 : Process | turn : T2 > .
 
-	rl [enterCrit] : < P : Process | inCS: B, Attrs > < mutex : Mutex | value: M >
-	              => < P : Process | inCS: true, Attrs > < mutex : Mutex | value: M + 1 > .
-	rl [exitCrit] : < P : Process | inCS: B, Attrs > < mutex : Mutex | value: M >
-	             => < P : Process | inCS: false, Attrs > < mutex : Mutex | value: M - 1 > .
+	rl [enterCrit] : < P : Process | inCS : B > < mutex : Mutex | value : M >
+	              => < P : Process | inCS : true > < mutex : Mutex | value : M + 1 > .
+	rl [exitCrit] : < P : Process | inCS : B > < mutex : Mutex | value : M >
+	             => < P : Process | inCS : false > < mutex : Mutex | value : M - 1 > .
 
 	op initial : -> Configuration .
-	eq initial = < proc(1) : Process | inCS: false, turn: 0 >
-	             < proc(2) : Process | inCS: false, turn: 0 >
-	             < mutex : Mutex | value: 0 > .
-endm
+	eq initial = < proc(1) : Process | inCS : false, turn : 0 >
+	             < proc(2) : Process | inCS : false, turn : 0 >
+	             < mutex : Mutex | value : 0 > .
+endom
 
-mod BAKERY-PREDS is
+omod BAKERY-PREDS is
 	protecting BAKERY .
 	including SATISFACTION .
 
@@ -63,14 +58,13 @@ mod BAKERY-PREDS is
 
 	var C : Configuration .
 	var P : Oid .
-	var Attrs : AttributeSet .
 
-	eq C < P : Process | inCS: true, Attrs > |= inCS(P) = true .
+	eq C < P : Process | inCS : true > |= inCS(P) = true .
 	eq C |= inCS(P) = false [owise] .
 
-	eq C < mutex : Mutex | value: 1 > |= mutexOn = true .
+	eq C < mutex : Mutex | value : 1 > |= mutexOn = true .
 	eq C |= mutexOn = false [owise] .
-endm
+endom
 
 ***
 *** First approach to represent the example using strategies
@@ -105,8 +99,8 @@ smod BAKERY-STRAT is
 
 	sd bakery(P, 0) := setTurn[P <- P] .
 	sd bakery(P, 1) := nextTurn[P1 <- P] .
-	sd bakery(P, 2) := (xmatch < P : Process  | turn:  T, Attrs >
-		< OP : Process | turn: OT, OAttrs >  s.t. OT == 0 or T < OT) ;
+	sd bakery(P, 2) := (xmatch < P : Process  | turn :  T, Attrs >
+		< OP : Process | turn : OT, OAttrs >  s.t. OT == 0 or T < OT) ;
 		enterCrit[P <- P] .
 	sd bakery(P, 3) := exitCrit[P <- P] .
 	sd bakery(P, 4) := resetTurn[P <- P] .
@@ -149,8 +143,8 @@ smod BAKERY2-STRAT is
 
 	sd bakery(P) := setTurn[P <- P] ;
 	                nextTurn[P1 <- P] ;
-			(xmatch < P : Process | turn: T, Attrs >
-	                        < OP : Process | turn: OT, OAttrs >
+			(xmatch < P : Process | turn : T, Attrs >
+	                        < OP : Process | turn : OT, OAttrs >
 	                        s.t. OT == 0 or T < OT) ;
 			enterCrit[P <- P] ;
 	                exitCrit[P <- P] ;

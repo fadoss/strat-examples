@@ -4,7 +4,7 @@
 
 sload pmaude-conf
 
-mod SYMMETRIC-POLLING is
+omod SYMMETRIC-POLLING is
 	protecting NAT .
 	extending PMAUDE-CONFIGURATION .
 
@@ -13,12 +13,11 @@ mod SYMMETRIC-POLLING is
 	vars C S : Oid .
 	vars N M : Nat .
 
-	ops Client Server : -> Cid [ctor] .
+	*** Classes
+	class Client | buf : Nat, server : Oid .
+	class Server | client : Nat .
 
-	*** Operator declarations.
-	op buf:_     : Nat -> Attribute [ctor gather (&)] .
-	op server:_  : Oid -> Attribute [ctor gather (&)] .
-	op client:_  : Nat -> Attribute [ctor gather (&)] .
+	*** Object identifiers for stations
 	op station   : Nat -> Oid [ctor] .
 
 	*** Message contents
@@ -28,33 +27,33 @@ mod SYMMETRIC-POLLING is
 
 	*** Each station produces messages at the rate of 0.2. For this, each station sends a message
 	*** to itself with an exponentially-distributed delay of rate 0.2.
-	rl [produce] : < C : Client | buf: M, server: S > (C <- empty)
-	            => < C : Client | buf: 1, server: S > [T ; C <- empty] [nonexec] .
+	rl [produce] : < C : Client | buf : M > (C <- empty)
+	            => < C : Client | buf : 1 > [T ; C <- empty] [nonexec] .
 	*** with probability t := exponential(0.2) .
 
 	*** On receiving a poll message from the server, the station sends a scheduled serve message
 	*** to itself to imitate the time associated with polling.
-	rl [poll] : < C : Client | buf: M, server: S > (C <- poll)
-	         => < C : Client | buf: M, server: S > [T ; C <- serve] [nonexec] .
+	rl [poll] : < C : Client | buf : M > (C <- poll)
+	         => < C : Client | >         [T ; C <- serve] [nonexec] .
 	*** with probability t := exponential(200.0) .
 
 	*** On receiving a serve message, if the buffer is empty then the station sends a next message
 	*** to the server; otherwise, it send a scheduled done message to itself.
-	rl [serve] : < C : Client | buf: M, server: S > (C <- serve)
+	rl [serve] : < C : Client | buf : M, server : S > (C <- serve)
 	          => if M > 0 then
-	                < C : Client | buf: M, server: S > [T ; C <- done]
+	                < C : Client | > [T ; C <- done]
 	             else
-	                < C : Client | buf: M, server: S > (S <- next)
+	                < C : Client | > (S <- next)
 	             fi [nonexec] .
 	*** with probability t := exponential(1.0) .
 
 	*** On receiving a done message, the station sends a next message to the server.
-	rl [served] : < C : Client | buf: M, server: S > (C <- done)
-	           => < C : Client | buf: 0, server: S > (S <- next) .
+	rl [served] : < C : Client | buf : M, server : S > (C <- done)
+	           => < C : Client | buf : 0 >             (S <- next) .
 
 	*** On receiving a next message, the server sends a poll message to the next station.
-	rl [next] : < S : Server | client: N > (S <- next)
-	         => < S : Server | client: increment(N) > (station(N) <- poll) .
+	rl [next] : < S : Server | client : N > (S <- next)
+	         => < S : Server | client : increment(N) > (station(N) <- poll) .
 
 	*** Define increment as increment(N) = (N+1) modulo 5, which is the number of stations
 	eq increment(N) = if N >= 5 then 1 else N + 1 fi .
@@ -62,13 +61,13 @@ mod SYMMETRIC-POLLING is
 	*** Create the initial configuration with 5 stations and 1 server and a next message.
 	op init : -> Configuration .
 	op s : -> Oid [ctor] .
-	eq init = < s : Server | client: 1 > (s <- next) time(0.0)
-	          < station(1) : Client | buf: 1, server: s >
-	          < station(2) : Client | buf: 1, server: s >
-	          < station(3) : Client | buf: 1, server: s >
-                  < station(4) : Client | buf: 1, server: s >
-                  < station(5) : Client | buf: 1, server: s > .
-endm
+	eq init = < s : Server | client : 1 > (s <- next) time(0.0)
+	          < station(1) : Client | buf : 1, server : s >
+	          < station(2) : Client | buf : 1, server : s >
+	          < station(3) : Client | buf : 1, server : s >
+                  < station(4) : Client | buf : 1, server : s >
+                  < station(5) : Client | buf : 1, server : s > .
+endom
 
 smod SYMMETRIC-POLLING-STRAT is
 	protecting SYMMETRIC-POLLING .
@@ -90,7 +89,7 @@ smod SYMMETRIC-POLLING-STRAT is
 	*** Get the current client of the server
 	op cclient : Configuration ~> Nat .
 
-	eq cclient(< S : Server | client: N > C) = N .
+	eq cclient(< S : Server | client : N > C) = N .
 endsm
 
 *** mvmaude symmetric-polling.maude init symmetric-polling.multiquatex step

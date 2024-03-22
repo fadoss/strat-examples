@@ -1,28 +1,19 @@
 ==========================================
-srewrite in RIVER-CROSSING-SCHECK : initial using safe .
+srewrite in RIVER-CHECK : initial using safe .
 
 Solution 1
 rewrites: 33
-result River: left | right shepherd wolf goat cabbage
+result River: left | shepherd wolf goat cabbage right
 
 No more solutions.
 rewrites: 33
 ==========================================
-srewrite in RIVER-CROSSING-SCHECK : initial using eagerEating .
+srewrite in RIVER-CHECK : initial using eagerEating .
 
 Solution 1
 rewrites: 71
-result River: left | right shepherd wolf goat cabbage
+result River: left | shepherd wolf goat cabbage right
 
 No more solutions.
 rewrites: 71
-==========================================
-srewrite in RIVER-CROSSING-SCHECK : initial using solution .
-
-Solution 1
-rewrites: 8
-result River: left | right shepherd wolf goat cabbage
-
-No more solutions.
-rewrites: 8
 Bye.

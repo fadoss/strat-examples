@@ -3,14 +3,14 @@ srewrite in RIP-SCHECK : linear using iteration .
 
 Solution 1
 rewrites: 136244
-result Configuration: < r1 : Router | table: (< 1 . 0 . 0 . 0 / 8,0 . 0 . 0 .
-    0,netwk(1),0,0 > < 2 . 0 . 0 . 0 / 8,1 . 0 . 0 . 2,netwk(1),1,0 >),
-    interfaces: netwk(1) |> 1 . 0 . 0 . 1 / 8 > < r2 : Router | table: (< 1 . 0
-    . 0 . 0 / 8,0 . 0 . 0 . 0,netwk(1),0,0 > < 2 . 0 . 0 . 0 / 8,0 . 0 . 0 . 0,
-    netwk(2),0,0 >),interfaces: (netwk(1) |> 1 . 0 . 0 . 2 / 8 netwk(2) |> 2 .
-    0 . 0 . 2 / 8) > < r3 : Router | table: (< 1 . 0 . 0 . 0 / 8,2 . 0 . 0 . 2,
-    netwk(2),1,0 > < 2 . 0 . 0 . 0 / 8,0 . 0 . 0 . 0,netwk(2),0,0 >),
-    interfaces: netwk(2) |> 2 . 0 . 0 . 1 / 8 >
+result Configuration: < r1 : Router | table : (< 1 . 0 . 0 . 0 / 8, 0 . 0 . 0 .
+    0, netwk(1), 0, 0 > < 2 . 0 . 0 . 0 / 8, 1 . 0 . 0 . 2, netwk(1), 1, 0 >),
+    interfaces : netwk(1) |> 1 . 0 . 0 . 1 / 8 > < r2 : Router | table : (< 1 .
+    0 . 0 . 0 / 8, 0 . 0 . 0 . 0, netwk(1), 0, 0 > < 2 . 0 . 0 . 0 / 8, 0 . 0 .
+    0 . 0, netwk(2), 0, 0 >), interfaces : (netwk(1) |> 1 . 0 . 0 . 2 / 8
+    netwk(2) |> 2 . 0 . 0 . 2 / 8) > < r3 : Router | table : (< 1 . 0 . 0 . 0 /
+    8, 2 . 0 . 0 . 2, netwk(2), 1, 0 > < 2 . 0 . 0 . 0 / 8, 0 . 0 . 0 . 0,
+    netwk(2), 0, 0 >), interfaces : netwk(2) |> 2 . 0 . 0 . 1 / 8 >
 
 No more solutions.
 rewrites: 136244

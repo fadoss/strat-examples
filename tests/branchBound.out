@@ -2,12 +2,12 @@
 srewrite in MAIN : initial(node(city(0), 0), generateFixData(4)) using solve .
 
 Solution 1
-rewrites: 1791
+rewrites: 7545
 result BBState: solution(node(city(0) city(4) city(3) city(1) city(2) city(0),
     20), 20)
 
 No more solutions.
-rewrites: 2285
+rewrites: 12639
 ==========================================
 srewrite in MAIN : initial(node(city(0), 0), generateFixData(3)) using solve .
 
