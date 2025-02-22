@@ -1,0 +1,81 @@
+***
+*** Symmetric polling example
+***
+
+sload ../apmaude
+
+omod SYMMETRIC-POLLING is
+	protecting ACTORS .
+	protecting NAT .
+	protecting FLOAT .
+
+	vars t T : Float .
+	vars C S : Oid .
+	vars N M : Nat .
+
+	class Station | buf : Nat, server : Oid .
+	class Server | client : Nat .
+
+	ops poll next serve done : -> Content [ctor] .
+
+	*** Each station produces messages at the rate of 0.2. For this each station sends a message
+	*** to itself with message delay exponentially distributed with rate 0.2.
+	rl [produce] : < C : Station | buf : M > (C <- empty) time(T)
+	            => < C : Station | buf : 1 > [T + t, (C <- empty)] time(T)
+		[metadata "with probability t := exponential(0.2)" nonexec] .
+
+	*** On receiving a poll message from the server, the station sends a scheduled serve message
+	*** to itself to imitate the time associated with polling.
+	rl [poll] : < C : Station | > (C <- poll) time(T)
+	         => < C : Station | > [T + t, (C <- serve)] time(T)
+		[metadata "with probability t := exponential(200.0)" nonexec] .
+
+	*** On receiving a serve message, if the buffer is empty then the station sends a next message
+	*** to the server; otherwise, it send a scheduled done message to itself
+	rl [serve] : < C : Station | buf : M, server : S > (C <- serve) time(T)
+	          => if M > 0 then
+		     	< C : Station | > [T + t, (C <- done)]
+	             else
+		     	< C : Station | > (S <- next)
+	             fi time(T)
+		[metadata "with probability t := exponential(1.0)" nonexec] .
+
+	*** On receiving a done message, the station sends a next message to the server.
+	rl [served] : < C : Station | server : S > (C <- done)
+	           => < C : Station | buf : 0 > (S <- next) .
+
+	*** On receiving a next message, the server sends a poll message to the next station.
+	rl [next] : < S : Server | client : N > (S <- next)
+	         => < S : Server | client : increment(N) > (station(N) <- poll) .
+
+	*** Increment module the number of stations
+	op increment : Nat -> Nat .
+	eq increment(N) = if N >= 5 then 1 else N + 1 fi .
+
+	*** Create the initial configuration with 5 stations and 1 server and a next message.
+	op init : -> Configuration .
+	op init : Nat -> Configuration .
+	op s : -> Oid [ctor] .
+	op station : Nat -> Oid [ctor] .
+
+	eq init = init(5) .
+
+	eq init(0) = < s : Server | client : 1 > (s <- next) time(0.0) .
+	eq init(s N) = init(N) < station(s N) : Station | buf : 1, server : s > .
+endom
+
+omod SYMMETRIC-POLLING-PREDS is
+	protecting SYMMETRIC-POLLING .
+
+	*** Configuration where a message is received on
+	op aboutToServe : Nat Configuration -> Bool .
+
+	var N : Nat .
+	var T : Float .
+	var C : Configuration .
+
+	eq aboutToServe(N, (station(N) <- serve) C) = true .
+	eq aboutToServe(N, C) = false [owise] .
+endom
+
+*** reduce in APMAUDE-TRANSLATE : atransform(upModule('SYMMETRIC-POLLING, true)) .

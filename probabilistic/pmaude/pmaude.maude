@@ -1,0 +1,400 @@
+***
+*** PMaude translation to Maude
+***
+
+fmod PBUBBLES is
+	including QID-LIST .
+
+	sorts @PBubble@ @PToken@ @NePTokenList@ .
+
+
+	op PBubble : QidList -> @PBubble@ [special (id-hook Bubble (1 -1 ( ))
+	                          op-hook qidListSymbol (__ : QidList QidList ~> QidList)
+	                          op-hook qidSymbol (<Qids> : ~> Qid)
+	                          id-hook Exclude(eq ceq trans ctrans red assoc comm ctor cmod! cmod*
+	                                          var vars op ops copen cview :goal :ind set-cores
+	                                          :apply :imp :def :id :proof :infer :show :desc
+	                                          set-output :save-proof :infer-proof :generate-proof
+	                                          :sel :proven :help set-backtrack-bound))] .
+
+	op PToken : Qid -> @PToken@ [special (id-hook Bubble (1 1)
+	                          op-hook qidSymbol (<Qids> : ~> Qid)
+	                          id-hook Exclude(. [] < { } ( )))] .
+
+	op nePTokenList : QidList -> @NePTokenList@ [special (id-hook Bubble (1 -1)
+	                          op-hook qidListSymbol (__ : QidList QidList ~> QidList)
+	                          op-hook qidSymbol (<Qids> : ~> Qid)
+	                          id-hook Exclude(. : { }))] .
+endfm
+
+fmod PMAUDE-GRAMMAR is
+  protecting PBUBBLES .
+	protecting FLOAT .
+	protecting INT .
+
+	sorts @BoolDistr@ @IntDistr@ @FloatDistr@ @Distr@ @ProbAssign@ @ProbAssigns@ @ProbSpec@ .
+
+	op with probability _ : @ProbAssigns@ -> @ProbSpec@ [ctor gather (&)] .
+
+	subsort @ProbAssign@ < @ProbAssigns@ .
+	subsort @BoolDistr@ @IntDistr@ @FloatDistr@ < @Distr@ .
+
+	*** Probabilistic assignment
+	op _:=_ : @PToken@ @Distr@ -> @ProbAssign@ [ctor] .
+	op _,_ : @ProbAssigns@ @ProbAssigns@ -> @ProbAssigns@ [ctor assoc gather (e E) prec 42] .
+
+	*** Probability distributions
+	op bernoulli : @PBubble@ -> @BoolDistr@ [ctor] . *** Float
+	op normal : @PBubble@ @PBubble@ -> @FloatDistr@ [ctor] . *** Float Float
+	op uniform : @PBubble@ @PBubble@ -> @Distr@ [ctor] . *** Float Float or Int Int
+***	op uniform : @PBubble@ @PBubble@ -> @FloatDistr@ [ctor] . *** Float Float
+***	op uniform : @PBubble@ @PBubble@ -> @IntDistr@ [ctor] . *** Int Int
+	op exponential : @PBubble@ -> @FloatDistr@ [ctor] . *** Float
+endfm
+
+fmod DIAGNOSTICS is
+	protecting QID-LIST .
+
+	sort Diagnostics .
+
+	op error : QidList -> Diagnostics [ctor] .
+	op warning : QidList -> Diagnostics [ctor] .
+
+	op fine : -> Diagnostics [ctor] .
+	op __ : Diagnostics Diagnostics -> Diagnostics [ctor assoc id: fine] .
+endfm
+
+fmod PMAUDE-PARSER is
+	protecting META-LEVEL .
+	protecting LEXICAL .
+	protecting DIAGNOSTICS .
+
+	vars T T1 T2 T3 : Term .
+	var  TL         : TermList .
+	var  VS         : VariableSet .
+	var  V          : Variable .
+	var  Q          : Qid .
+
+	*** Check that the expression is well-formed
+	op checkPSpec : Term VariableSet -> Diagnostics .
+	op checkExpr : TermList VariableSet -> Diagnostics .
+
+	eq checkPSpec('with`probability_[T], VS) = checkPSpec(T, VS) .
+	eq checkPSpec('_:=_[V, T], V ; VS) = checkExpr(T, V ; VS) .
+	eq checkPSpec('_:=_[T1, T], VS) = error('left-hand 'side 'of 'probability 'assignment 'is 'not 'known 'variable) .
+	eq checkPSpec('bernoulli[T], VS) = checkExpr(T, VS) .
+	eq checkPSpec('normal[T1, T2], VS) = checkExpr(T1, VS) checkExpr(T2, VS) .
+	eq checkPSpec('uniform[T1, T2], VS) = checkExpr(T1, VS) checkExpr(T2, VS) .
+	eq checkPSpec('exponential[T], VS) = checkExpr(T, VS) .
+
+	eq checkExpr(C:Constant, VS) = fine .
+	eq checkExpr(V, V ; VS) = fine .
+	eq checkExpr(V, VS) = error('unbound 'variable V) .
+	eq checkExpr(Q[TL], VS) = checkExpr(TL, VS) .
+	eq checkExpr(empty, VS) = fine .
+	eq checkExpr((T, TL), VS) = checkExpr(T, VS) checkExpr(TL, VS) .
+endfm
+
+fmod GENERIC-REPLACE is
+	protecting META-MODULE .
+
+	*** Replace a variable with term
+
+	vars V W            : Variable .
+	vars T T1 T2 P      : Term .
+	var TL              : TermList .
+	var NeTL            : NeTermList .
+	var C               : Condition .
+	var Sb              : Substitution .
+	vars St St1 St2 St3 : Strategy .
+	var SL              : StrategyList .
+	vars CM CM1 CM2     : ChoiceMap .
+	vars UPS UPS1 UPS2  : UsingPairSet .
+	var Ty              : Type .
+	var Q               : Qid .
+	var S               : Sort .
+
+	*** Terms
+	op replace : Variable Term TermList -> TermList .
+	eq replace(V, T, V) = T .
+	eq replace(V, T, W) = W [owise] .
+	eq replace(V, T, C:Constant) = C:Constant .
+	eq replace(V, T, Q[TL]) = Q[replace(V, T, TL)] .
+	eq replace(V, T, (empty).TermList) = empty .
+	eq replace(V, T, (T1, NeTL)) = replace(V, T, T1), replace(V, T, NeTL) .
+
+	*** Conditions
+	op replace : Variable Term Condition -> Condition .
+	eq replace(V, T, (nil).Condition) = nil .
+	eq replace(V, T, (T1 = T2) /\ C) = replace(V, T, T1) = replace(V, T, T2) /\ replace(V, T, C) .
+	eq replace(V, T, (T1 : S) /\ C) = (replace(V, T, T1) : S) /\ replace(V, T, C) .
+	eq replace(V, T, (T1 := T2) /\ C) = (replace(V, T, T1) := replace(V, T, T2)) /\ replace(V, T, C) .
+	eq replace(V, T, (T1 => T2) /\ C) = (replace(V, T, T1) => replace(V, T, T2)) /\ replace(V, T, C) .
+
+	*** Substitutions
+	op replace : Variable Term Substitution -> Substitution .
+	eq replace(V, T, (none).Substitution) = none .
+	eq replace(V, T, W <- T1 ; Sb) = (W <- replace(V, T, T1)) ; replace(V, T, Sb) .
+
+	*** Strategies
+	op replace : Variable Term StrategyList -> StrategyList .
+	eq replace(V, T, fail) = fail .
+	eq replace(V, T, idle) = idle .
+	eq replace(V, T, all) = all .
+	eq replace(V, T, Q[Sb]{SL}) = Q[replace(V, T, Sb)]{replace(V, T, SL)} .
+	eq replace(V, T, top(St)) = top(replace(V, T, St)) .
+	eq replace(V, T, match P s.t. C) = match P s.t. replace(V, T, C) .
+	eq replace(V, T, xmatch P s.t. C) = match P s.t. replace(V, T, C) .
+	eq replace(V, T, amatch P s.t. C) = match P s.t. replace(V, T, C) .
+	eq replace(V, T, St1 | St2) = replace(V, T, St1) | replace(V, T, St2) [owise] .
+	eq replace(V, T, St1 ; St2) = replace(V, T, St1) ; replace(V, T, St2) [owise] .
+	eq replace(V, T, St1 or-else St2) = replace(V, T, St1) or-else replace(V, T, St2) .
+	eq replace(V, T, St +) = replace(V, T, St) + .
+	eq replace(V, T, St1 ? St2 : St3) = replace(V, T, St1) ? replace(V, T, St2) : replace(V, T, St3) .
+	eq replace(V, T, matchrew P s.t. C by UPS) = matchrew replace(V, T, P) s.t. replace(V, T, C) by replace(V, T, UPS) .
+	eq replace(V, T, xmatchrew P s.t. C by UPS) = matchrew replace(V, T, P) s.t. replace(V, T, C) by replace(V, T, UPS) .
+	eq replace(V, T, amatchrew P s.t. C by UPS) = matchrew replace(V, T, P) s.t. replace(V, T, C) by replace(V, T, UPS) .
+	eq replace(V, T, Q[[TL]]) = Q[[replace(V, T, TL)]] .
+	eq replace(V, T, one(St)) = one(replace(V, T, St)) .
+	eq replace(V, T, St *) = replace(V, T, St) * .
+	eq replace(V, T, St !) = replace(V, T, St) ! .
+	eq replace(V, T, not(St)) = not(replace(V, T, St)) .
+	eq replace(V, T, test(St)) = test(replace(V, T, St)) .
+	eq replace(V, T, try(St)) = try(replace(V, T, St)) .
+	eq replace(V, T, choice(CM)) = choice(replace(V, T, CM)) .
+	eq replace(V, T, sample W := T1 in St) = sample W := replace(V, T, T1) in replace(V, T, St) .
+	eq replace(V, T, matchrew P s.t. C with weight T1 by UPS) = matchrew P s.t. replace(V, T, C) with weight replace(V, T, T1) by replace(V, T, UPS) .
+	eq replace(V, T, xmatchrew P s.t. C with weight T1 by UPS) = xmatchrew P s.t. replace(V, T, C) with weight replace(V, T, T1) by replace(V, T, UPS) .
+	eq replace(V, T, amatchrew P s.t. C with weight T1 by UPS) = amatchrew P s.t. replace(V, T, C) with weight replace(V, T, T1) by replace(V, T, UPS) .
+
+	*** Strategy lists
+	eq replace(V, T, (empty).StrategyList) = empty .
+	eq replace(V, T, (St1, SL)) = replace(V, T, St1), replace(V, T, SL) .
+
+	*** Choice maps
+	op replace : Variable Term ChoiceMap -> ChoiceMap .
+	eq replace(V, T, T1 : St) = replace(V, T, T1) : replace(V, T, St) .
+	eq replace(V, T, (CM1, CM2)) = replace(V, T, CM1), replace(V, T, CM2) .
+
+	*** Term-using-strategy pairs
+	op replace : Variable Term UsingPairSet -> UsingPairSet .
+	eq replace(V, T, W using St) = W using replace(V, T, St) .
+	eq replace(V, T, (UPS1, UPS2)) = replace(V, T, UPS1), replace(V, T, UPS2) .
+endfm
+
+fmod PMAUDE-TRANSLATE is
+	protecting PMAUDE-PARSER .
+	protecting CONVERSION .
+	protecting STRING-OPS .
+	protecting GENERIC-REPLACE .
+
+	op transform : Module -> Module .
+
+	var  M              : Module .
+	vars T T' L R T1 T2 : Term .
+	var  TL TL'         : TermList .
+	var  NeTL           : NeTermList .
+	var  V              : Variable .
+	vars VS VS'         : VariableSet .
+	var  N              : Nat .
+	var  Rl             : Rule .
+	var  Rls            : RuleSet .
+	var  St             : Strategy .
+	var  Q              : Qid .
+	var  QS             : QidSet .
+	var  Ty             : Type .
+	var  Attrs          : AttrSet .
+	var  C              : Condition .
+	var  S              : String .
+	var  Ct             : Constant .
+	var  QIL QIL'       : QidList .
+
+	eq transform(M) = smod getName(M) is
+		getImports(M)
+		sorts getSorts(M) .
+		getSubsorts(M)
+		getOps(M)
+		getMbs(M)
+		getEqs(M)
+		labelRules(getRls(M), 1, none)
+		getStrats(M)
+		*** Any rule (probabilistic or not)
+		(strat 'pm-all : nil @ 'Bool [none] .)
+		*** Only probabilistic rules
+		(strat 'pm-step : nil @ 'Bool [none] .)
+		*** Full executions
+		(strat 'pm-run : nil @ 'Bool [none] .)
+		*** Probabilistic rule application strategies
+		pmRuleAppStrats(getRls(M))
+		getSds(M)
+		(sd 'pm-all[[empty]] := all [none] .)
+		(sd 'pm-all[[empty]] := 'pm-step[[empty]] [none] .)
+		(sd 'pm-run[[empty]] := 'pm-all[[empty]] ? 'pm-run[[empty]] : idle [none] .)
+		pMaudeStrats(M, labelRules(getRls(M), 1, none))
+	endsm .
+
+	*** assign unique labels to probabilistic rules
+	op labelRules : RuleSet Nat QidSet -> RuleSet .
+	op labelRule : AttrSet Nat QidSet -> AttrSet .
+
+	eq labelRules(none, N, QS) = none .
+	eq labelRules(rl L => R [metadata(S) Attrs] . Rls, N, QS) =
+		rl L => R [metadata(S) labelRule(Attrs, N, QS)] .
+		labelRules(Rls, s N, addLabelToSet(Attrs, QS)) .
+	eq labelRules(crl L => R if C [metadata(S) Attrs] . Rls, N, QS) =
+		crl L => R if C [metadata(S) labelRule(Attrs, N, QS)] .
+		labelRules(Rls, s N, addLabelToSet(Attrs, QS)) .
+	eq labelRules(Rl Rls, N, QS) = Rl labelRules(Rls, N, QS) [owise] .
+
+	eq labelRule(label(Q) Attrs, N, QS) = Attrs
+		if contains(QS, Q)
+		then label(qid(string(Q) + "@" + string(N, 10)))
+		else label(Q) fi
+	.
+	eq labelRule(Attrs, N, QS) = label(qid("@prule" + string(N, 10))) Attrs [owise] .
+
+	op originalLabel : Qid ~> Qid .
+	ceq originalLabel(Q) = if find(string(Q), "@", 0) == notFound
+		 then Q
+		 else qid(substr(string(Q), 0, find(string(Q), "@", 0))) fi
+         if find(string(Q), "@", 0) =/= 0 .
+
+	*** Probabilistic rule application strategies
+	op pmRuleAppStrats : RuleSet -> StratDeclSet .
+	eq pmRuleAppStrats(none) = none .
+	eq pmRuleAppStrats(rl L => R [metadata(S) label(Q) Attrs] . Rls) =
+		if startsWith(S, "with probability") then
+			(strat qid("pmr-" + string(Q)) : nil @ 'Bool [none] .)
+		else none fi
+		pmRuleAppStrats(Rls) .
+	eq pmRuleAppStrats(crl L => R if C [metadata(S) label(Q) Attrs] . Rls) =
+		if startsWith(S, "with probability") then
+			(strat qid("pmr-" + string(Q)) : nil @ 'Bool [none] .)
+		else none fi
+		pmRuleAppStrats(Rls) .
+	eq pmRuleAppStrats(Rl Rls) = pmRuleAppStrats(Rls) [owise] .
+
+	*** Check whether a QidSet contains a Qid
+	op contains : QidSet Qid -> Bool .
+	eq contains(Q ; QS, Q) = true .
+	eq contains(QS, Q) = false [owise] .
+
+	*** Add the rule label to the QidSet if any
+	op addLabelToSet : Attr QidSet -> QidSet .
+	eq addLabelToSet(label(Q) Attrs, QS) = Q ; QS .
+	eq addLabelToSet(Attrs, QS) = QS [owise] .
+
+	*** Transform the PMaude module to Maude
+	op pMaudeStrats : Module RuleSet -> StratDefSet .
+	op pMaudeStrat4Rule : Module Term Term AttrSet VariableSet -> StratDefSet .
+
+	ceq pMaudeStrat4Rule(M, L, R, Attrs label(Q) metadata(S), VS) =
+		if originalLabel(Q) :: Qid then
+			(sd qid("pmr-" + string(originalLabel(Q)))[[empty]] := St [none] .)
+			(sd 'pm-step[[empty]] := qid("pmr-" + string(originalLabel(Q)))[[empty]] [none] .)
+		else
+			sd 'pm-step[[empty]] := St [none] .
+		fi
+	if V := makeVar("W", leastSort(M, L))
+	/\ T := getTerm(metaParse(['PMAUDE-GRAMMAR], none, tokenize(S), '@ProbSpec@))
+        /\ VS' := VS ; getVars(T)
+        /\ < T', QIL > := solveBubbles(M, T, VS') *** TODO: Deal with parsing errors
+        /\ St := amatchrew V s.t. L := V by V using pMaudeStrat(T', Q[makeIdSubs(VS')]{empty}) .
+
+	sort BubbleParsePair .
+	op <_,_> : TermList QidList -> BubbleParsePair [ctor] .
+
+	op solveBubbles : Module Term VariableSet -> BubbleParsePair .
+	ceq solveBubbles(M, Q[TL], VS) = < Q[TL'], QIL >
+	 if Q =/= 'PToken and Q =/= 'PBubble
+	 /\ < TL', QIL > := solveBubbles*(M, TL, VS) .
+	eq solveBubbles(M, 'PToken[T], VS) = solveToken(T, VS) .
+	eq solveBubbles(M, 'PBubble[T], VS) = solveBubble(M, T, VS) [owise] .
+
+	***(
+	  ceq parseRedTerm(M, 'red_.['CafeBubble[T]], VS) = T'
+	  if T' := getTerm(metaParse(M, VS, downQidList(T), anyType)) .
+	)
+	op solveBubbles* : Module TermList VariableSet -> BubbleParsePair .
+	eq solveBubbles*(M, empty, VS) = < empty, nil > .
+	ceq solveBubbles*(M, (T, TL), VS) = < (T', TL'), QIL QIL' >
+	 if < T', QIL > := solveBubbles(M, T, VS)
+	 /\ < TL', QIL' > := solveBubbles*(M, TL, VS) .
+
+	op solveToken : Term VariableSet -> BubbleParsePair .
+	ceq solveToken(T, V ; VS) = < V, nil >
+	 if Q := downQid(T)
+	 /\ getName(V) == Q .
+	eq solveToken('PToken[T], VS) = < T, '\rb 'Error: '\o 'No 'parse 'for 'token. > .
+
+	op solveBubble : Module Term VariableSet -> BubbleParsePair .
+	ceq solveBubble(M, T, VS) = < T', nil >
+	 if QIL := downQidList(T)
+	 /\ T' := getTerm(metaParse(M, VS, QIL, anyType)) .
+
+	op downQid : Term ~> Qid .
+	eq downQid(Ct) = qid(substr(string(getName(Ct)), 1, length(string(getName(Ct))))) .
+
+	op downQidList : Term ~> QidList .
+	eq downQidList('nil.TypeList) = nil .
+	eq downQidList(('__[TL], TL')) = (downQidList(TL) downQidList(TL')) .
+	eq downQidList((Q, TL)) = (downQid(Q) downQidList(TL)) .
+	eq downQidList(empty) = nil .
+
+	op downQidList : Term ~> QidList .
+	eq downQidList('nil.TypeList) = nil .
+	eq downQidList(('__[TL], TL')) = (downQidList(TL) downQidList(TL')) .
+	eq downQidList((Q, TL)) = (downQid(Q) downQidList(TL)) .
+	eq downQidList(empty) = nil .
+
+	eq pMaudeStrats(M, none) = none .
+	ceq pMaudeStrats(M, rl L => R [metadata(S) Attrs] . Rls) =
+		pMaudeStrat4Rule(M, L, R, metadata(S) Attrs, getVars(L) ; getVars(R))
+		pMaudeStrats(M, Rls)
+	 if startsWith(S, "with probability") .
+	ceq pMaudeStrats(M, crl L => R if C [metadata(S) Attrs] . Rls) =
+		pMaudeStrat4Rule(M, L, R, metadata(S) Attrs, getVars(L) ; getVars(R) ; getVars(C))
+		pMaudeStrats(M, Rls)
+	 if startsWith(S, "with probability") .
+	eq pMaudeStrats(M, Rl Rls) = pMaudeStrats(M, Rls) [owise] .
+
+	op pMaudeStrat : Term Strategy -> Strategy .
+
+	eq pMaudeStrat('with`probability_[T], St) = pMaudeStrat(T, St) .
+	eq pMaudeStrat('_:=_[V, 'bernoulli[T]], St) = sample wrapBoolVar(V) := 'bernoulli[T] in replace(V, '_==_[wrapBoolVar(V), '1.0.Float], St) .
+	eq pMaudeStrat('_:=_[V, 'normal[T1, T2]], St) = sample V := 'normal[T1, T2] in St .
+	eq pMaudeStrat('_:=_[V, 'uniform[T1, T2]], St) = sample V := 'uniform[T1, T2] in St .
+	eq pMaudeStrat('_:=_[V, 'exponential[T]], St) = sample V := 'exp[T] in St .
+	eq pMaudeStrat('_`,_[T], St) = pMaudeStrat(T, St) .
+	eq pMaudeStrat('_`,_[NeTL, T], St) = pMaudeStrat('_`,_[NeTL], pMaudeStrat(T, St)) [owise] .
+
+
+	*** Make variable
+	op makeVar : String Type -> Variable .
+	eq makeVar(S, Ty) = qid(S + ":" + string(Ty)) .
+
+	*** Rename Boolean variable
+	op wrapBoolVar : Variable -> Variable .
+	eq wrapBoolVar(V) = qid(string(getName(V)) + "@wrapped:Float") .
+
+
+	*** Get variables in a term
+	op getVars : TermList -> VariableSet .
+	eq getVars(empty) = none .
+	eq getVars(Ct) = none .
+	eq getVars(V) = V .
+	eq getVars(Q[TL]) = getVars(TL) .
+	eq getVars((T, NeTL)) = getVars(T) ; getVars(NeTL) .
+
+	op getVars : Condition -> VariableSet .
+	eq getVars((nil).Condition) = none .
+	eq getVars(T = T' /\ C) = getVars(C) .
+	eq getVars(T : Ty /\ C) = getVars(C) .
+	eq getVars(T := T' /\ C) = getVars(T) ; getVars(C) .
+	eq getVars(T => T' /\ C) = getVars(T') ; getVars(C) .
+
+	*** Make identity substitution
+	op makeIdSubs : VariableSet -> Substitution .
+	eq makeIdSubs(none) = none .
+	eq makeIdSubs(V ; VS) = V <- V ; makeIdSubs(VS) .
+endfm

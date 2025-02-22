@@ -1,0 +1,14 @@
+// Time until the (n + 1)-th message is received by the first station
+TimeNRounds(n) = if (s.rval("aboutToServe(1, C:Configuration)")) then
+		if (n == 0) then
+			s.rval("getTime(C:Configuration)")
+		else
+			#TimeNRounds(n - 1)
+		fi
+	else
+		#TimeNRounds(n)
+	fi;
+
+eval parametric(E[TimeNRounds(n)], n, 0, 1, 20);
+
+// Example execution: umaudemc scheck symmetric-polling.maude -m 'APMAUDE-TRANSLATE' -M "atransform(upModule('SYMMETRIC-POLLING-PREDS, true))" init symmetric-polling.quatex ap-step --assign step -d 0.2 -j 6

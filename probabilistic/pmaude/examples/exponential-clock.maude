@@ -1,0 +1,57 @@
+***
+*** Exponential clock example from [AMS06]
+***
+
+sload ../pmaude
+
+mod EXPONENTIAL-CLOCK is
+	protecting FLOAT .
+
+	sort Clock .
+
+	op clock : Float Float -> Clock [ctor] .
+	op broken : Float Float -> Clock [ctor] .
+
+	vars T C D : Float .
+	var  B     : Bool .
+
+	rl [advance] : clock(T, C) =>
+		if B then
+			clock(T + D, C - C / 1000.0)
+		else
+			broken(T, C  - C / 1000.0)
+		fi
+	[metadata "with probability B := bernoulli(C / 1000.0), D := exponential(1.0)" nonexec] .
+
+	rl [reset] : clock(T, C) => clock(0.0, C) .
+endm
+
+mod EXPONENTIAL-CLOCK-PREDS is
+	protecting EXPONENTIAL-CLOCK .
+
+	vars T C : Float .
+	var  Clk : Clock .
+
+	*** Whether the clock is broken
+	op isBroken : Clock -> Bool .
+
+	eq isBroken(broken(T, C)) = true .
+	eq isBroken(Clk) = false [owise] .
+
+	*** Clock time
+	op time : Clock -> Float .
+
+	eq time(clock(T, C)) = T .
+	eq time(broken(T, C)) = T .
+
+	*** Clock charge
+	op charge : Clock -> Float .
+
+	eq charge(clock(T, C)) = C .
+	eq charge(broken(T, C)) = C .
+endm
+
+select PMAUDE-TRANSLATE .
+
+*** red transform(upModule('EXPONENTIAL-CLOCK, true)) .
+*** red metaReduce(transform(upModule('EXPONENTIAL-CLOCK, true)), '0.Nat) .

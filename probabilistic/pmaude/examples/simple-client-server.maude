@@ -1,0 +1,65 @@
+***
+*** Simple client/server
+***
+
+sload ../apmaude
+
+omod SIMPLE-CLIENT-SERVER is
+	extending ACTORS .
+	protecting NAT .
+
+	vars t t1 t2 T : Float .
+	vars C S       : Oid .
+	vars N M       : Nat .
+
+	class Client | counter : Nat, server : Oid .
+	class Server | total : Nat .
+
+	op ctnt : Nat -> Content [ctor] .
+
+	rl [send] : < C : Client | counter : N, server : S > (C <- empty) time(T)
+                 => < C : Client | counter : s N > [T + t1, (C <- empty)] [T + t2, (S <- ctnt(N))] time(T)
+		[metadata "with probability t1 := exponential(2.0), t2 := exponential(10.0)" nonexec] .
+
+	rl [compute] : < S : Server | total : M > (S <- ctnt(N)) time(T)
+                    => [T + t, < S : Server | total : M + N >] time(T)
+		[metadata "with probability t := exponential(1.0)" nonexec] .
+
+	rl [busy-drop] : [t, < S : Server | total : M >] (S <- ctnt(N))
+                      => [t, < S : Server | total : M >] .
+
+	op init : -> Configuration .
+	op c : -> Oid [ctor] .
+	op s : -> Oid [ctor] .
+
+	eq init = < c : Client | counter : 0, server : s >
+	          < s : Server | total : 0 > (c <- empty) time(0.0) .
+endom
+
+omod SIMPLE-CLIENT-SERVER-PREDS is
+	protecting SIMPLE-CLIENT-SERVER .
+
+	*** Total computed by a server
+	op getTotal : Oid Configuration ~> Nat .
+	*** Has message for a server
+	op hasMessageFor : Oid Configuration -> Bool .
+	*** A message for the server will be lost
+	op willBeLost : Oid Configuration -> Bool .
+
+	var C    : Configuration .
+	var O    : Oid .
+	var N    : Nat .
+	var Cnts : Content .
+	var Cls  : Cid .
+	var T    : Float .
+
+	eq getTotal(O, < O : Server | total : N > C) = N .
+
+	eq hasMessageFor(O, (O <- Cnts) C) = true .
+	eq hasMessageFor(O, C) = false [owise] .
+
+	eq willBeLost(O, [T, < O : Server | >] (O <- Cnts) C) = true .
+	eq willBeLost(O, C) = false [owise] .
+endom
+
+*** reduce in APMAUDE-TRANSLATE : atransform(upModule('SIMPLE-CLIENT-SERVER, true)) .

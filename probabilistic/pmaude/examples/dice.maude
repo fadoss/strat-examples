@@ -1,0 +1,36 @@
+***
+*** Simple fair dice example
+***
+
+sload ../pmaude
+sload model-checker
+
+mod DICE is
+	protecting NAT .
+
+	sort Dice .
+
+	op [_] : Nat -> Dice [ctor] .
+
+	vars N M : Nat .
+
+	rl [N] => [M] [metadata "with probability M := uniform(1, 6)" nonexec] .
+endm
+
+mod DICE-MC is
+	protecting DICE .
+	including MODEL-CHECKER .
+
+	subsort Dice < State .
+
+	op get : Nat -> Prop [ctor] .
+
+	vars N M : Nat .
+
+	eq [N] |= get(N) = true .
+	eq [N] |= get(M) = false [owise] .
+endm
+
+select PMAUDE-TRANSLATE .
+
+*** red transform(upModule('DICE, true)) .

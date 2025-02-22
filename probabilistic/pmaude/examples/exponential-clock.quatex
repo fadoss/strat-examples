@@ -1,0 +1,26 @@
+// Time until the clock breaks
+BreakTime() = if (s.rval("isBroken(Clk:Clock)")) then
+		s.rval("time(Clk:Clock)")
+	else
+		#BreakTime()
+	fi;
+
+// Charge when the clock breaks
+BreakCharge() = if (s.rval("isBroken(Clk:Clock)")) then
+		s.rval("charge(Clk:Clock)")
+	else
+		#BreakCharge()
+	fi;
+
+// Charge after some time (or less time if the clock is broken)
+ChargeAfter(s) = if (s.rval("time(Clk:Clock)") >= s || s.rval("isBroken(Clk:Clock)")) then
+		s.rval("charge(Clk:Clock)")
+	else
+		#ChargeAfter(s)
+	fi;
+
+// eval E[BreakTime()];
+eval E[BreakCharge()];
+// eval parametric(E[ChargeAfter(x)], x, 10, 25, 250);
+
+// Example execution: umaudemc scheck exponential-clock.maude -M "transform(upModule('EXPONENTIAL-CLOCK-PREDS, true))" 'clock(0.0, 1000.0)' exponential-clock.quatex pmr-advance --assign step -d 0.1 -j 6

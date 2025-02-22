@@ -1,0 +1,25 @@
+// Value of the server's total field after t units of time
+TotalAfter(t) = if (s.rval("getTime(C:Configuration)") >= t) then
+		s.rval("getTotal(s, C:Configuration)")
+	else
+		#TotalAfter(t)
+	fi;
+
+// Number of messages lost within a given number of total messages to the server
+HowManyLost(n, l) = if (n == 0) then
+		l
+	else
+		if (s.rval("hasMessageFor(s, C:Configuration)")) then
+			#HowManyLost(
+				n - 1,
+				if (s.rval("willBeLost(s, C:Configuration)")) then l + 1 else l fi
+			)
+		else
+			#HowManyLost(n, l)
+		fi
+	fi;
+
+// eval parametric(E[TotalAfter(x)], x, 1, 1, 10);
+eval E[HowManyLost(1000, 0)];
+
+// Example execution: umaudemc scheck simple-client-server.maude -m APMAUDE-TRANSLATE -M "atransform(upModule('SIMPLE-CLIENT-SERVER-PREDS, true))" 'init' simple-client-server.quatex ap-step --assign step -d 0.5 -j 6

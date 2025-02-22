@@ -1,0 +1,105 @@
+***
+*** Actor PMaude
+***
+
+sload pmaude
+
+fmod FLOAT-INF is
+	extending FLOAT .
+
+	sort FloatInf .
+	subsort Float < FloatInf .
+
+	*** Float with positive infinity
+	op inf : -> FloatInf [ctor] .
+
+	*** Minimum
+	op minInf : FloatInf FloatInf -> FloatInf .
+
+	vars F G : Float .
+
+	eq minInf(F, inf) = F .
+	eq minInf(inf, F) = F .
+	eq minInf(inf, inf) = inf .
+	eq minInf(F, G) = min(F, G) .
+endfm
+
+mod ACTORS is
+	protecting FLOAT-INF .
+	protecting CONFIGURATION .
+
+	sorts ScheduledObject Content .
+	subsort ScheduledObject < Configuration .
+
+	*** Message
+	op (_<-_) : Oid Content -> Msg [ctor msg] .
+	op empty : -> Content [ctor] .
+	*** Current time
+	op time : Float -> Configuration [ctor] .
+	*** Scheduled object or message
+	op [_,_] : Float Object -> ScheduledObject [ctor] .
+	op [_,_] : Float Msg -> ScheduledObject [ctor] .
+
+	*** Tick rule
+	***
+
+	vars T NT : Float .
+	var  C    : Content .
+	var  S    : Configuration .
+	var  O    : Object .
+	var  M    : Msg .
+
+	*** Smallest time in the configuration
+	op smallest : Configuration -> FloatInf .
+
+	eq smallest(none) = inf .
+	eq smallest([T, O] S) = minInf(T, smallest(S)) .
+	eq smallest([T, M] S) = minInf(T, smallest(S)) .
+	eq smallest(O S) = smallest(S) .
+	eq smallest(M S) = smallest(S) .
+	eq smallest(time(T) S) = smallest(S) .
+
+	*** Advance a configuration to a given time
+	op advance : Configuration Float -> Configuration .
+
+	eq advance(none, NT) = none .
+	eq advance([T, O] S, NT) = if T <= NT then O else [T, O] fi advance(S, NT) .
+	eq advance([T, M] S, NT) = if T <= NT then M else [T, M] fi advance(S, NT) .
+	eq advance(O S, NT) = O advance(S, NT) .
+	eq advance(M S, NT) = M advance(S, NT) .
+	eq advance(time(T) S, NT) = time(NT) advance(S, NT) .
+
+	*** The actual rule
+	crl [tick] : S => advance(S, NT) if NT := smallest(S) [nonexec] .
+
+	*** Time getter
+	op getTime : Configuration ~> Float .
+
+	eq getTime(time(T) S) = T .
+endm
+
+fmod APMAUDE-TRANSLATE is
+	protecting PMAUDE-TRANSLATE .
+
+	*** Actor PMaude transformation
+	op atransform : Module -> Module .
+
+	vars M M' : Module .
+
+	ceq atransform(M) = smod getName(M') is
+		getImports(M')
+		sorts getSorts(M') .
+		getSubsorts(M')
+		getOps(M')
+		getMbs(M')
+		getEqs(M')
+		getRls(M')
+		getStrats(M')
+		(strat 'ap-step : nil @ 'Bool [none] .)
+		(strat 'ap-run : nil @ 'Bool [none] .)
+		getSds(M')
+		(sd 'ap-step[[empty]] := ('pm-all[[empty]]) ! ; top('tick[none]{empty}) [none] .)
+		(sd 'ap-run[[empty]] := 'ap-step[[empty]] ? 'ap-run[[empty]] : idle [none] .)
+	endsm
+	 if M' := transform(M) .
+endfm
